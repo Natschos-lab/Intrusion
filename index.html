@@ -29,7 +29,7 @@
         body.light-mode {
             --bg-grad-1: #f0f9ff; --bg-grad-2: #e0f2fe; --bg-grad-3: #fce7f3; --bg-grad-4: #ffffff;
             --card-bg: rgba(255, 255, 255, 0.85);
-            --primary-neon: #0284c7; /* Plus sombre pour lisibilité */
+            --primary-neon: #0284c7;
             --danger-neon: #e11d48;
             --accent-neon: #d97706;
             --grey-neon: #64748b;
@@ -65,21 +65,11 @@
             color: var(--text-main);
         }
 
-        /* Force colors in light mode for elements that usually have 'text-white' */
         body.light-mode .text-white, 
-        body.light-mode .text-light {
-            color: #0f172a !important;
-        }
-        
-        body.light-mode .text-white-force {
-             color: #0f172a !important;
-        }
+        body.light-mode .text-light { color: #0f172a !important; }
+        body.light-mode .text-white-force { color: #0f172a !important; }
 
-        label, .form-label {
-            color: var(--text-main) !important;
-            font-weight: 500;
-            opacity: 1 !important;
-        }
+        label, .form-label { color: var(--text-main) !important; font-weight: 500; opacity: 1 !important; }
 
         .glass-card {
             background: var(--card-bg);
@@ -91,61 +81,39 @@
             transition: transform 0.3s, background 0.3s;
         }
 
-        /* --- STYLE INPUT CYBERPUNK --- */
+        /* --- INPUTS --- */
         .cyber-input-group {
-            display: flex;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            border: 1px solid var(--primary-neon);
+            display: flex; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1); border: 1px solid var(--primary-neon);
         }
-
         .cyber-label {
-            background-color: var(--primary-neon);
-            color: #fff;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 800;
-            padding: 0 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            min-width: 90px;
+            background-color: var(--primary-neon); color: #fff; font-family: 'Orbitron', sans-serif;
+            font-weight: 800; padding: 0 15px; display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem; text-transform: uppercase; min-width: 90px;
         }
-
         .cyber-input {
-            background-color: var(--input-bg);
-            color: var(--input-text) !important;
-            caret-color: var(--primary-neon);
-            border: none;
-            padding: 15px;
-            font-family: 'Poppins', sans-serif;
-            font-weight: bold;
-            font-size: 1.2rem;
-            width: 100%;
-            outline: none;
+            background-color: var(--input-bg); color: var(--input-text) !important; caret-color: var(--primary-neon);
+            border: none; padding: 15px; font-family: 'Poppins', sans-serif; font-weight: bold;
+            font-size: 1.2rem; width: 100%; outline: none;
         }
         
-        /* Stats Boxes */
+        /* --- STATS BOXES --- */
         .stat-box {
             background: rgba(125, 125, 125, 0.1); border: 2px solid var(--border-color); border-radius: 15px; padding: 10px 5px;
             display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100px;
             transition: all 0.2s; backdrop-filter: blur(5px);
         }
         .stat-box:active { transform: scale(0.95); }
-        
         .box-infiltre { border-color: var(--danger-neon); }
         .box-infiltre .role-name { color: var(--danger-neon); }
         .box-inconnu { border-color: var(--grey-neon); }
         .box-inconnu .role-name { color: var(--grey-neon); }
         .box-pnj { border-color: var(--primary-neon); }
         .box-pnj .role-name { color: var(--primary-neon); }
-
         .role-name { font-family: 'Orbitron', sans-serif; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
         .role-count { font-size: 1.8rem; font-weight: 700; color: var(--text-main); line-height: 1; }
 
-        /* Contrôles + / - */
+        /* --- CONTROLS --- */
         .ctrl-btn {
             width: 30px; height: 30px; padding: 0; display: flex; align-items: center; justify-content: center;
             border-radius: 50%; font-weight: bold; font-family: 'Courier New', monospace; cursor: pointer; transition: 0.1s;
@@ -155,10 +123,9 @@
         .ctrl-btn:active { background: rgba(125,125,125,0.2); transform: scale(0.9); }
         .ctrl-btn.disabled { opacity: 0.3; cursor: not-allowed; border-color: #555; color: #555; }
 
-        /* Boutons */
+        /* --- BUTTONS --- */
         .btn { transition: all 0.1s ease-in-out; }
         .btn:active { transform: scale(0.96); }
-
         .btn-neon {
             background: linear-gradient(45deg, var(--primary-neon), #3b82f6); border: none; color: #fff;
             font-weight: 700; font-family: 'Orbitron', sans-serif; text-transform: uppercase;
@@ -168,23 +135,18 @@
             background: rgba(125, 125, 125, 0.1); border: 1px solid var(--danger-neon); color: var(--danger-neon);
             font-family: 'Orbitron', sans-serif; font-weight: bold; padding: 15px 20px; border-radius: 12px;
         }
-        
         .btn-history {
              background: rgba(125, 125, 125, 0.1); border: 1px solid var(--primary-neon); color: var(--primary-neon);
              border-radius: 12px; padding: 0 20px; font-size: 1.5rem; transition: 0.3s;
         }
         .btn-history:active { background: var(--primary-neon); color: white; }
         
-        /* ROSTER / LISTE JOUEURS */
         .roster-item {
             background: rgba(125, 125, 125, 0.05); border: 1px solid var(--border-color); color: var(--text-main); padding: 10px 15px;
             border-radius: 12px; display: flex; align-items: center; gap: 15px; margin-bottom: 10px;
         }
-        .stat-badge {
-            font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;
-        }
+        .stat-badge { font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
         
-        /* EXIT BUTTON */
         .btn-quit {
             position: fixed; top: 15px; left: 15px; z-index: 100;
             background: rgba(0,0,0,0.4); border: 1px solid var(--danger-neon); color: var(--danger-neon);
@@ -194,60 +156,55 @@
         }
         .btn-quit:active { background: var(--danger-neon); color: white; transform: scale(0.9); }
 
-        /* MODAL HISTORY & ITEMS */
         .history-item {
             background: rgba(125, 125, 125, 0.1); border: 1px solid var(--border-color); color: var(--text-main); padding: 10px 15px;
             border-radius: 12px; cursor: pointer; text-align: left; transition: 0.2s; position: relative;
-            user-select: none; margin-bottom: 15px; margin-top: 5px;
-            display: flex; align-items: center; gap: 15px;
+            user-select: none; margin-bottom: 15px; margin-top: 5px; display: flex; align-items: center; gap: 15px;
         }
         .history-item:active { background: rgba(56, 189, 248, 0.2); transform: scale(0.98); }
 
-        /* Timer & Anim */
         .timer-display { font-size: 5rem; font-family: 'Orbitron', sans-serif; font-weight: 900; color: var(--text-main); transition: color 0.3s; }
-        
         @keyframes heartbeat {
             0% { transform: scale(1); } 15% { transform: scale(1.1); } 30% { transform: scale(1); }
             45% { transform: scale(1.1); } 60% { transform: scale(1); } 100% { transform: scale(1); }
         }
         .timer-urgent { color: var(--danger-neon); animation: heartbeat 1s infinite; }
-
         .eliminated-role { font-size: 2.5rem; font-family: 'Orbitron', sans-serif; font-weight: 900; margin: 20px 0; text-transform: uppercase; }
         
+        /* --- ANIMATIONS & TRANSITIONS --- */
         .fade-in { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes popIn {
             from { opacity: 0; transform: scale(0.95) translateY(10px); }
             to { opacity: 1; transform: scale(1) translateY(0); }
         }
 
-        #inputGuessWord {
-            color: var(--input-text) !important;
-            background-color: var(--input-bg) !important;
-            border: 2px solid var(--accent-neon) !important;
-            font-weight: bold; letter-spacing: 1px; font-family: 'Poppins', sans-serif;
+        .fade-out { animation: fadeOut 0.3s forwards; }
+        @keyframes fadeOut {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0.95); }
         }
 
-        /* CHECKBOX THEME SWITCH STYLE */
-        .btn-check:checked + .btn-outline-secondary {
-            background-color: var(--text-main);
-            color: var(--card-bg);
-            border-color: var(--text-main);
+        /* Effet de choc rouge lors de l'élimination */
+        @keyframes shockwave {
+            0% { box-shadow: inset 0 0 0 red; background: rgba(255, 0, 0, 0); transform: translate(0, 0); }
+            10% { box-shadow: inset 0 0 100px red; background: rgba(255, 0, 0, 0.2); transform: translate(-5px, 5px); }
+            20% { transform: translate(5px, -5px); }
+            30% { transform: translate(-5px, 5px); }
+            40% { transform: translate(5px, -5px); }
+            100% { box-shadow: inset 0 0 0 red; background: transparent; transform: translate(0, 0); }
         }
-        .btn-check:not(:checked) + .btn-outline-secondary {
-            color: var(--text-main);
-            border-color: var(--border-color);
+        .elimination-shock { animation: shockwave 0.5s ease-out; }
+
+        #inputGuessWord {
+            color: var(--input-text) !important; background-color: var(--input-bg) !important;
+            border: 2px solid var(--accent-neon) !important; font-weight: bold; letter-spacing: 1px; font-family: 'Poppins', sans-serif;
         }
+
+        .btn-check:checked + .btn-outline-secondary { background-color: var(--text-main); color: var(--card-bg); border-color: var(--text-main); }
+        .btn-check:not(:checked) + .btn-outline-secondary { color: var(--text-main); border-color: var(--border-color); }
         
-        /* MODE REVELATION SWITCH */
-        .btn-check:checked + .btn-outline-custom {
-            background-color: var(--primary-neon);
-            color: #fff;
-            border-color: var(--primary-neon);
-        }
-        .btn-check:not(:checked) + .btn-outline-custom {
-            color: var(--text-main);
-            border-color: var(--border-color);
-        }
+        .btn-check:checked + .btn-outline-custom { background-color: var(--primary-neon); color: #fff; border-color: var(--primary-neon); }
+        .btn-check:not(:checked) + .btn-outline-custom { color: var(--text-main); border-color: var(--border-color); }
     </style>
 </head>
 <body class="">
@@ -365,9 +322,12 @@
 
     <div id="view-pass" class="d-none text-center fade-in pt-5">
         <div class="glass-card p-5 mx-auto" style="max-width: 500px;">
-            <i class="bi bi-phone-vibrate fs-1 text-muted mb-3 d-block"></i>
-            <h3 class="mb-4">JOUEUR SUIVANT</h3>
-            <button onclick="showNameInput(); SFX.click()" class="btn btn-neon w-100">JE SUIS PRÊT(E)</button>
+            <div id="pass-dynamic-content" class="mb-4">
+                <i class="bi bi-phone-vibrate fs-1 text-muted mb-3 d-block"></i>
+                <h3 class="mb-4">JOUEUR SUIVANT</h3>
+            </div>
+            
+            <button onclick="handlePassClick(); SFX.click()" class="btn btn-neon w-100">JE SUIS PRÊT(E)</button>
         </div>
     </div>
 
@@ -476,10 +436,25 @@
 
             <div id="gameWinAction" class="d-none">
                 <h2 id="winMessage" class="brand-font mb-4 victory-text">VICTOIRE</h2>
-                <button onclick="toggleRevealEndModal(); SFX.click()" class="btn btn-warning w-100 py-3 mb-3 fw-bold text-dark rounded-pill">
+                
+                <button onclick="toggleRevealEndModal(); SFX.click()" class="btn btn-warning w-100 py-3 mb-4 fw-bold text-dark rounded-pill">
                     <i class="bi bi-eye-fill"></i> VOIR LES MOTS SECRETS
                 </button>
-                <button onclick="location.reload()" class="btn btn-outline-danger w-100 py-3">NOUVELLE PARTIE</button>
+
+                <div class="row g-2">
+                    <div class="col-6">
+                        <button onclick="replayGame(); SFX.success()" class="btn btn-neon w-100 py-3 h-100" style="font-size: 0.9rem;">
+                            <i class="bi bi-arrow-repeat d-block fs-4 mb-1"></i> REJOUER
+                            <br><small class="fw-normal">Mêmes joueurs</small>
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button onclick="location.reload()" class="btn btn-outline-danger w-100 py-3 h-100" style="font-size: 0.9rem;">
+                            <i class="bi bi-house-fill d-block fs-4 mb-1"></i> MENU
+                            <br><small class="fw-normal">Nouvelle partie</small>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -574,7 +549,10 @@
     // --- DATA ---
     const wordPairs = [
 ["Pyramide", "Pharaon"], ["Guitare", "Violon"], ["Bière", "Vin"],["McDo", "Burger King"], ["Facebook", "Twitter"], ["Plage", "Piscine"],
-["Thé", "Café"], ["Lune", "Soleil"], ["Train", "Métro"], ["Chat", "Chien"],["PC", "Tablette"], ["Foot", "Rugby"], ["Netflix", "YouTube"], ["Batman", "Superman"],["Pain au Choc", "Croissant"], ["Ski", "Snowboard"], ["Ketchup", "Mayo"],["Android", "iPhone"], ["Chocolat", "Vanille"], ["Cinema", "Netflix"], ["Paris","Londres"], ["Rome","Athènes"], ["Madrid","Barcelone"], ["Berlin","Amsterdam"], ["Lisbonne","Porto"], ["Mer","Océan"], ["Lac","Étang"], ["Rivière","Fleuve"], ["Montagne","Colline"], ["Forêt","Jungle"], ["Désert","Savane"], ["Pluie","Neige"], ["Vent","Tempête"], ["Nuage","Brouillard"], ["Soleil","Étoile"], ["Matin","Soir"], ["Jour","Nuit"], ["Printemps","Automne"], ["Été","Hiver"], ["Chaud","Froid"], ["Feu","Glace"], ["Eau","Glace"], ["Vapeur","Fumée"], ["Or","Argent"], ["Cuivre","Fer"], ["Bois","Métal"], ["Verre","Plastique"], ["Pierre","Brique"], ["Mur","Clôture"], ["Porte","Fenêtre"], ["Escalier","Ascenseur"], ["Maison","Appartement"], ["Villa","Chalet"], ["Hôtel","Auberge"], ["École","Université"], ["Classe","Amphithéâtre"], ["Livre","Magazine"], ["Journal","Blog"], ["Stylo","Crayon"], ["Feutre","Marqueur"], ["Gomme","Taille-crayon"], ["Table","Bureau"], ["Chaise","Fauteuil"], ["Canapé","Lit"], ["Oreiller","Coussin"], ["Couette","Couverture"], ["Réveil","Horloge"], ["Montre","Bracelet"], ["Bague","Collier"], ["Chapeau","Casquette"], ["Pull","Sweat"], ["Veste","Manteau"], ["Jean","Pantalon"], ["Short","Bermuda"], ["Robe","Jupe"], ["Chaussures","Baskets"], ["Bottes","Sandales"], ["Chaussettes","Collants"], ["Écharpe","Foulard"], ["Gants","Moufles"], ["Parapluie","Imperméable"], ["Sac","Valise"], ["Cartable","Sac à dos"], ["Clé","Serrure"], ["Télécommande","Manette"], ["Télévision","Écran"], ["Radio","Podcast"], ["Film","Série"], ["Cinéma","Théâtre"], ["Acteur","Réalisateur"], ["Chanteur","Musicien"], ["Groupe","Orchestre"], ["Piano","Clavier"], ["Batterie","Tambour"], ["Micro","Haut-parleur"], ["Casque","Écouteurs"], ["Photo","Vidéo"], ["Caméra","Appareil photo"], ["Peinture","Dessin"], ["Crayon","Pinceau"], ["Couleur","Teinte"], ["Rouge","Rose"], ["Bleu","Vert"], ["Jaune","Orange"], ["Noir","Blanc"], ["Gris","Beige"], ["Clair","Sombre"], ["Rapide","Lent"], ["Fort","Faible"], ["Grand","Petit"], ["Large","Étroit"], ["Lourd","Léger"], ["Plein","Vide"], ["Ouvert","Fermé"], ["Rond","Carré"], ["Triangle","Rectangle"], ["Nombre","Chiffre"], ["Addition","Soustraction"], ["Multiplication","Division"], ["Problème","Énigme"], ["Jeu","Jouet"], ["Puzzle","Casse-tête"], ["Cartes","Dominos"], ["Échecs","Dames"], ["Dés","Jetons"], ["Football","Basket"], ["Tennis","Badminton"], ["Golf","Mini-golf"], ["Natation","Plongée"], ["Course","Marathon"], ["Ski","Patinage"], ["Vélo","Trottinette"], ["Moto","Scooter"], ["Voiture","Camion"], ["Bus","Tram"], ["Avion","Hélicoptère"], ["Bateau","Ferry"], ["Port","Marina"], ["Route","Autoroute"], ["Pont","Tunnel"], ["Feu rouge","Stop"], ["Carte","GPS"], ["Boussole","Carte"], ["Restaurant","Café"], ["Bistrot","Brasserie"], ["Menu","Carte"], ["Entrée","Plat"], ["Plat","Dessert"], ["Fromage","Yaourt"], ["Lait","Crème"], ["Beurre","Margarine"], ["Pain","Brioche"], ["Croissant","Pain au lait"], ["Gâteau","Tarte"], ["Chocolat","Caramel"], ["Vanille","Fraise"], ["Pomme","Poire"], ["Banane","Mangue"], ["Orange","Clémentine"], ["Citron","Pamplemousse"], ["Fraise","Framboise"], ["Raisin","Cerise"], ["Salade","Crudités"], ["Tomate","Concombre"], ["Carotte","Betterave"], ["Oignon","Échalote"], ["Ail","Gingembre"], ["Sel","Poivre"], ["Sucre","Miel"], ["Épices","Herbes"], ["Café","Expresso"], ["Thé","Infusion"], ["Eau","Jus"], ["Soda","Limonade"], ["Bière","Cidre"], ["Vin rouge","Vin blanc"], ["Champagne","Prosecco"], ["Bouteille","Canette"], ["Verre","Tasse"], ["Assiette","Bol"], ["Fourchette","Cuillère"], ["Couteau","Spatule"], ["Poêle","Casserole"], ["Four","Micro-ondes"], ["Frigo","Congélateur"], ["Cuisine","Salle à manger"], ["Salon","Séjour"], ["Salle de bain","Toilettes"], ["Douche","Baignoire"], ["Savon","Gel douche"], ["Shampoing","Après-shampoing"], ["Serviette","Peignoir"], ["Brosse","Peigne"], ["Dentifrice","Bain de bouche"], ["Parfum","Déodorant"], ["Crème","Lotion"], ["Médecin","Infirmier"], ["Hôpital","Clinique"], ["Pharmacie","Parapharmacie"], ["Maladie","Rhume"], ["Fièvre","Toux"], ["Médicament","Pilule"], ["Vaccin","Injection"], ["Sport","Exercice"], ["Yoga","Pilates"], ["Danse","Chorégraphie"], ["Musique","Chanson"], ["Paroles","Refrain"], ["Couplet","Pont"], ["Silence","Calme"], ["Bruit","Vacarme"], ["Ville","Village"], ["Quartier","Centre-ville"], ["Marché","Supermarché"], ["Boutique","Magasin"], ["Caisse","Panier"], ["Ticket","Facture"], ["Prix","Tarif"], ["Réduction","Promotion"], ["Cadeau","Surprise"], ["Noël","Nouvel An"], ["Anniversaire","Fête"], ["Mariage","Fiançailles"], ["Invité","Hôte"], ["Famille","Cousins"], ["Parents","Enfants"], ["Frère","Sœur"], ["Grand-père","Grand-mère"], ["Bébé","Enfant"], ["Ami","Copain"], ["Voisin","Collègue"], ["Patron","Employé"], ["Travail","Bureau"], ["Réunion","Conférence"], ["Projet","Mission"], ["Objectif","But"], ["Succès","Victoire"], ["Échec","Erreur"], ["Chance","Hasard"], ["Règle","Loi"], ["Justice","Tribunal"], ["Police","Gendarmerie"], ["Pompiers","Ambulance"], ["Urgence","Secours"], ["Danger","Risque"], ["Sécurité","Protection"], ["Secret","Mystère"], ["Indice","Preuve"], ["Question","Réponse"], ["Problème","Solution"], ["Idée","Concept"], ["Plan","Stratégie"], ["Début","Fin"], ["Avant","Après"], ["Toujours","Jamais"], ["Souvent","Parfois"], ["Vrai","Faux"], ["Oui","Non"],["Chaise","Tabouret"], ["Serrure","Cadenas"], ["Brouillard","Brume"], ["Mythe","Légende"], ["Espoir","Optimisme"], ["Carte mère","Processeur"], ["Pixel","Vecteur"], ["Débit","Latence"], ["Contrat","Accord"], ["Vote","Suffrage"], ["Plinthe","Corniche"], ["Faïence","Carrelage"], ["Boussole","Sextant"], ["Gravité","Inertie"], ["Atome","Molécule"], ["Prisme","Lentille"], ["Érosion","Sédimentation"], ["Symbole","Icône"], ["Alphabet","Syllabaire"], ["Dialecte","Accent"], ["Parabole","Allégorie"], ["Ironie","Sarcasme"], ["Synopsis","Scénario"], ["Montage","Réalisation"], ["Partition","Portée"], ["Tempo","Rythme"], ["Tonalité","Gamme"], ["Improvisation","Composition"], ["Perspective","Profondeur"], ["Ombre","Reflet"], ["Contraste","Saturation"], ["Pigment","Teinture"], ["Toile","Support"], ["Ébauche","Esquisse"], ["Prototype","Maquette"], ["Fonction","Usage"], ["Ergonomie","Design"], ["Minimalisme","Baroque"], ["Symétrie","Asymétrie"], ["Module","Composant"], ["Algorithme","Procédure"], ["Variable","Constante"], ["Boucle","Condition"], ["Cache","Mémoire"], ["Serveur","Client"], ["Pare-feu","Antivirus"], ["Cryptage","Encodage"], ["Identité","Authentification"], ["Session","Connexion"], ["Bande passante","Canal"], ["Signal","Interférence"], ["Onde","Fréquence"], ["Amplitude","Phase"], ["Décibel","Hertz"], ["Voltage","Ampérage"], ["Résistance","Impédance"], ["Circuit","Schéma"], ["Bobine","Condensateur"], ["Soudure","Brasage"], ["Alliage","Composite"], ["Carbone","Silicium"], ["Isotope","Élément"], ["Fusion","Fission"], ["Réacteur","Générateur"], ["Énergie","Puissance"], ["Rendement","Efficacité"], ["Entropie","Désordre"], ["Équilibre","Stabilité"], ["Oscillation","Vibration"], ["Modèle","Simulation"], ["Hypothèse","Postulat"], ["Théorème","Lemme"], ["Démonstration","Preuve"], ["Corollaire","Conséquence"], ["Variable aléatoire","Probabilité"], ["Statistique","Échantillon"], ["Médiane","Moyenne"], ["Variance","Écart-type"], ["Projection","Interpolation"], ["Tendance","Cycle"], ["Indice","Indicateur"], ["Inflation","Déflation"], ["Récession","Croissance"], ["Capital","Actif"], ["Passif","Dette"], ["Liquidité","Solvabilité"], ["Bilan","Compte de résultat"], ["Audit","Contrôle"], ["Fiscalité","Imposition"], ["Subvention","Aide"], ["Prime","Bonus"], ["Salaire","Rémunération"], ["Horaires","Planning"], ["Deadline","Échéance"], ["Objectif","Livrable"], ["Méthode","Processus"], ["Qualité","Conformité"], ["Norme","Standard"], ["Certification","Label"], ["Brevet","Licence"], ["Propriété","Usufruit"], ["Bail","Location"], ["Hypothèque","Garantie"], ["Litige","Contentieux"], ["Jurisprudence","Précédent"], ["Plaignant","Défendeur"], ["Verdict","Sentence"], ["Appel","Recours"], ["Arbitrage","Médiation"], ["Conflit","Désaccord"], ["Consensus","Compromis"], ["Majorité","Unanimité"], ["Scrutin","Référendum"], ["Mandat","Fonction"], ["Législatif","Exécutif"], ["Décret","Ordonnance"], ["Constitution","Charte"], ["Souveraineté","Autorité"], ["Diplomatie","Négociation"], ["Traité","Alliance"], ["Frontière","Limite"], ["Territoire","Zone"], ["Région","District"], ["Cadastre","Parcelle"], ["Urbanisme","Zonage"], ["Voirie","Infrastructure"], ["Réseau","Maillage"], ["Flux","Circulation"], ["Mobilité","Transport"], ["Logistique","Acheminement"], ["Stock","Inventaire"], ["Entrepôt","Plateforme"], ["Conditionnement","Emballage"], ["Palette","Caisse"], ["Volume","Capacité"], ["Poids","Masse"], ["Densité","Concentration"], ["Dosage","Proportion"], ["Recette","Formule"], ["Cuisson","Préparation"], ["Fermentation","Maturation"], ["Arôme","Saveur"], ["Texture","Consistance"], ["Croquant","Fondant"], ["Épicerie","Primeur"], ["Marchandise","Produit"], ["Rayon","Étallage"], ["Ticket","Justificatif"], ["Garantie","SAV"], ["Retour","Échange"], ["Avis","Notation"], ["Réputation","Image"], ["Influence","Impact"], ["Audience","Portée"], ["Viralité","Propagation"], ["Tendance","Mode"], ["Style","Esthétique"], ["Tenue","Accoutrement"], ["Accessoire","Ornement"], ["Bouton","Fermeture"], ["Couture","Ourlet"], ["Tissu","Maille"], ["Motif","Imprimé"], ["Teinte","Nuance"], ["Dégradé","Transition"], ["Brillance","Matité"], ["Polissage","Finition"], ["Vernis","Laque"], ["Protection","Revêtement"], ["Usure","Altération"], ["Patine","Vieillissement"], ["Restauration","Réparation"], ["Maintenance","Entretien"], ["Panne","Défaillance"], ["Diagnostic","Inspection"], ["Réglage","Calibration"], ["Mesure","Étalonnage"], ["Précision","Exactitude"], ["Erreur","Biais"], ["Perception","Interprétation"], ["Attention","Concentration"], ["Mémoire","Souvenir"], ["Apprentissage","Assimilation"], ["Réflexe","Habitude"], ["Émotion","Sentiment"], ["Intuition","Raisonnement"], ["Créativité","Inspiration"], ["Motivation","Engagement"], ["Volonté","Détermination"], ["Persévérance","Résilience"], ["Stress","Pression"], ["Fatigue","Épuisement"], ["Repos","Récupération"], ["Routine","Rituel"], ["Transition","Changement"], ["Adaptation","Ajustement"], ["Évolution","Transformation"], ["Progrès","Amélioration"], ["Innovation","Rupture"], ["Tradition","Héritage"], ["Culture","Patrimoine"], ["Mémoire collective","Histoire"], ["Chronologie","Frise"], ["Ère","Période"], ["Cycle","Saison"], ["Aube","Crépuscule"], ["Horizon","Perspective"], ["Repère","Référence"], ["Orientation","Alignement"], ["Coordonnée","Axe"], ["Dimension","Échelle"], ["Macro","Micro"], ["Global","Local"], ["Centre","Périphérie"], ["Intérieur","Extérieur"], ["Surface","Profondeur"], ["Contour","Limite"], ["Structure","Ossature"], ["Fondation","Socle"], ["Pilier","Support"], ["Charge","Contrainte"], ["Tension","Compression"], ["Stabilité","Solidité"], ["Risque","Exposition"], ["Prévention","Anticipation"], ["Plan B","Alternative"], ["Option","Choix"], ["Décision","Arbitrage"], ["Priorité","Urgence"], ["Temps","Durée"], ["Instant","Moment"], ["Intervalle","Délai"], ["Synchronisation","Coordination"], ["Séquence","Enchaînement"], ["Ordre","Classement"], ["Catégorie","Typologie"], ["Liste","Inventaire"], ["Ensemble","Sous-ensemble"], ["Exemple","Illustration"], ["Résumé","Synthèse"], ["Détail","Précision"], ["Clarté","Lisibilité"], ["Forme","Contenu"], ["Fond","Surface"], ["Signal faible","Indice"], ["Cause","Effet"], ["Déclencheur","Facteur"], ["Corrélation","Lien"], ["Probabilité","Chance"], ["Certitude","Conviction"], ["Doute","Incertitude"], ["Hypothèse","Scénario"], ["Prévision","Projection"], ["Objectivité","Neutralité"], ["Opinion","Point de vue"], ["Argument","Justification"], ["Débat","Discussion"], ["Dialogue","Échange"], ["Silence","Pause"], ["Message","Intention"], ["Ton","Registre"], ["Style","Signature"], ["Originalité","Singularité"], ["Copie","Imitation"]
+["Thé", "Café"], ["Lune", "Soleil"], ["Train", "Métro"], ["Chat", "Chien"],["PC", "Tablette"], ["Foot", "Rugby"], ["Netflix", "YouTube"], ["Batman", "Superman"],["Pain au Choc", "Croissant"], ["Ski", "Snowboard"], ["Ketchup", "Mayo"],["Android", "iPhone"], ["Chocolat", "Vanille"], ["Cinema", "Netflix"], ["Paris","Londres"], ["Rome","Athènes"], ["Madrid","Barcelone"], ["Berlin","Amsterdam"], ["Lisbonne","Porto"], ["Mer","Océan"], ["Lac","Étang"], ["Rivière","Fleuve"], ["Montagne","Colline"], ["Forêt","Jungle"], ["Désert","Savane"], ["Pluie","Neige"], ["Vent","Tempête"], ["Nuage","Brouillard"], ["Soleil","Étoile"], ["Matin","Soir"], ["Jour","Nuit"], ["Printemps","Automne"], ["Été","Hiver"], ["Chaud","Froid"], ["Feu","Glace"], ["Eau","Glace"], ["Vapeur","Fumée"], ["Or","Argent"], ["Cuivre","Fer"], ["Bois","Métal"], ["Verre","Plastique"], ["Pierre","Brique"], ["Mur","Clôture"], ["Porte","Fenêtre"], ["Escalier","Ascenseur"], ["Maison","Appartement"], ["Villa","Chalet"], ["Hôtel","Auberge"], ["École","Université"], ["Classe","Amphithéâtre"], ["Livre","Magazine"], ["Journal","Blog"], ["Stylo","Crayon"], ["Feutre","Marqueur"], ["Gomme","Taille-crayon"], ["Table","Bureau"], ["Chaise","Fauteuil"], ["Canapé","Lit"], ["Oreiller","Coussin"], ["Couette","Couverture"], ["Réveil","Horloge"], ["Montre","Bracelet"], ["Bague","Collier"], ["Chapeau","Casquette"], ["Pull","Sweat"], ["Veste","Manteau"], ["Jean","Pantalon"], ["Short","Bermuda"], ["Robe","Jupe"], ["Chaussures","Baskets"], ["Bottes","Sandales"], ["Chaussettes","Collants"], ["Écharpe","Foulard"], ["Gants","Moufles"], ["Parapluie","Imperméable"], ["Sac","Valise"], ["Cartable","Sac à dos"], ["Clé","Serrure"], ["Télécommande","Manette"], ["Télévision","Écran"], ["Radio","Podcast"], ["Film","Série"], ["Cinéma","Théâtre"], ["Acteur","Réalisateur"], ["Chanteur","Musicien"], ["Groupe","Orchestre"], ["Piano","Clavier"], ["Batterie","Tambour"], ["Micro","Haut-parleur"], ["Casque","Écouteurs"], ["Photo","Vidéo"], ["Caméra","Appareil photo"], ["Peinture","Dessin"], ["Crayon","Pinceau"], ["Couleur","Teinte"], ["Rouge","Rose"], ["Bleu","Vert"], ["Jaune","Orange"], ["Noir","Blanc"], ["Gris","Beige"], ["Clair","Sombre"], ["Rapide","Lent"], ["Fort","Faible"], ["Grand","Petit"], ["Large","Étroit"], ["Lourd","Léger"], ["Plein","Vide"], ["Ouvert","Fermé"], ["Rond","Carré"], ["Triangle","Rectangle"], ["Nombre","Chiffre"], ["Addition","Soustraction"], ["Multiplication","Division"], ["Problème","Énigme"], ["Jeu","Jouet"], ["Puzzle","Casse-tête"], ["Cartes","Dominos"], ["Échecs","Dames"], ["Dés","Jetons"], ["Football","Basket"], ["Tennis","Badminton"], ["Golf","Mini-golf"], ["Natation","Plongée"], ["Course","Marathon"], ["Ski","Patinage"], ["Vélo","Trottinette"], ["Moto","Scooter"], ["Voiture","Camion"], ["Bus","Tram"], ["Avion","Hélicoptère"], ["Bateau","Ferry"], ["Port","Marina"], ["Route","Autoroute"], ["Pont","Tunnel"], ["Feu rouge","Stop"], ["Carte","GPS"], ["Boussole","Carte"], ["Restaurant","Café"], ["Bistrot","Brasserie"], ["Menu","Carte"], ["Entrée","Plat"], ["Plat","Dessert"], ["Fromage","Yaourt"], ["Lait","Crème"], ["Beurre","Margarine"], ["Pain","Brioche"], ["Croissant","Pain au lait"], ["Gâteau","Tarte"], ["Chocolat","Caramel"], ["Vanille","Fraise"], ["Pomme","Poire"], ["Banane","Mangue"], ["Orange","Clémentine"], ["Citron","Pamplemousse"], ["Fraise","Framboise"], ["Raisin","Cerise"], ["Salade","Crudités"], ["Tomate","Concombre"], ["Carotte","Betterave"], ["Oignon","Échalote"], ["Ail","Gingembre"], ["Sel","Poivre"], ["Sucre","Miel"], ["Épices","Herbes"], ["Café","Expresso"], ["Thé","Infusion"], ["Eau","Jus"], ["Soda","Limonade"], ["Bière","Cidre"], ["Vin rouge","Vin blanc"], ["Champagne","Prosecco"], ["Bouteille","Canette"], ["Verre","Tasse"], ["Assiette","Bol"], ["Fourchette","Cuillère"], ["Couteau","Spatule"], ["Poêle","Casserole"], ["Four","Micro-ondes"], ["Frigo","Congélateur"], ["Cuisine","Salle à manger"], ["Salon","Séjour"], ["Salle de bain","Toilettes"], ["Douche","Baignoire"], ["Savon","Gel douche"], ["Shampoing","Après-shampoing"], ["Serviette","Peignoir"], ["Brosse","Peigne"], ["Dentifrice","Bain de bouche"], ["Parfum","Déodorant"], ["Crème","Lotion"], ["Médecin","Infirmier"], ["Hôpital","Clinique"], ["Pharmacie","Parapharmacie"], ["Maladie","Rhume"], ["Fièvre","Toux"], ["Médicament","Pilule"], ["Vaccin","Injection"], ["Sport","Exercice"], ["Yoga","Pilates"], ["Danse","Chorégraphie"], ["Musique","Chanson"], ["Paroles","Refrain"], ["Couplet","Pont"], ["Silence","Calme"], ["Bruit","Vacarme"], ["Ville","Village"], ["Quartier","Centre-ville"], ["Marché","Supermarché"], ["Boutique","Magasin"], ["Caisse","Panier"], ["Ticket","Facture"], ["Prix","Tarif"], ["Réduction","Promotion"], ["Cadeau","Surprise"], ["Noël","Nouvel An"], ["Anniversaire","Fête"], ["Mariage","Fiançailles"], ["Invité","Hôte"], ["Famille","Cousins"], ["Parents","Enfants"], ["Frère","Sœur"], ["Grand-père","Grand-mère"], ["Bébé","Enfant"], ["Ami","Copain"], ["Voisin","Collègue"], ["Patron","Employé"], ["Travail","Bureau"], ["Réunion","Conférence"], ["Projet","Mission"], ["Objectif","But"], ["Succès","Victoire"], ["Échec","Erreur"], ["Chance","Hasard"], ["Règle","Loi"], ["Justice","Tribunal"], ["Police","Gendarmerie"], ["Pompiers","Ambulance"], ["Urgence","Secours"], ["Danger","Risque"], ["Sécurité","Protection"], ["Secret","Mystère"], ["Indice","Preuve"], ["Question","Réponse"], ["Problème","Solution"], ["Idée","Concept"], ["Plan","Stratégie"], ["Début","Fin"], ["Avant","Après"], ["Toujours","Jamais"], ["Souvent","Parfois"], ["Vrai","Faux"], ["Oui","Non"],["Raclette", "Fondue"], 
+["Mojito", "Spritz"],["Uber", "Taxi"],["Vinted", "LeBonCoin"],["Télétravail", "Bureau"],["Climatisation", "Ventilateur"],["Barbecue", "Plancha"],["Pétanque", "Mölkky"],["Koh-Lanta", "Fort Boyard"],["Astérix", "Tintin"],["Pokémon", "Digimon"], 
+["Zidane", "Mbappé"], ["Frites", "Potatoes"], ["Boxer", "Caleçon"], ["Barbe", "Moustache"], ["Tatouage", "Piercing"], ["Camping", "Hôtel"], ["Influenceur", "Vedette"], ["Tacos", "Kebab"], ["Sushi", "Maki"], ["Vampire", "Loup-garou"], 
+["Zombie", "Fantôme"], ["TikTok", "Instagram"], ["Emoji", "GIF"], ["Selfie", "Portrait"], ["Billard", "Baby-foot"], ["Piscine", "Jacuzzi"], ["Nutella", "Confiture"], ["Crocs", "Tongs"], ["Jul", "Ninho"],["Ascenseur", "Escalator"]
     ];
 
     // --- STATE ---
@@ -587,6 +565,7 @@
     let currentInfiltreWord = "";
     let pendingVictimIndex = -1;
     let currentAvatarData = null;
+    let previousStarters = [];
 
     // --- THEME ENGINE ---
     function initTheme() {
@@ -660,8 +639,6 @@
     document.addEventListener('visibilitychange', async () => { if (document.visibilityState === 'visible') { await toggleScreenLock(); } });
 
     // --- PLAYER DATA & ROSTER ---
-    // Structure: [{name: 'Toto', avatar: '...', globalWins: 0, sessionWins: 0}, ...]
-    
     function getStoredPlayers() {
         return JSON.parse(localStorage.getItem('intrusion_players_v3') || '[]');
     }
@@ -704,15 +681,10 @@
     }
 
     function updateWinStats(winningRoles) {
-        // winningRoles: array ['PNJ'] or ['Infiltré', 'Inconnu']
         let history = getStoredPlayers();
         let updated = false;
 
         players.forEach(p => {
-            // Check if player role matches winning roles
-            // Note: If "Inconnu" wins, usually just him. If "Infiltrés" win, all infiltrés win.
-            // If "Civils" win, all PNJs win.
-            
             let playerWon = false;
             if (winningRoles.includes('CIVILS') && p.role === 'PNJ') playerWon = true;
             if (winningRoles.includes('BAD') && (p.role === 'Infiltré' || p.role === 'Inconnu')) playerWon = true;
@@ -798,11 +770,33 @@
 
     // --- UI HELPERS ---
     function showView(id) {
-        document.querySelectorAll('[id^="view-"]').forEach(el => el.classList.add('d-none'));
-        document.getElementById(id).classList.remove('d-none');
-        // Hide quit button on setup/roster, show elsewhere
-        if(id === 'view-setup' || id === 'view-roster') document.getElementById('btn-quit-app').classList.add('d-none');
-        else document.getElementById('btn-quit-app').classList.remove('d-none');
+        // CORRECTION MAJEURE : Sélectionne uniquement les DIV qui sont des VUES
+        const currentView = document.querySelector('div[id^="view-"]:not(.d-none)');
+        const nextView = document.getElementById(id);
+
+        if (!currentView || currentView === nextView) {
+            if(currentView) currentView.classList.add('d-none');
+            nextView.classList.remove('d-none');
+            nextView.classList.add('fade-in');
+            
+            if(id === 'view-setup' || id === 'view-roster') document.getElementById('btn-quit-app').classList.add('d-none');
+            else document.getElementById('btn-quit-app').classList.remove('d-none');
+            return;
+        }
+
+        currentView.classList.remove('fade-in');
+        currentView.classList.add('fade-out');
+
+        setTimeout(() => {
+            currentView.classList.add('d-none');
+            currentView.classList.remove('fade-out');
+            nextView.classList.remove('d-none');
+            nextView.classList.add('fade-in');
+            
+            if(id === 'view-setup' || id === 'view-roster') document.getElementById('btn-quit-app').classList.add('d-none');
+            else document.getElementById('btn-quit-app').classList.remove('d-none');
+            
+        }, 280);
     }
 
     function toggleQuitModal() {
@@ -864,9 +858,90 @@
     }
     updateConfigFromSlider();
 
+    // --- LOGIC: SELECT SMART STARTER ---
+    function pickSmartStarter(isFirstRound) {
+        const alive = players.filter(p => p.alive);
+        let candidates;
+        
+        // Règle 1 : Inconnu ne commence pas au round 1
+        if (isFirstRound) {
+            candidates = alive.filter(p => p.role !== 'Inconnu');
+            if (candidates.length === 0) candidates = alive;
+        } else {
+            candidates = alive;
+        }
+
+        // Règle 2 : Priorité à ceux qui n'ont jamais commencé
+        let freshCandidates = candidates.filter(p => !previousStarters.includes(p.name));
+        let chosenPlayer;
+
+        if (freshCandidates.length > 0) {
+            chosenPlayer = freshCandidates[Math.floor(Math.random() * freshCandidates.length)];
+        } else {
+            chosenPlayer = candidates[Math.floor(Math.random() * candidates.length)];
+        }
+
+        previousStarters.push(chosenPlayer.name);
+        return chosenPlayer.name;
+    }
+
+    // --- PASS SCREEN LOGIC (Smart Button) ---
+    function updatePassScreen() {
+        const container = document.getElementById('pass-dynamic-content');
+        const currentPlayer = players[currentStep];
+
+        if (currentPlayer) {
+            // MODE REPLAY
+            let avatarHtml = `<div class="rounded-circle bg-secondary d-flex justify-content-center align-items-center mx-auto mb-3" style="width: 100px; height: 100px; box-shadow: 0 0 15px var(--primary-neon);"><i class="bi bi-person-fill text-white fs-1"></i></div>`;
+            if (currentPlayer.avatar) {
+                avatarHtml = `<img src="${currentPlayer.avatar}" class="rounded-circle mx-auto mb-3" style="width: 100px; height: 100px; object-fit: cover; box-shadow: 0 0 15px var(--primary-neon); display:block;">`;
+            }
+            container.innerHTML = `
+                ${avatarHtml}
+                <h4 class="text-muted small text-uppercase mb-2">C'est au tour de</h4>
+                <h2 class="brand-font text-info mb-4">${currentPlayer.name}</h2>
+            `;
+        } else {
+            // MODE NORMAL
+            container.innerHTML = `
+                <i class="bi bi-phone-vibrate fs-1 text-muted mb-3 d-block"></i>
+                <h3 class="mb-4">JOUEUR SUIVANT</h3>
+            `;
+        }
+    }
+
+    function handlePassClick() {
+        const currentPlayer = players[currentStep];
+        if (currentPlayer) {
+            // REPLAY: Go straight to reveal
+            const title = document.getElementById('revealTitle');
+            const word = document.getElementById('revealWord');
+            const desc = document.getElementById('revealDesc');
+            
+            if(currentPlayer.role === 'Inconnu') {
+                title.innerText = "L'INCONNU"; title.style.color = '#adb5bd';
+                word.innerText = "???"; word.style.color = '#adb5bd'; desc.innerText = "Tu n'as pas de mot. Bluffe !";
+            } else {
+                word.innerText = currentPlayer.word; word.style.color = '#fbbf24';
+                if(gameConfig.mode === 'revele') {
+                    if(currentPlayer.role === 'PNJ') { title.innerText = "PNJ"; title.style.color = '#38bdf8'; desc.innerText = "Tu es civil. Trouve l'intrus."; } 
+                    else { title.innerText = "INFILTRÉ"; title.style.color = '#f43f5e'; desc.innerText = "Tu es l'intrus. Cache-toi."; }
+                } else {
+                    title.innerText = "AGENT"; title.style.color = '#fff'; desc.innerText = "Analyse les autres mots.";
+                }
+            }
+            SFX.reveal();
+            showView('view-reveal');
+        } else {
+            // NEW GAME: Go to name input
+            showNameInput();
+        }
+    }
+
     // --- GAME INIT ---
     function initGame() {
         toggleScreenLock();
+        previousStarters = []; 
         gameConfig.mode = document.getElementById('modeRevele').checked ? 'revele' : 'secret';
         const pair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
         currentPNJWord = pair[0]; currentInfiltreWord = pair[1];
@@ -875,7 +950,45 @@
         for(let i=0; i<gameConfig.inconnus; i++) rolesDeck.push({role:'Inconnu', word:null});
         for(let i=0; i<gameConfig.pnj; i++) rolesDeck.push({role:'PNJ', word:pair[0]});
         for (let i = rolesDeck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [rolesDeck[i], rolesDeck[j]] = [rolesDeck[j], rolesDeck[i]]; }
-        players = []; currentStep = 0; showView('view-pass');
+        players = []; 
+        currentStep = 0; 
+        updatePassScreen();
+        showView('view-pass');
+    }
+    
+    // --- REPLAY GAME (SAME PLAYERS) ---
+    function replayGame() {
+        const oldPlayers = players.map(p => ({ name: p.name, avatar: p.avatar }));
+        previousStarters = []; 
+        
+        const pair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
+        currentPNJWord = pair[0]; currentInfiltreWord = pair[1];
+        
+        rolesDeck = [];
+        for(let i=0; i<gameConfig.infiltres; i++) rolesDeck.push({role:'Infiltré', word:pair[1]});
+        for(let i=0; i<gameConfig.inconnus; i++) rolesDeck.push({role:'Inconnu', word:null});
+        for(let i=0; i<gameConfig.pnj; i++) rolesDeck.push({role:'PNJ', word:pair[0]});
+        
+        for (let i = rolesDeck.length - 1; i > 0; i--) { 
+            const j = Math.floor(Math.random() * (i + 1)); 
+            [rolesDeck[i], rolesDeck[j]] = [rolesDeck[j], rolesDeck[i]]; 
+        }
+
+        players = [];
+        for(let i=0; i < oldPlayers.length; i++) {
+            if(i < rolesDeck.length) {
+                players.push({
+                    name: oldPlayers[i].name,
+                    avatar: oldPlayers[i].avatar,
+                    role: rolesDeck[i].role,
+                    word: rolesDeck[i].word,
+                    alive: true
+                });
+            }
+        }
+        currentStep = 0;
+        updatePassScreen();
+        showView('view-pass');
     }
 
     // --- SETUP LOOP ---
@@ -884,6 +997,7 @@
     function revealIdentity() {
         const inputVal = document.getElementById('inputPseudo').value.trim();
         const pseudo = inputVal || ("Joueur " + (currentStep + 1));
+        
         const isTaken = players.some(p => p.name.toLowerCase() === pseudo.toLowerCase());
         if (isTaken) { alert("Ce pseudo est déjà pris !"); SFX.error(); return; }
         
@@ -913,8 +1027,16 @@
 
     function nextPlayer() {
         currentStep++;
-        if(currentStep < gameConfig.total) showView('view-pass');
-        else { document.getElementById('firstPlayerName').innerText = players[Math.floor(Math.random()*players.length)].name; showView('view-pre-debate'); }
+        if(currentStep < gameConfig.total) {
+            updatePassScreen();
+            showView('view-pass');
+        }
+        else { 
+            // FIRST ROUND: TRUE to protect Inconnu
+            const starterName = pickSmartStarter(true);
+            document.getElementById('firstPlayerName').innerText = starterName; 
+            showView('view-pre-debate'); 
+        }
     }
 
     // --- GAME LOOP ---
@@ -980,13 +1102,18 @@
         const guess = cleanString(guessRaw); const correct = cleanString(currentPNJWord);
         let isCorrect = false; if (guess === correct) isCorrect = true; else { const dist = levenshtein(guess, correct); if (dist <= 1) isCorrect = true; }
         players[pendingVictimIndex].alive = false;
+        
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+        document.body.classList.add('elimination-shock');
+        setTimeout(() => document.body.classList.remove('elimination-shock'), 500);
+
         if (isCorrect) {
             SFX.success(); showView('view-result');
             document.getElementById('gameContinueAction').classList.add('d-none'); document.getElementById('gameWinAction').classList.remove('d-none');
             const winMsg = document.getElementById('winMessage');
             document.getElementById('eliminatedNameDisplay').innerText = players[pendingVictimIndex].name;
             document.getElementById('eliminatedRoleDisplay').innerText = "INCONNU"; document.getElementById('eliminatedRoleDisplay').style.color = "#94a3b8";
-            updateWinStats(['INCONNU_SOLO']); // Inconnu wins
+            updateWinStats(['INCONNU_SOLO']);
             winMsg.innerText = "VICTOIRE DE L'INCONNU !"; winMsg.className = "brand-font mb-4 victory-text text-white-force";
             updateEliminatedImage();
         } else { SFX.error(); finalizeElimination(pendingVictimIndex); }
@@ -995,6 +1122,11 @@
     function finalizeElimination(index) {
         const victim = players[index];
         victim.alive = false;
+        
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+        document.body.classList.add('elimination-shock');
+        setTimeout(() => document.body.classList.remove('elimination-shock'), 500);
+
         showView('view-result');
         const roleDisplay = document.getElementById('eliminatedRoleDisplay');
         const nameDisplay = document.getElementById('eliminatedNameDisplay');
@@ -1047,9 +1179,9 @@
     }
 
     function setupNextRound() {
-        const alivePlayers = players.filter(p => p.alive);
-        const randomStarter = alivePlayers[Math.floor(Math.random() * alivePlayers.length)];
-        document.getElementById('nextRoundStarter').innerText = randomStarter.name;
+        // NEXT ROUND: FALSE because Inconnu can now start
+        const starterName = pickSmartStarter(false);
+        document.getElementById('nextRoundStarter').innerText = starterName;
         showView('view-round-transition');
     }
 
