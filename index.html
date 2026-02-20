@@ -307,6 +307,19 @@
                     </label>
                 </div>
 
+                <div class="p-3 border border-secondary rounded mb-4 bg-dark bg-opacity-25">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-start">
+                            <div class="small text-muted text-uppercase mb-1"><i class="bi bi-database-fill"></i> Mots Disponibles</div>
+                            <span class="fs-4 fw-bold text-info" id="displayWordsRemaining">--</span>
+                            <span class="text-muted small"> / <span id="displayWordsTotal">--</span></span>
+                        </div>
+                        <button onclick="resetPlayedWords(); SFX.alarm()" class="btn btn-outline-danger btn-sm fw-bold">
+                            <i class="bi bi-arrow-counterclockwise"></i> RESET
+                        </button>
+                    </div>
+                </div>
+
                 <button onclick="initGame(); SFX.success()" class="btn btn-neon w-100 py-3">INITIALISER LA MISSION</button>
             </div>
         </div>
@@ -596,6 +609,50 @@
     let currentAvatarData = null;
     let previousStarters = [];
 
+    // --- GESTION DE L'HISTORIQUE DES MOTS ---
+    function getPlayedWords() {
+        return JSON.parse(localStorage.getItem('intrusion_played_words') || '[]');
+    }
+
+    function savePlayedWord(word) {
+        let played = getPlayedWords();
+        if (!played.includes(word)) {
+            played.push(word);
+            localStorage.setItem('intrusion_played_words', JSON.stringify(played));
+        }
+        updateWordStatsUI();
+    }
+
+    function resetPlayedWords() {
+        localStorage.removeItem('intrusion_played_words');
+        updateWordStatsUI();
+    }
+
+    function updateWordStatsUI() {
+        const played = getPlayedWords();
+        const total = wordPairs.length;
+        const remaining = total - played.length;
+        
+        const remEl = document.getElementById('displayWordsRemaining');
+        const totEl = document.getElementById('displayWordsTotal');
+        if(remEl) remEl.innerText = remaining;
+        if(totEl) totEl.innerText = total;
+    }
+
+    function getRandomWordPair() {
+        let playedWords = getPlayedWords();
+        let availablePairs = wordPairs.filter(pair => !playedWords.includes(pair[0]));
+
+        if (availablePairs.length === 0) {
+            resetPlayedWords();
+            availablePairs = wordPairs;
+        }
+
+        const pair = availablePairs[Math.floor(Math.random() * availablePairs.length)];
+        savePlayedWord(pair[0]); 
+        return pair;
+    }
+
     // --- THEME ENGINE ---
     function initTheme() {
         const savedTheme = localStorage.getItem('intrusion_theme');
@@ -799,7 +856,6 @@
 
     // --- UI HELPERS ---
     function showView(id) {
-        // CORRECTION MAJEURE : Sélectionne uniquement les DIV qui sont des VUES
         const currentView = document.querySelector('div[id^="view-"]:not(.d-none)');
         const nextView = document.getElementById(id);
 
@@ -972,7 +1028,10 @@
         toggleScreenLock();
         previousStarters = []; 
         gameConfig.mode = document.getElementById('modeRevele').checked ? 'revele' : 'secret';
-        const pair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
+        
+        // NOUVEAU: on utilise la pioche intelligente
+        const pair = getRandomWordPair();
+        
         currentPNJWord = pair[0]; currentInfiltreWord = pair[1];
         rolesDeck = [];
         for(let i=0; i<gameConfig.infiltres; i++) rolesDeck.push({role:'Infiltré', word:pair[1]});
@@ -990,7 +1049,9 @@
         const oldPlayers = players.map(p => ({ name: p.name, avatar: p.avatar }));
         previousStarters = []; 
         
-        const pair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
+        // NOUVEAU: on utilise la pioche intelligente
+        const pair = getRandomWordPair();
+        
         currentPNJWord = pair[0]; currentInfiltreWord = pair[1];
         
         rolesDeck = [];
@@ -1220,6 +1281,10 @@
         document.getElementById('endWordInf').innerText = currentInfiltreWord;
         if (modal.classList.contains('d-none')) { modal.classList.remove('d-none'); SFX.reveal(); } else { modal.classList.add('d-none'); }
     }
+
+    // NOUVEAU: Initialiser l'affichage des mots au chargement de la page
+    updateWordStatsUI();
+
 </script>
 </body>
 </html>
