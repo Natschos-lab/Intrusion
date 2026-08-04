@@ -683,18 +683,6 @@
 
                     <hr class="border-secondary mb-4 opacity-25">
 
-                    <div class="mb-4 text-center">
-                        <label class="form-label small text-uppercase ls-1">Mode de Révélation</label>
-                        <div class="btn-group w-100" role="group">
-                            <input type="radio" class="btn-check" name="gameMode" id="modeSecret" value="secret" checked
-                                onclick="SFX.click()">
-                            <label class="btn btn-outline-custom" for="modeSecret">SECRET</label>
-                            <input type="radio" class="btn-check" name="gameMode" id="modeRevele" value="revele"
-                                onclick="SFX.click()">
-                            <label class="btn btn-outline-custom" for="modeRevele">RÉVÉLÉ</label>
-                        </div>
-                    </div>
-
                     <div class="mb-4">
                         <label class="form-label d-flex justify-content-between">
                             <span>Nombre de Joueurs</span>
@@ -704,35 +692,51 @@
                             oninput="updateConfigFromSlider(); SFX.click()">
                     </div>
 
-                    <div class="row text-center g-2 mb-4">
-                        <div class="col-4">
-                            <div class="stat-box box-infiltre h-100">
-                                <div class="role-name">Infiltré</div>
-                                <div class="d-flex align-items-center gap-2">
-                                    <button class="ctrl-btn ctrl-minus" id="btnMinusInf"
-                                        onclick="adjustRole('infiltre', -1); SFX.click()">-</button>
-                                    <div class="role-count" id="displayInfiltres">1</div>
-                                    <button class="ctrl-btn ctrl-plus" id="btnPlusInf"
-                                        onclick="adjustRole('infiltre', 1); SFX.click()">+</button>
+                    <div id="setup-role-settings-placeholder">
+                        <div id="role-settings-block">
+                            <div class="mb-4 text-center">
+                                <label class="form-label small text-uppercase ls-1">Mode de Révélation</label>
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="gameMode" id="modeSecret" value="secret"
+                                        checked onclick="SFX.click()">
+                                    <label class="btn btn-outline-custom" for="modeSecret">SECRET</label>
+                                    <input type="radio" class="btn-check" name="gameMode" id="modeRevele" value="revele"
+                                        onclick="SFX.click()">
+                                    <label class="btn btn-outline-custom" for="modeRevele">RÉVÉLÉ</label>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="stat-box box-inconnu h-100">
-                                <div class="role-name">Inconnu</div>
-                                <div class="d-flex align-items-center gap-2">
-                                    <button class="ctrl-btn ctrl-minus" id="btnMinusInc"
-                                        onclick="adjustRole('inconnu', -1); SFX.click()">-</button>
-                                    <div class="role-count" id="displayInconnus">0</div>
-                                    <button class="ctrl-btn ctrl-plus" id="btnPlusInc"
-                                        onclick="adjustRole('inconnu', 1); SFX.click()">+</button>
+
+                            <div class="row text-center g-2 mb-4">
+                                <div class="col-4">
+                                    <div class="stat-box box-infiltre h-100">
+                                        <div class="role-name">Infiltré</div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <button class="ctrl-btn ctrl-minus" id="btnMinusInf"
+                                                onclick="adjustRole('infiltre', -1); SFX.click()">-</button>
+                                            <div class="role-count" id="displayInfiltres">1</div>
+                                            <button class="ctrl-btn ctrl-plus" id="btnPlusInf"
+                                                onclick="adjustRole('infiltre', 1); SFX.click()">+</button>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="stat-box box-pnj h-100">
-                                <div class="role-name">PNJ</div>
-                                <div class="role-count" id="displayPNJ" style="padding: 5px 0;">3</div>
+                                <div class="col-4">
+                                    <div class="stat-box box-inconnu h-100">
+                                        <div class="role-name">Inconnu</div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <button class="ctrl-btn ctrl-minus" id="btnMinusInc"
+                                                onclick="adjustRole('inconnu', -1); SFX.click()">-</button>
+                                            <div class="role-count" id="displayInconnus">0</div>
+                                            <button class="ctrl-btn ctrl-plus" id="btnPlusInc"
+                                                onclick="adjustRole('inconnu', 1); SFX.click()">+</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stat-box box-pnj h-100">
+                                        <div class="role-name">PNJ</div>
+                                        <div class="role-count" id="displayPNJ" style="padding: 5px 0;">3</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -748,7 +752,8 @@
                     <div class="p-3 border border-secondary rounded mb-4 bg-dark bg-opacity-25">
                         <div class="d-flex justify-content-between align-items-center">
                             <div class="text-start">
-                                <div class="small text-muted text-uppercase mb-1"><i class="bi bi-database-fill"></i>
+                                <div class="small text-light opacity-75 text-uppercase mb-1"><i
+                                        class="bi bi-database-fill"></i>
                                     Mots Disponibles</div>
                                 <span class="fs-4 fw-bold text-info" id="displayWordsRemaining">--</span>
                                 <span class="text-muted small"> / <span id="displayWordsTotal">--</span></span>
@@ -837,6 +842,7 @@
                     </div>
 
                     <div id="lobby-actions-host" class="d-none">
+                        <div id="mp-role-settings-placeholder" class="mb-3"></div>
                         <button id="btn-start-mp" onclick="MP.startGame(); SFX.success()"
                             class="btn btn-neon w-100 py-3 mb-3">LANCER LA MISSION</button>
                     </div>
@@ -1041,10 +1047,16 @@
                     C'est au tour de :<br>
                     <strong class="fs-3 text-primary" id="nextRoundStarter">---</strong>
                 </div>
-                <button onclick="startDebate(60); SFX.click()"
-                    class="btn btn-warning w-100 py-4 fw-bold fs-5 text-dark rounded-pill">
-                    🗣️ LANCER LE CHRONO (1 Min)
-                </button>
+                <div id="transition-host-action">
+                    <button onclick="startDebate(60); SFX.click()"
+                        class="btn btn-warning w-100 py-4 fw-bold fs-5 text-dark rounded-pill">
+                        🗣️ LANCER LE CHRONO (1 Min)
+                    </button>
+                </div>
+                <div id="transition-client-action" class="d-none pt-3">
+                    <h5 class="text-warning">EN ATTENTE</h5>
+                    <p class="text-muted small">L'hôte va lancer le chrono...</p>
+                </div>
             </div>
         </div>
 
@@ -1132,7 +1144,16 @@
         document.getElementById('inputGuessWord').addEventListener('keypress', function (e) { if (e.key === 'Enter') { validateGuess(); SFX.click(); } });
 
         // --- STATE ---
-
+        let gameConfig = { total: 4, infiltres: 1, inconnus: 0, pnj: 3, mode: 'secret' };
+        let players = [];
+        let currentStep = 0;
+        let rolesDeck = [];
+        let currentPNJWord = "";
+        let currentInfiltreWord = "";
+        let previousStarters = [];
+        let timerInterval = null;
+        let pendingVictimIndex = -1;
+        let currentAvatarData = null;
         // --- DATA ---
         const wordPairs = [
             ["Pyramide", "Pharaon"], ["Guitare", "Violon"], ["Bière", "Vin"], ["McDo", "Burger King"],
@@ -1375,17 +1396,6 @@
         ];
 
         // --- STATE ---
-        let gameConfig = { total: 4, infiltres: 1, inconnus: 0, pnj: 3, mode: 'secret' };
-        let rolesDeck = [];
-        let players = [];
-        let currentStep = 0;
-        let timerInterval;
-        let currentPNJWord = "";
-        let currentInfiltreWord = "";
-        let pendingVictimIndex = -1;
-        let currentAvatarData = null;
-        let previousStarters = [];
-
         // --- NETWORKING (MP) ---
         const MP = {
             peer: null,
@@ -1415,11 +1425,20 @@
                 this.peer.on('open', (id) => {
                     this.updateStatus('HÔTE : ' + this.roomId, 'online');
                     document.getElementById('displayRoomCode').innerText = this.roomId;
+                    document.getElementById('host-room-code-display').innerText = this.roomId;
+                    document.getElementById('modalRoomCodeDisplay').innerText = this.roomId;
+                    document.getElementById('host-room-code-btn').classList.remove('d-none');
                     document.getElementById('lobby-host-elements').classList.remove('d-none');
                     document.getElementById('lobby-client-elements').classList.add('d-none');
                     document.getElementById('lobby-actions-host').classList.remove('d-none');
                     document.getElementById('mp-chat-container').classList.remove('d-none');
                     document.body.style.paddingBottom = "200px";
+
+                    const placeholder = document.getElementById('mp-role-settings-placeholder');
+                    const block = document.getElementById('role-settings-block');
+                    if (placeholder && block) placeholder.appendChild(block);
+                    updateConfigFromSlider(1); // Set config for 1 player (host alone)
+
                     showView('view-mp-lobby');
                     this.addSelfToLobby();
                 });
@@ -1430,13 +1449,24 @@
                     conn.on('close', () => {
                         this.connections = this.connections.filter(c => c !== conn);
                         this.syncLobby();
+                        if (typeof players !== 'undefined' && players.length > 0) {
+                            const playerIndex = players.findIndex(p => p.peerId === conn.peer);
+                            if (playerIndex !== -1 && players[playerIndex].alive) {
+                                const pName = players[playerIndex].name;
+                                const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                this.displayChat('Système', pName + " s'est déconnecté (Éliminé).", timeStr, true);
+                                this.broadcast({ type: 'chat', name: 'Système', message: pName + " s'est déconnecté (Éliminé).", time: timeStr, system: true });
+                                finalizeElimination(playerIndex, false);
+                            }
+                        }
                     });
                 });
 
                 this.peer.on('error', (err) => {
-                    console.error(err);
-                    if (err.type === 'unavailable-id') { alert("Ce code est déjà utilisé, réessaie."); this.initHost(); }
-                    else { alert("Erreur de connexion."); this.disconnect(); }
+                    if (!this.isDisconnecting) {
+                        alert("Erreur réseau ou code introuvable.");
+                        this.disconnect();
+                    }
                 });
             },
 
@@ -1478,14 +1508,45 @@
             },
 
             disconnect: function () {
+                if (this.isDisconnecting) return;
                 this.isDisconnecting = true;
-                if (this.peer) this.peer.destroy();
-                this.peer = null; this.connections = []; this.mode = null;
+
+                if (typeof timerInterval !== 'undefined' && timerInterval) {
+                    clearInterval(timerInterval);
+                }
+
+                // 1. Prévenir tous les joueurs que la salle ferme AVANT de couper
+                if (this.mode === 'host' && this.connections.length > 0) {
+                    try { this.broadcast({ type: 'room_closed' }); } catch (e) { }
+                }
+
+                // 2. Détruire proprement la connexion
+                try { if (this.peer) this.peer.destroy(); } catch (e) { }
+                this.peer = null;
+                this.connections = [];
+                this.mode = null;
+
+                // 3. Nettoyer l'interface
                 document.getElementById('mp-status-indicator').classList.add('d-none');
                 document.getElementById('mp-chat-container').classList.add('d-none');
+                document.getElementById('host-room-code-btn').classList.add('d-none');
                 document.body.style.paddingBottom = "0px";
-                showView('view-setup');
-                this.isDisconnecting = false;
+
+                const placeholder = document.getElementById('setup-role-settings-placeholder');
+                const block = document.getElementById('role-settings-block');
+                if (placeholder && block) placeholder.appendChild(block);
+
+                try { updateConfigFromSlider(); } catch (e) { }
+
+                // 4. CORRECTION PAGE BLANCHE : On n'affiche le menu que si on n'y est pas déjà
+                const setupView = document.getElementById('view-setup');
+                if (setupView && setupView.classList.contains('d-none')) {
+                    showView('view-setup');
+                }
+
+                setTimeout(() => {
+                    this.isDisconnecting = false;
+                }, 500);
             },
 
             addSelfToLobby: function () {
@@ -1496,6 +1557,22 @@
 
             handleData: function (data, conn) {
                 switch (data.type) {
+                    case 'room_closed':
+                        alert("L'hôte a fermé la salle.");
+                        this.disconnect();
+                        break;
+                    case 'force_lobby':
+                        if (typeof timerInterval !== 'undefined' && timerInterval) {
+                            clearInterval(timerInterval);
+                        }
+                        players = [];
+                        currentStep = 0;
+                        document.getElementById('voteButtonsContainer').innerHTML = "";
+                        showView('view-mp-lobby');
+                        if (this.mode === 'host') {
+                            this.syncLobby();
+                        }
+                        break;
                     case 'join':
                         const isTaken = this.connections.some(c => c.peerName === data.name) || this.me.name === data.name;
                         if (isTaken) {
@@ -1548,6 +1625,12 @@
                         break;
                     case 'sync_elimination':
                         finalizeElimination(data.index, true);
+                        break;
+                    case 'sync_vote_progress':
+                        const voteStatusEl = document.getElementById('vote-progress-status');
+                        if (voteStatusEl) {
+                            voteStatusEl.innerText = `${data.count} / ${data.total} votes enregistrés`;
+                        }
                         break;
                     case 'sync_guess_phase':
                         pendingVictimIndex = data.index;
@@ -1653,7 +1736,7 @@
                 if (!msg) return;
                 input.value = "";
 
-                const chatData = { type: 'chat', name: this.me.name || 'Moi', message: msg, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+                const chatData = { type: 'chat', name: this.me.name || localStorage.getItem('intrusion_last_name') || 'Joueur', message: msg, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
 
                 this.displayChat(chatData.name, chatData.message, chatData.time, true);
 
@@ -1672,6 +1755,37 @@
                 div.innerHTML = `<strong class="small text-info">${isMe ? 'Moi' : name}</strong> <span style="font-size: 0.65rem; opacity: 0.6; margin-left: 5px;">${time}</span><br><span class="text-white">${msg}</span>`;
                 container.appendChild(div);
                 container.scrollTop = container.scrollHeight;
+
+                if (!isMe && this.isChatMinimized) {
+                    this.unreadChatCount++;
+                    const bubble = document.getElementById('mp-chat-unread-bubble');
+                    if (bubble) {
+                        bubble.innerText = this.unreadChatCount + (this.unreadChatCount > 1 ? " Nouveaux" : " Nouveau");
+                        bubble.classList.remove('d-none');
+                        setTimeout(() => {
+                            bubble.classList.add('d-none');
+                        }, 2000);
+                    }
+                }
+            },
+
+            toggleChat: function () {
+                this.isChatMinimized = !this.isChatMinimized;
+                const content = document.getElementById('mp-chat-content');
+                const toggleBtn = document.getElementById('mp-chat-toggle');
+
+                if (this.isChatMinimized) {
+                    content.classList.add('d-none');
+                    toggleBtn.innerHTML = '<i class="bi bi-chevron-up"></i>';
+                } else {
+                    content.classList.remove('d-none');
+                    toggleBtn.innerHTML = '<i class="bi bi-chevron-down"></i>';
+                    this.unreadChatCount = 0;
+                    const bubble = document.getElementById('mp-chat-unread-bubble');
+                    if (bubble) bubble.classList.add('d-none');
+                    const container = document.getElementById('mp-chat-messages');
+                    if (container) container.scrollTop = container.scrollHeight;
+                }
             },
 
             syncLobby: function () {
@@ -1682,6 +1796,7 @@
                 });
                 this.renderLobby(lobbyPlayers);
                 this.broadcast({ type: 'sync_lobby', players: lobbyPlayers });
+                updateConfigFromSlider(lobbyPlayers.length);
             },
 
             renderLobby: function (list) {
@@ -1723,7 +1838,7 @@
                         const isReady = memorizedList.includes(idx);
                         const icon = isReady ? '<i class="bi bi-check-circle-fill text-success fs-5"></i>' : '<div class="spinner-border spinner-border-sm text-warning" role="status" style="width: 1rem; height: 1rem;"></div>';
                         html += `<div class="list-group-item bg-transparent text-white d-flex justify-content-between align-items-center border-secondary px-3 py-2 small">
-                                    <span class="${isReady ? 'text-white' : 'text-muted'}">${p.name}</span>
+                                    <span class="${isReady ? 'text-white' : 'text-light opacity-75'}">${p.name}</span>
                                     <span>${icon}</span>
                                  </div>`;
                     }
@@ -1805,6 +1920,9 @@
                         finalizeElimination(victimIdx);
                     }
                     this.votes = {};
+                } else {
+                    this.broadcast({ type: 'sync_vote_progress', count: votesCount, total: aliveCount });
+                    this.handleData({ type: 'sync_vote_progress', count: votesCount, total: aliveCount });
                 }
             }
         };
@@ -2112,11 +2230,27 @@
         }
         function confirmQuit() { location.reload(); }
 
+        function toggleHostOptionsModal() {
+            const modal = document.getElementById('hostOptionsModal');
+            if (modal.classList.contains('d-none')) modal.classList.remove('d-none');
+            else modal.classList.add('d-none');
+        }
+
+        function hostForceRestart() {
+            if (confirm("Voulez-vous vraiment annuler la partie en cours et ramener tout le monde au salon (Lobby) ?")) {
+                toggleHostOptionsModal();
+                MP.broadcast({ type: 'force_lobby' });
+                MP.handleData({ type: 'force_lobby' });
+            }
+        }
+
         // --- CONFIG LOGIC ---
-        function updateConfigFromSlider() {
-            const val = parseInt(document.getElementById('rangePlayers').value);
+        function updateConfigFromSlider(totalOverride = null) {
+            const val = totalOverride !== null ? totalOverride : parseInt(document.getElementById('rangePlayers').value);
             gameConfig.total = val;
-            document.getElementById('displayPlayerCount').innerText = val;
+            if (totalOverride === null) {
+                document.getElementById('displayPlayerCount').innerText = val;
+            }
             let inf = 1, inc = 0;
             if (val >= 5 && val <= 6) { inf = 1; inc = 1; }
             else if (val >= 7 && val <= 8) { inf = 2; inc = 1; }
@@ -2295,24 +2429,37 @@
             // Hide the skip button until they reveal their identity again
             document.getElementById('btn-skip-pair').classList.add('d-none');
 
-            if (players.length === gameConfig.total) {
+            if (MP.mode === 'host') {
+                for (let i = 0; i < players.length; i++) {
+                    players[i].role = rolesDeck[i].role;
+                    players[i].word = rolesDeck[i].word;
+                }
+                // On envoie individuellement à chaque client son propre index
+                MP.connections.forEach((c, i) => {
+                    c.send({
+                        type: 'start_game',
+                        players: players,
+                        config: gameConfig,
+                        words: [currentPNJWord, currentInfiltreWord],
+                        myIndex: i + 1
+                    });
+                });
+                revealIdentity(true);
+            } else if (players.length === gameConfig.total) {
                 // Tous les joueurs sont déjà enregistrés (mode replay) : réassigner les rôles sans re-saisie
                 for (let i = 0; i < players.length; i++) {
                     players[i].role = rolesDeck[i].role;
                     players[i].word = rolesDeck[i].word;
-                    players[i].alive = true;
                 }
+                updatePassScreen();
             } else {
                 // Première partie : seul le joueur 1 est enregistré, mettre à jour son rôle
                 if (players.length > 0) {
                     players[0].role = rolesDeck[0].role;
                     players[0].word = rolesDeck[0].word;
                 }
+                revealIdentity();
             }
-
-            currentStep = 0;
-            updatePassScreen();
-            showView('view-pass');
         }
 
         // --- REPLAY GAME (SAME PLAYERS) ---
@@ -2430,9 +2577,9 @@
                     title.innerText = "AGENT"; title.style.color = '#fff'; desc.innerText = "Analyse les autres mots.";
                 }
             }
-            // Show skip button only for player 1 (currentStep === 0)
+            // Show skip button only for player 1 (currentStep === 0) or host in MP
             const skipBtn = document.getElementById('btn-skip-pair');
-            if (!fromMP && currentStep === 0) {
+            if (currentStep === 0 || (MP.mode === 'host')) {
                 skipBtn.classList.remove('d-none');
             } else {
                 skipBtn.classList.add('d-none');
@@ -2503,6 +2650,10 @@
         function forceVote() { clearInterval(timerInterval); SFX.alarm(); setupVoteScreen(); }
 
         function handleForceVoteClick() {
+            if (MP.mode && MP.me.index !== null && !players[MP.me.index].alive) {
+                alert("Vous êtes éliminé, vous ne pouvez pas stopper le chrono.");
+                return;
+            }
             if (MP.mode) {
                 const btn = document.getElementById('btn-force-vote');
                 btn.classList.add('disabled');
@@ -2523,6 +2674,17 @@
         function setupVoteScreen() {
             showView('view-vote');
             const container = document.getElementById('voteButtonsContainer');
+
+            if (MP.mode && MP.me.index !== null && !players[MP.me.index].alive) {
+                container.innerHTML = `
+                <div class="vote-wait-screen text-center pt-4">
+                    <div class="spinner-border text-danger mb-3"></div>
+                    <h5 class="text-danger">VOUS ÊTES ÉLIMINÉ</h5>
+                    <p class="text-muted small">Attente du vote des survivants...</p>
+                </div>`;
+                return;
+            }
+
             container.innerHTML = "";
             players.forEach((p, index) => {
                 if (p.alive) {
@@ -2681,6 +2843,19 @@
             }
 
             document.getElementById('nextRoundStarter').innerText = starterName;
+
+            if (MP.mode === 'client') {
+                const hostBtn = document.getElementById('transition-host-action');
+                const clientMsg = document.getElementById('transition-client-action');
+                if (hostBtn) hostBtn.classList.add('d-none');
+                if (clientMsg) clientMsg.classList.remove('d-none');
+            } else {
+                const hostBtn = document.getElementById('transition-host-action');
+                const clientMsg = document.getElementById('transition-client-action');
+                if (hostBtn) hostBtn.classList.remove('d-none');
+                if (clientMsg) clientMsg.classList.add('d-none');
+            }
+
             showView('view-round-transition');
         }
 
@@ -2696,17 +2871,67 @@
 
     </script>
 
+    <!-- HOST ROOM CODE BUTTON -->
+    <div id="host-room-code-btn" class="position-fixed d-none" style="top: 15px; right: 15px; z-index: 2000;">
+        <button class="btn btn-sm btn-outline-info bg-dark fw-bold shadow"
+            onclick="toggleHostOptionsModal(); SFX.click();">
+            <i class="bi bi-gear-fill"></i> Options (<span id="host-room-code-display"></span>)
+        </button>
+    </div>
+
+    <!-- MODAL OPTIONS HOTE -->
+    <div id="hostOptionsModal"
+        class="d-none position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-90 d-flex justify-content-center align-items-center"
+        style="z-index: 3000; backdrop-filter: blur(8px);">
+        <div class="glass-card p-4 text-center"
+            style="width: 90%; max-width: 400px; border: 1px solid var(--primary-neon);">
+            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom border-secondary pb-2">
+                <h5 class="brand-font text-info mb-0"><i class="bi bi-gear-fill"></i> OPTIONS HÔTE</h5>
+                <button onclick="toggleHostOptionsModal(); SFX.click()" class="btn btn-sm btn-outline-secondary"><i
+                        class="bi bi-x-lg"></i></button>
+            </div>
+
+            <h5 class="text-muted small text-uppercase mb-2">Code de la salle</h5>
+            <div id="modalRoomCodeDisplay" class="room-code-display mb-4"
+                style="font-size: 2.5rem; letter-spacing: 5px;">----</div>
+            <p class="small text-muted mb-4">Partagez ce code avec vos amis pour qu'ils rejoignent.</p>
+
+            <hr class="border-secondary opacity-25">
+
+            <p class="small text-warning mb-3">En cas de bug ou de problème de connexion :</p>
+            <button onclick="hostForceRestart(); SFX.click()" class="btn btn-outline-danger w-100 py-3 fw-bold">
+                <i class="bi bi-arrow-counterclockwise"></i> REDÉMARRER LA PARTIE
+            </button>
+        </div>
+    </div>
+
     <!-- CHAT EN LIGNE -->
     <div id="mp-chat-container" class="d-none fixed-bottom bg-dark border-top border-secondary p-2 shadow-lg"
         style="z-index: 1050; display: flex; flex-direction: column;">
-        <div id="mp-chat-messages" class="flex-grow-1 overflow-auto mb-2 px-1"
-            style="max-height: 150px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 5px;">
+
+        <div id="mp-chat-unread-bubble" class="position-absolute translate-middle badge rounded-pill bg-danger d-none"
+            style="top: 0; left: 50%; font-size: 0.8rem; z-index: 1051; transition: opacity 0.3s;">
+            0 Nouveau
         </div>
-        <div class="d-flex gap-2">
-            <input type="text" id="mp-chat-input"
-                class="form-control form-control-sm cyber-input bg-dark text-white border-secondary"
-                placeholder="Message..." autocomplete="off" onkeypress="if(event.key==='Enter') MP.sendChat()">
-            <button onclick="MP.sendChat()" class="btn btn-sm btn-neon px-3"><i class="bi bi-send-fill"></i></button>
+
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="small text-muted fw-bold">CHAT EN LIGNE</span>
+            <button id="mp-chat-toggle" class="btn btn-sm text-warning p-1 fs-5" onclick="MP.toggleChat()">
+                <i class="bi bi-chevron-down"></i>
+            </button>
+        </div>
+
+        <div id="mp-chat-content" style="display: flex; flex-direction: column;">
+            <div id="mp-chat-messages" class="flex-grow-1 overflow-auto mb-2 px-1"
+                style="max-height: 150px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 5px;">
+            </div>
+            <div class="d-flex gap-2">
+                <input type="text" id="mp-chat-input"
+                    class="form-control form-control-sm cyber-input bg-dark text-white border-secondary"
+                    placeholder="Message..." autocomplete="off" onkeypress="if(event.key==='Enter') MP.sendChat()">
+                <button onclick="MP.sendChat()" class="btn btn-sm btn-neon px-3"><i
+                        class="bi bi-send-fill"></i></button>
+            </div>
         </div>
     </div>
 </body>
