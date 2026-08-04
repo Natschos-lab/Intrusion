@@ -876,7 +876,8 @@
                     <h3 class="mb-4">JOUEUR SUIVANT</h3>
                 </div>
 
-                <button onclick="handlePassClick(); SFX.click()" class="btn btn-neon w-100">JE SUIS PRÊT(E)</button>
+                <button id="btn-pass-ready" onclick="handlePassClick(); SFX.click()" class="btn btn-neon w-100">JE SUIS
+                    PRÊT(E)</button>
             </div>
         </div>
 
@@ -912,7 +913,8 @@
                     </button>
                 </div>
 
-                <button id="btn-name-submit" onclick="revealIdentity()" class="btn btn-neon w-100 py-3">RÉVÉLER MON CODE</button>
+                <button id="btn-name-submit" onclick="revealIdentity()" class="btn btn-neon w-100 py-3">RÉVÉLER MON
+                    CODE</button>
             </div>
         </div>
 
@@ -940,10 +942,17 @@
                     Premier joueur à parler :<br>
                     <strong class="fs-3 text-info" id="firstPlayerName">---</strong>
                 </div>
-                <button onclick="startDebate(60); SFX.click()"
-                    class="btn btn-warning w-100 py-4 fw-bold fs-5 text-dark rounded-pill">
-                    🗣️ DÉBAT OUVERT (1 MIN)
-                </button>
+                <div id="host-debate-action">
+                    <button onclick="startDebate(60); SFX.click()"
+                        class="btn btn-warning w-100 py-4 fw-bold fs-5 text-dark rounded-pill">
+                        🗣️ DÉBAT OUVERT (1 MIN)
+                    </button>
+                </div>
+                <div id="client-debate-action" class="d-none pt-3">
+                    <div class="spinner-grow text-warning mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
+                    <h5 class="text-warning">EN ATTENTE</h5>
+                    <p class="text-muted small">L'hôte va lancer le chrono du débat...</p>
+                </div>
             </div>
         </div>
 
@@ -955,7 +964,8 @@
                     <div id="timerBar" class="progress-bar bg-info" style="width: 100%"></div>
                 </div>
                 <div id="timerStatus" class="text-info mb-4">Débat en cours...</div>
-                <button onclick="forceVote(); SFX.click()" class="btn btn-stop w-100 mb-3">
+                <button id="btn-force-vote" onclick="handleForceVoteClick(); SFX.click()"
+                    class="btn btn-stop w-100 mb-3">
                     <i class="bi bi-stop-circle"></i> ARRÊTER & VOTER
                 </button>
             </div>
@@ -1452,7 +1462,12 @@
                         this.sendData({ type: 'join', name: localStorage.getItem('intrusion_last_name') || 'Inconnu', avatar: localStorage.getItem('intrusion_last_avatar') });
                     });
                     conn.on('data', (data) => this.handleData(data));
-                    conn.on('close', () => { alert("L'hôte s'est déconnecté."); this.disconnect(); });
+                    conn.on('close', () => {
+                        if (!this.isDisconnecting) {
+                            alert("L'hôte s'est déconnecté.");
+                            this.disconnect();
+                        }
+                    });
                 });
 
                 this.peer.on('error', (err) => { alert("Impossible de rejoindre la salle. Vérifie le code."); this.disconnect(); });
@@ -1463,12 +1478,14 @@
             },
 
             disconnect: function () {
+                this.isDisconnecting = true;
                 if (this.peer) this.peer.destroy();
                 this.peer = null; this.connections = []; this.mode = null;
                 document.getElementById('mp-status-indicator').classList.add('d-none');
                 document.getElementById('mp-chat-container').classList.add('d-none');
                 document.body.style.paddingBottom = "0px";
                 showView('view-setup');
+                this.isDisconnecting = false;
             },
 
             addSelfToLobby: function () {
@@ -1501,19 +1518,30 @@
                         gameConfig = data.config;
                         currentPNJWord = data.words[0];
                         currentInfiltreWord = data.words[1];
-                        this.startClientFlow();
+                        this.startClientFlow(data.myIndex);
                         break;
                     case 'memorized':
                         if (this.mode === 'host') {
-                            this.memorizedCount++;
+                            this.memorizedPlayers = this.memorizedPlayers || [];
+                            if (!this.memorizedPlayers.includes(data.index)) {
+                                this.memorizedPlayers.push(data.index);
+                                this.memorizedCount++;
+                            }
                             const alivePlayers = players.filter(p => p.alive).length;
                             if (this.memorizedCount >= alivePlayers) {
                                 const starterName = pickSmartStarter(true);
                                 this.broadcast({ type: 'start_debate', starter: starterName });
                                 document.getElementById('firstPlayerName').innerText = starterName;
+                                preparePreDebateView();
                                 showView('view-pre-debate');
+                            } else {
+                                this.broadcast({ type: 'sync_memorized_status', memorized: this.memorizedPlayers });
+                                this.renderMemorizedStatus(this.memorizedPlayers);
                             }
                         }
+                        break;
+                    case 'sync_memorized_status':
+                        this.renderMemorizedStatus(data.memorized);
                         break;
                     case 'vote':
                         if (this.mode === 'host') this.handleIncomingVote(data.from, data.to);
@@ -1540,7 +1568,7 @@
                             const guessRaw = data.guess;
                             const guess = cleanString(guessRaw); const correct = cleanString(currentPNJWord);
                             let isCorrect = false; if (guess === correct) isCorrect = true; else { const dist = levenshtein(guess, correct); if (dist <= 1) isCorrect = true; }
-                            
+
                             this.broadcast({ type: 'sync_guess_result', correct: isCorrect, index: pendingVictimIndex });
                             this.handleData({ type: 'sync_guess_result', correct: isCorrect, index: pendingVictimIndex });
                         }
@@ -1570,6 +1598,7 @@
                         break;
                     case 'start_debate':
                         document.getElementById('firstPlayerName').innerText = data.starter;
+                        preparePreDebateView();
                         showView('view-pre-debate');
                         break;
                     case 'start_timer':
@@ -1586,6 +1615,35 @@
                             });
                         }
                         break;
+                    case 'vote_stop_timer':
+                        if (this.mode === 'host') {
+                            this.stopTimerVotes = (this.stopTimerVotes || 0) + 1;
+                            const alivePlayers = players.filter(p => p.alive).length;
+                            const threshold = Math.floor(alivePlayers / 2) + 1;
+
+                            if (this.stopTimerVotes >= threshold) {
+                                this.broadcast({ type: 'force_vote' });
+                                forceVote();
+                                this.stopTimerVotes = 0;
+                            } else {
+                                this.broadcast({ type: 'sync_stop_timer_votes', votes: this.stopTimerVotes, threshold: threshold });
+                                // host local update
+                                const btn = document.getElementById('btn-force-vote');
+                                if (btn && !btn.classList.contains('disabled')) {
+                                    btn.innerHTML = `<i class="bi bi-stop-circle"></i> ARRÊTER & VOTER (${this.stopTimerVotes}/${threshold})`;
+                                }
+                            }
+                        }
+                        break;
+                    case 'sync_stop_timer_votes':
+                        const btn = document.getElementById('btn-force-vote');
+                        if (btn && !btn.classList.contains('disabled')) {
+                            btn.innerHTML = `<i class="bi bi-stop-circle"></i> ARRÊTER & VOTER (${data.votes}/${data.threshold})`;
+                        }
+                        break;
+                    case 'force_vote':
+                        forceVote();
+                        break;
                 }
             },
 
@@ -1594,11 +1652,11 @@
                 const msg = input.value.trim();
                 if (!msg) return;
                 input.value = "";
-                
-                const chatData = { type: 'chat', name: this.me.name || 'Moi', message: msg, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) };
-                
+
+                const chatData = { type: 'chat', name: this.me.name || 'Moi', message: msg, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+
                 this.displayChat(chatData.name, chatData.message, chatData.time, true);
-                
+
                 if (this.mode === 'host') {
                     this.broadcast(chatData);
                 } else if (this.mode === 'client') {
@@ -1655,8 +1713,29 @@
                 if (this.connections[0]) this.connections[0].send(data);
             },
 
+            renderMemorizedStatus: function (memorizedList) {
+                const container = document.getElementById('mp-memorized-list');
+                if (!container) return;
+
+                let html = '<div class="list-group list-group-flush border rounded bg-dark bg-opacity-50 mt-3">';
+                players.forEach((p, idx) => {
+                    if (p.alive) {
+                        const isReady = memorizedList.includes(idx);
+                        const icon = isReady ? '<i class="bi bi-check-circle-fill text-success fs-5"></i>' : '<div class="spinner-border spinner-border-sm text-warning" role="status" style="width: 1rem; height: 1rem;"></div>';
+                        html += `<div class="list-group-item bg-transparent text-white d-flex justify-content-between align-items-center border-secondary px-3 py-2 small">
+                                    <span class="${isReady ? 'text-white' : 'text-muted'}">${p.name}</span>
+                                    <span>${icon}</span>
+                                 </div>`;
+                    }
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            },
+
             startGame: function () {
                 this.memorizedCount = 0;
+                this.stopTimerVotes = 0;
+                this.memorizedPlayers = [];
                 // Setup roles locally
                 initGame(true); // true means networking mode
 
@@ -1665,6 +1744,11 @@
                 this.connections.forEach((c, i) => {
                     const roleData = rolesDeck[i + 1];
                     allPlayers.push({ name: c.peerName, avatar: c.peerAvatar, role: roleData.role, word: roleData.word, alive: true, peerId: c.peer });
+                });
+
+                players = allPlayers;
+
+                this.connections.forEach((c, i) => {
                     c.send({
                         type: 'start_game',
                         players: allPlayers,
@@ -1673,7 +1757,7 @@
                         myIndex: i + 1
                     });
                 });
-                players = allPlayers;
+
                 this.startLocalReveal();
             },
 
@@ -1683,9 +1767,11 @@
                 revealIdentity(true);
             },
 
-            startClientFlow: function () {
-                const myName = localStorage.getItem('intrusion_last_name');
-                const myIdx = players.findIndex(p => p.name === myName);
+            startClientFlow: function (myIdx) {
+                if (myIdx === undefined) {
+                    const myName = localStorage.getItem('intrusion_last_name');
+                    myIdx = players.findIndex(p => p.name === myName);
+                }
                 this.me.index = myIdx;
                 currentStep = myIdx;
                 revealIdentity(true);
@@ -1968,13 +2054,36 @@
             else { modal.classList.add('d-none'); }
         }
 
-        // --- UI HELPERS ---
-        function showView(id) {
-            const currentView = document.querySelector('div[id^="view-"]:not(.d-none)');
-            const nextView = document.getElementById(id);
+        function preparePreDebateView() {
+            if (MP.mode === 'client') {
+                document.getElementById('host-debate-action').classList.add('d-none');
+                document.getElementById('client-debate-action').classList.remove('d-none');
+            } else {
+                document.getElementById('host-debate-action').classList.remove('d-none');
+                document.getElementById('client-debate-action').classList.add('d-none');
+            }
+        }
 
-            if (!currentView || currentView === nextView) {
-                if (currentView) currentView.classList.add('d-none');
+        // --- UI HELPERS ---
+        let activeViewTimeout = null;
+        function showView(id) {
+            if (activeViewTimeout) {
+                clearTimeout(activeViewTimeout);
+                activeViewTimeout = null;
+            }
+
+            const nextView = document.getElementById(id);
+            const allViews = document.querySelectorAll('div[id^="view-"]');
+            let currentView = null;
+
+            allViews.forEach(v => {
+                if (!v.classList.contains('d-none') && v !== nextView && !v.classList.contains('fade-out')) {
+                    currentView = v;
+                }
+            });
+
+            if (!currentView) {
+                allViews.forEach(v => { if (v !== nextView) { v.classList.add('d-none'); v.classList.remove('fade-out', 'fade-in'); } });
                 nextView.classList.remove('d-none');
                 nextView.classList.add('fade-in');
 
@@ -1986,15 +2095,13 @@
             currentView.classList.remove('fade-in');
             currentView.classList.add('fade-out');
 
-            setTimeout(() => {
-                currentView.classList.add('d-none');
-                currentView.classList.remove('fade-out');
+            activeViewTimeout = setTimeout(() => {
+                allViews.forEach(v => { if (v !== nextView) { v.classList.add('d-none'); v.classList.remove('fade-out'); } });
                 nextView.classList.remove('d-none');
                 nextView.classList.add('fade-in');
 
                 if (id === 'view-setup' || id === 'view-roster') document.getElementById('btn-quit-app').classList.add('d-none');
                 else document.getElementById('btn-quit-app').classList.remove('d-none');
-
             }, 280);
         }
 
@@ -2107,6 +2214,8 @@
                 <h3 class="mb-4">JOUEUR SUIVANT</h3>
             `;
             }
+            const btn = document.getElementById('btn-pass-ready');
+            if (btn) btn.classList.remove('d-none');
         }
 
         function handlePassClick() {
@@ -2257,7 +2366,7 @@
                 currentAvatarData = null;
                 document.getElementById('avatarPreview').innerHTML = `<i class="bi bi-person-fill fs-1 text-secondary"></i>`;
             }
-            
+
             const btn = document.getElementById('btn-name-submit');
             if (context === 'host') {
                 btn.innerText = "CRÉER LA SALLE";
@@ -2333,13 +2442,18 @@
 
         function nextPlayer() {
             if (MP.mode) {
+                let msgTitle = gameConfig.mode === 'revele' ? 'RÔLE MÉMORISÉ' : 'MOT MÉMORISÉ';
+                document.getElementById('pass-dynamic-content').innerHTML = `<h3>${msgTitle}</h3><p class="text-muted mb-1">Attente des autres agents...</p><div id="mp-memorized-list" class="mt-2 text-start"></div>`;
+                const btn = document.getElementById('btn-pass-ready');
+                if (btn) btn.classList.add('d-none');
+                showView('view-pass');
+
                 if (MP.mode === 'host') {
-                    MP.handleData({ type: 'memorized', index: MP.me.index });
+                    // Small delay so that the fade out starts cleanly before potential state change
+                    setTimeout(() => MP.handleData({ type: 'memorized', index: MP.me.index }), 50);
                 } else {
                     MP.sendData({ type: 'memorized', index: MP.me.index });
                 }
-                document.getElementById('pass-dynamic-content').innerHTML = `<h3>RÔLE MÉMORISÉ</h3><p class="text-muted">Attente des autres agents...</p>`;
-                showView('view-pass');
                 return;
             }
 
@@ -2351,6 +2465,7 @@
             else {
                 const starterName = pickSmartStarter(true);
                 document.getElementById('firstPlayerName').innerText = starterName;
+                preparePreDebateView();
                 showView('view-pre-debate');
             }
         }
@@ -2367,6 +2482,14 @@
             const status = document.getElementById('timerStatus');
             display.classList.remove('text-danger'); display.classList.remove('timer-urgent');
             bar.classList.remove('bg-danger'); bar.classList.add('bg-info'); status.innerText = "Débat en cours...";
+
+            const btn = document.getElementById('btn-force-vote');
+            if (btn) {
+                btn.classList.remove('disabled');
+                btn.onclick = () => { handleForceVoteClick(); SFX.click(); };
+                btn.innerHTML = '<i class="bi bi-stop-circle"></i> ARRÊTER & VOTER';
+            }
+
             if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(() => {
                 timeLeft--;
@@ -2378,6 +2501,23 @@
             }, 1000);
         }
         function forceVote() { clearInterval(timerInterval); SFX.alarm(); setupVoteScreen(); }
+
+        function handleForceVoteClick() {
+            if (MP.mode) {
+                const btn = document.getElementById('btn-force-vote');
+                btn.classList.add('disabled');
+                btn.onclick = null;
+                btn.innerHTML = '<i class="bi bi-check-circle"></i> VOTE ENREGISTRÉ';
+
+                if (MP.mode === 'host') {
+                    MP.handleData({ type: 'vote_stop_timer' });
+                } else {
+                    MP.sendData({ type: 'vote_stop_timer' });
+                }
+            } else {
+                forceVote();
+            }
+        }
 
         // --- VOTE ---
         function setupVoteScreen() {
@@ -2435,11 +2575,11 @@
 
         function validateGuess() {
             const guessRaw = document.getElementById('inputGuessWord').value;
-            
+
             if (MP.mode) {
                 if (MP.mode === 'client') MP.sendData({ type: 'guess_submit', guess: guessRaw });
                 else MP.handleData({ type: 'guess_submit', guess: guessRaw });
-                
+
                 showView('view-vote');
                 document.getElementById('voteButtonsContainer').innerHTML = `
                 <div class="vote-wait-screen">
@@ -2557,11 +2697,15 @@
     </script>
 
     <!-- CHAT EN LIGNE -->
-    <div id="mp-chat-container" class="d-none fixed-bottom bg-dark border-top border-secondary p-2 shadow-lg" style="z-index: 1050; display: flex; flex-direction: column;">
-        <div id="mp-chat-messages" class="flex-grow-1 overflow-auto mb-2 px-1" style="max-height: 150px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 5px;">
+    <div id="mp-chat-container" class="d-none fixed-bottom bg-dark border-top border-secondary p-2 shadow-lg"
+        style="z-index: 1050; display: flex; flex-direction: column;">
+        <div id="mp-chat-messages" class="flex-grow-1 overflow-auto mb-2 px-1"
+            style="max-height: 150px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 5px;">
         </div>
         <div class="d-flex gap-2">
-            <input type="text" id="mp-chat-input" class="form-control form-control-sm cyber-input bg-dark text-white border-secondary" placeholder="Message..." autocomplete="off" onkeypress="if(event.key==='Enter') MP.sendChat()">
+            <input type="text" id="mp-chat-input"
+                class="form-control form-control-sm cyber-input bg-dark text-white border-secondary"
+                placeholder="Message..." autocomplete="off" onkeypress="if(event.key==='Enter') MP.sendChat()">
             <button onclick="MP.sendChat()" class="btn btn-sm btn-neon px-3"><i class="bi bi-send-fill"></i></button>
         </div>
     </div>
