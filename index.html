@@ -604,6 +604,104 @@
             padding: 40px 20px;
         }
 
+        /* --- VOTE TRACKER --- */
+        .vote-tracker {
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .vote-tracker-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--grey-neon);
+            margin-bottom: 12px;
+        }
+
+        .vote-tracker-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .vote-tracker-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.4s ease;
+            border: 1px solid var(--border-color);
+            background: rgba(125, 125, 125, 0.08);
+        }
+
+        .vote-tracker-pill.has-voted {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.12);
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.15);
+        }
+
+        .vote-tracker-pill.has-voted .vote-status-icon {
+            color: #4ade80;
+        }
+
+        .vote-tracker-pill.has-voted .vote-player-name {
+            color: #4ade80;
+        }
+
+        .vote-tracker-pill.waiting {
+            border-color: var(--border-color);
+            opacity: 0.6;
+        }
+
+        .vote-tracker-pill.waiting .vote-status-icon {
+            color: var(--grey-neon);
+            animation: pulse-waiting 1.5s ease-in-out infinite;
+        }
+
+        .vote-tracker-pill.waiting .vote-player-name {
+            color: var(--grey-neon);
+        }
+
+        @keyframes pulse-waiting {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        .vote-tracker-pill .vote-avatar {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .vote-tracker-pill .vote-avatar-placeholder {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: rgba(125, 125, 125, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+        }
+
+        .vote-player-name {
+            color: var(--text-main);
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .vote-status-icon {
+            font-size: 0.9rem;
+        }
+
         #btn-mp-toggle {
             position: fixed;
             bottom: 20px;
@@ -1627,10 +1725,7 @@
                         finalizeElimination(data.index, true);
                         break;
                     case 'sync_vote_progress':
-                        const voteStatusEl = document.getElementById('vote-progress-status');
-                        if (voteStatusEl) {
-                            voteStatusEl.innerText = `${data.count} / ${data.total} votes enregistrés`;
-                        }
+                        renderVoteTracker(data.voterIndices || [], data.count, data.total);
                         break;
                     case 'sync_guess_phase':
                         pendingVictimIndex = data.index;
@@ -1921,8 +2016,9 @@
                     }
                     this.votes = {};
                 } else {
-                    this.broadcast({ type: 'sync_vote_progress', count: votesCount, total: aliveCount });
-                    this.handleData({ type: 'sync_vote_progress', count: votesCount, total: aliveCount });
+                    const voterIndices = Object.keys(this.votes).map(Number);
+                    this.broadcast({ type: 'sync_vote_progress', count: votesCount, total: aliveCount, voterIndices: voterIndices });
+                    this.handleData({ type: 'sync_vote_progress', count: votesCount, total: aliveCount, voterIndices: voterIndices });
                 }
             }
         };
@@ -2681,6 +2777,7 @@
                     <div class="spinner-border text-danger mb-3"></div>
                     <h5 class="text-danger">VOUS ÊTES ÉLIMINÉ</h5>
                     <p class="text-muted small">Attente du vote des survivants...</p>
+                    <div id="vote-tracker-container"></div>
                 </div>`;
                 return;
             }
@@ -2711,15 +2808,46 @@
 
                 document.getElementById('voteButtonsContainer').innerHTML = `
                 <div class="vote-wait-screen">
-                    <div class="spinner-border text-primary mb-3"></div>
+                    <i class="bi bi-check-circle-fill text-success mb-3" style="font-size: 2.5rem;"></i>
                     <h5>VOTE ENREGISTRÉ</h5>
                     <p class="text-muted small">Attente des autres agents...</p>
+                    <div id="vote-tracker-container"></div>
                 </div>`;
                 return;
             }
 
             if (victim.role === 'Inconnu') { document.getElementById('inputGuessWord').value = ""; showView('view-guess'); }
             else { finalizeElimination(index); }
+        }
+
+        function renderVoteTracker(voterIndices, count, total) {
+            const container = document.getElementById('vote-tracker-container');
+            if (!container) return;
+
+            const alivePlayers = players.map((p, i) => ({ ...p, index: i })).filter(p => p.alive);
+            const voterSet = new Set(voterIndices);
+
+            let html = `<div class="vote-tracker">`;
+            html += `<div class="vote-tracker-title">${count} / ${total} votes enregistrés</div>`;
+            html += `<div class="vote-tracker-grid">`;
+
+            alivePlayers.forEach(p => {
+                const hasVoted = voterSet.has(p.index);
+                const pillClass = hasVoted ? 'has-voted' : 'waiting';
+                const icon = hasVoted ? '<i class="bi bi-check-circle-fill vote-status-icon"></i>' : '<i class="bi bi-hourglass-split vote-status-icon"></i>';
+                const avatarHtml = p.avatar
+                    ? `<img src="${p.avatar}" class="vote-avatar" alt="${p.name}">`
+                    : `<div class="vote-avatar-placeholder"><i class="bi bi-person-fill"></i></div>`;
+
+                html += `<div class="vote-tracker-pill ${pillClass}">
+                    ${avatarHtml}
+                    <span class="vote-player-name">${p.name}</span>
+                    ${icon}
+                </div>`;
+            });
+
+            html += `</div></div>`;
+            container.innerHTML = html;
         }
 
         // --- ALGO ---
