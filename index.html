@@ -752,6 +752,16 @@
             </h1>
         </div>
 
+        <!-- BANNIÈRE DE RÉCUPÉRATION DE SESSION -->
+        <div id="resume-session-banner" class="d-none alert alert-info border-info glass-card text-center mb-4 fade-in mx-auto" style="max-width: 500px;">
+            <h5 class="brand-font text-info"><i class="bi bi-arrow-clockwise"></i> SESSION INTERROMPUE</h5>
+            <p class="small text-muted mb-3" id="resume-session-msg">Une partie en cours a été détectée.</p>
+            <div class="d-flex gap-2 justify-content-center">
+                <button onclick="MP.resumeSession(); SFX.success()" class="btn btn-sm btn-neon">REPRENDRE</button>
+                <button onclick="MP.clearSession(); SFX.click()" class="btn btn-sm btn-outline-secondary">IGNORER</button>
+            </div>
+        </div>
+
         <div id="view-setup" class="row justify-content-center fade-in">
             <div class="col-md-6">
                 <div id="mp-status-indicator" class="text-center d-none mb-3">
@@ -1252,6 +1262,12 @@
         let timerInterval = null;
         let pendingVictimIndex = -1;
         let currentAvatarData = null;
+
+        // --- RECONNECTION CONSTANTS ---
+        const RECONNECT_TIMEOUT_MS = 60000;   // 1 min avant élimination automatique
+        const HOST_RECONNECT_POLL_MS = 3000;   // Client retente toutes les 3s
+        const HOST_RECONNECT_MAX_MS = 60000; // Attente max 1 min pour l'hôte
+
         // --- DATA ---
         const wordPairs = [
             ["Pyramide", "Pharaon"], ["Guitare", "Violon"], ["Bière", "Vin"], ["McDo", "Burger King"],
@@ -1539,6 +1555,7 @@
 
                     showView('view-mp-lobby');
                     this.addSelfToLobby();
+                    this.saveSession();
                 });
 
                 this.peer.on('connection', (conn) => {
@@ -1548,13 +1565,23 @@
                         this.connections = this.connections.filter(c => c !== conn);
                         this.syncLobby();
                         if (typeof players !== 'undefined' && players.length > 0) {
-                            const playerIndex = players.findIndex(p => p.peerId === conn.peer);
+                            const playerIndex = players.findIndex(p => p.peerId === conn.peer || p.name === conn.peerName);
                             if (playerIndex !== -1 && players[playerIndex].alive) {
                                 const pName = players[playerIndex].name;
                                 const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                                this.displayChat('Système', pName + " s'est déconnecté (Éliminé).", timeStr, true);
-                                this.broadcast({ type: 'chat', name: 'Système', message: pName + " s'est déconnecté (Éliminé).", time: timeStr, system: true });
-                                finalizeElimination(playerIndex, false);
+                                 this.displayChat('Système', `⏳ ${pName} s'est déconnecté. Reconnexion possible pendant 1 min...`, timeStr, true);
+                                 this.broadcast({ type: 'chat', name: 'Système', message: `⏳ ${pName} s'est déconnecté. Reconnexion possible pendant 1 min...`, time: timeStr, system: true });
+                                 // Timer de grâce : 1 min avant élimination
+                                 conn._graceTimeout = setTimeout(() => {
+                                     const isBack = this.connections.some(c => c.peerName === pName && c.open);
+                                     if (!isBack && players[playerIndex] && players[playerIndex].alive) {
+                                         const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                         this.displayChat('Système', `❌ ${pName} absent 1 min — éliminé automatiquement.`, t, true);
+                                         this.broadcast({ type: 'chat', name: 'Système', message: `❌ ${pName} absent 1 min — éliminé automatiquement.`, time: t, system: true });
+                                         finalizeElimination(playerIndex, false);
+                                         setTimeout(() => this.unblockPendingPhases(), 200);
+                                     }
+                                 }, RECONNECT_TIMEOUT_MS);
                             }
                         }
                     });
@@ -1587,13 +1614,15 @@
                         document.getElementById('mp-chat-container').classList.remove('d-none');
                         document.body.style.paddingBottom = "200px";
                         showView('view-mp-lobby');
-                        this.sendData({ type: 'join', name: localStorage.getItem('intrusion_last_name') || 'Inconnu', avatar: localStorage.getItem('intrusion_last_avatar') });
+                        this.me.name = localStorage.getItem('intrusion_last_name') || 'Inconnu';
+                        this.me.avatar = localStorage.getItem('intrusion_last_avatar');
+                        this.saveSession();
+                        this.sendData({ type: 'join', name: this.me.name, avatar: this.me.avatar });
                     });
                     conn.on('data', (data) => this.handleData(data));
                     conn.on('close', () => {
                         if (!this.isDisconnecting) {
-                            alert("L'hôte s'est déconnecté.");
-                            this.disconnect();
+                            this.startHostReconnectLoop();
                         }
                     });
                 });
@@ -1608,6 +1637,7 @@
             disconnect: function () {
                 if (this.isDisconnecting) return;
                 this.isDisconnecting = true;
+                this.clearSession();
 
                 if (typeof timerInterval !== 'undefined' && timerInterval) {
                     clearInterval(timerInterval);
@@ -1659,6 +1689,59 @@
                         alert("L'hôte a fermé la salle.");
                         this.disconnect();
                         break;
+                    case 'reconnect_game':
+                        players = data.players;
+                        gameConfig = data.config;
+                        currentPNJWord = data.words[0];
+                        currentInfiltreWord = data.words[1];
+                        MP.me.index = data.myIndex;
+                        pendingVictimIndex = data.pendingVictimIndex !== undefined ? data.pendingVictimIndex : -1;
+                        hideReconnectingOverlay();
+
+                        const targetView = data.currentView || 'view-debate';
+                        if (targetView === 'view-reveal') {
+                            revealIdentity(true);
+                        } else if (targetView === 'view-pass') {
+                            let msgTitle = gameConfig.mode === 'revele' ? 'RÔLE MÉMORISÉ' : 'MOT MÉMORISÉ';
+                            document.getElementById('pass-dynamic-content').innerHTML = `<h3>${msgTitle}</h3><p class="text-muted mb-1">Attente des autres agents...</p><div id="mp-memorized-list" class="mt-2 text-start"></div>`;
+                            const btn = document.getElementById('btn-pass-ready');
+                            if (btn) btn.classList.add('d-none');
+                            showView('view-pass');
+                            if (data.memorized) {
+                                MP.renderMemorizedStatus(data.memorized);
+                            }
+                        } else if (targetView === 'view-vote') {
+                            setupVoteScreen();
+                            if (data.voteProgress) {
+                                renderVoteTracker(data.voteProgress.voterIndices, data.voteProgress.count, data.voteProgress.total);
+                            }
+                        } else if (targetView === 'view-guess') {
+                            document.getElementById('inputGuessWord').value = "";
+                            showView('view-guess');
+                        } else if (targetView === 'view-pre-debate') {
+                            document.getElementById('firstPlayerName').innerText = data.starterName || (players.length > 0 ? players[0].name : '');
+                            preparePreDebateView();
+                            showView('view-pre-debate');
+                        } else if (targetView === 'view-debate') {
+                            startDebate(data.debateTimeLeft || 60, true);
+                        } else if (targetView === 'view-result') {
+                            if (pendingVictimIndex !== -1 && players[pendingVictimIndex]) {
+                                const victim = players[pendingVictimIndex];
+                                const roleDisplay = document.getElementById('eliminatedRoleDisplay');
+                                const nameDisplay = document.getElementById('eliminatedNameDisplay');
+                                nameDisplay.innerText = victim.name;
+                                roleDisplay.innerText = victim.role.toUpperCase();
+                                if (victim.role === 'PNJ') roleDisplay.style.color = '#38bdf8';
+                                else if (victim.role === 'Infiltré') roleDisplay.style.color = '#f43f5e';
+                                else roleDisplay.style.color = '#94a3b8';
+                                updateEliminatedImage();
+                            }
+                            showView('view-result');
+                        } else {
+                            showView(targetView);
+                        }
+                        checkWinCondition();
+                        break;
                     case 'force_lobby':
                         if (typeof timerInterval !== 'undefined' && timerInterval) {
                             clearInterval(timerInterval);
@@ -1671,16 +1754,65 @@
                             this.syncLobby();
                         }
                         break;
-                    case 'join':
-                        const isTaken = this.connections.some(c => c.peerName === data.name) || this.me.name === data.name;
-                        if (isTaken) {
+                    case 'join': {
+                        // Chercher une connexion existante avec ce nom (et un peer ID différent)
+                        const existingConnIndex = this.connections.findIndex(c => c.peerName === data.name && c.peer !== conn.peer);
+                        if (existingConnIndex !== -1) {
+                            const existingConn = this.connections[existingConnIndex];
+                            if (existingConn._graceTimeout) clearTimeout(existingConn._graceTimeout);
+                            try { existingConn.close(); } catch (e) { }
+                            this.connections.splice(existingConnIndex, 1);
+                        }
+
+                        if (this.me.name === data.name) {
                             conn.send({ type: 'error', message: 'Ce pseudo est déjà utilisé dans cette salle.' });
                             return;
                         }
+
                         conn.peerName = data.name;
                         conn.peerAvatar = data.avatar;
-                        this.syncLobby();
+
+                        if (players.length > 0) {
+                            // Partie en cours → restaurer l'état
+                            const playerIdx = players.findIndex(p => p.name === data.name);
+                            if (playerIdx !== -1) {
+                                players[playerIdx].peerId = conn.peer;
+                                const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                this.displayChat('Système', `✅ ${data.name} est de retour !`, t, true);
+                                this.broadcast({ type: 'chat', name: 'Système', message: `✅ ${data.name} est de retour !`, time: t, system: true });
+                                
+                                const targetView = getReconnectingPlayerView(playerIdx);
+                                const progressData = {
+                                    type: 'reconnect_game',
+                                    players: players,
+                                    config: gameConfig,
+                                    words: [currentPNJWord, currentInfiltreWord],
+                                    myIndex: playerIdx,
+                                    currentView: targetView,
+                                    pendingVictimIndex: pendingVictimIndex,
+                                    memorized: this.memorizedPlayers || [],
+                                    starterName: document.getElementById('firstPlayerName').innerText || (players.length > 0 ? players[0].name : '')
+                                };
+                                if (targetView === 'view-vote') {
+                                    const aliveCount = players.filter(p => p.alive).length;
+                                    const votesCount = this.votes ? Object.keys(this.votes).length : 0;
+                                    const voterIndices = this.votes ? Object.keys(this.votes).map(Number) : [];
+                                    progressData.voteProgress = {
+                                        count: votesCount,
+                                        total: aliveCount,
+                                        voterIndices: voterIndices
+                                    };
+                                } else if (targetView === 'view-debate') {
+                                    progressData.debateTimeLeft = MP.debateTimeLeft || 60;
+                                }
+                                conn.send(progressData);
+                                this.unblockPendingPhases();
+                            }
+                        } else {
+                            this.syncLobby();
+                        }
                         break;
+                    }
                     case 'error':
                         alert(data.message);
                         this.disconnect();
@@ -1704,6 +1836,7 @@
                             }
                             const alivePlayers = players.filter(p => p.alive).length;
                             if (this.memorizedCount >= alivePlayers) {
+                                if (this._memorizedTimeout) { clearTimeout(this._memorizedTimeout); this._memorizedTimeout = null; }
                                 const starterName = pickSmartStarter(true);
                                 this.broadcast({ type: 'start_debate', starter: starterName });
                                 document.getElementById('firstPlayerName').innerText = starterName;
@@ -1712,6 +1845,13 @@
                             } else {
                                 this.broadcast({ type: 'sync_memorized_status', memorized: this.memorizedPlayers });
                                 this.renderMemorizedStatus(this.memorizedPlayers);
+                                // Timeout 30s si un joueur ne répond pas
+                                if (!this._memorizedTimeout) {
+                                    this._memorizedTimeout = setTimeout(() => {
+                                        this._memorizedTimeout = null;
+                                        this.unblockPendingPhases();
+                                    }, RECONNECT_TIMEOUT_MS);
+                                }
                             }
                         }
                         break;
@@ -2001,6 +2141,7 @@
                 const aliveCount = players.filter(p => p.alive).length;
                 const votesCount = Object.keys(this.votes).length;
                 if (votesCount >= aliveCount) {
+                    if (this._voteTimeout) { clearTimeout(this._voteTimeout); this._voteTimeout = null; }
                     // All votes in! Determine victim
                     const tallies = {};
                     Object.values(this.votes).forEach(v => tallies[v] = (tallies[v] || 0) + 1);
@@ -2019,6 +2160,198 @@
                     const voterIndices = Object.keys(this.votes).map(Number);
                     this.broadcast({ type: 'sync_vote_progress', count: votesCount, total: aliveCount, voterIndices: voterIndices });
                     this.handleData({ type: 'sync_vote_progress', count: votesCount, total: aliveCount, voterIndices: voterIndices });
+                    // Timeout 30s si des votes manquent (joueurs absents)
+                    if (!this._voteTimeout) {
+                        this._voteTimeout = setTimeout(() => {
+                            this._voteTimeout = null;
+                            this.unblockPendingPhases();
+                        }, RECONNECT_TIMEOUT_MS);
+                    }
+                }
+            },
+
+            // --- RECONNEXION HÔTE : boucle de polling côté client ---
+            startHostReconnectLoop: function () {
+                showReconnectingOverlay("Connexion perdue. Tentative de reconnexion à l'hôte...");
+                let elapsed = 0;
+                const pollInterval = setInterval(() => {
+                    elapsed += HOST_RECONNECT_POLL_MS;
+                    if (elapsed >= HOST_RECONNECT_MAX_MS) {
+                        clearInterval(pollInterval);
+                        hideReconnectingOverlay();
+                        alert("L'hôte n'est pas revenu après 60 secondes. La partie est terminée.");
+                        this.disconnect();
+                        return;
+                    }
+                    try {
+                        if (!this.peer || this.peer.destroyed) return;
+                        const tryConn = this.peer.connect('toupil-' + this.roomId);
+                        tryConn.on('open', () => {
+                            clearInterval(pollInterval);
+                            this.connections = [tryConn];
+                            tryConn.on('data', (d) => this.handleData(d));
+                            tryConn.on('close', () => {
+                                if (!this.isDisconnecting) this.startHostReconnectLoop();
+                            });
+                            hideReconnectingOverlay();
+                            this.sendData({ type: 'join', name: this.me.name, avatar: this.me.avatar });
+                        });
+                    } catch (e) { /* réessai prochain tick */ }
+                }, HOST_RECONNECT_POLL_MS);
+            },
+
+            // --- DÉBLOQUER LES PHASES EN ATTENTE après élimination ---
+            unblockPendingPhases: function () {
+                const alivePlayers = players.filter(p => p.alive);
+                const aliveCount = alivePlayers.length;
+
+                // Débloquer phase mémorisé
+                if (this.memorizedPlayers) {
+                    const aliveMemorized = alivePlayers.filter(p => {
+                        const idx = players.indexOf(p);
+                        return this.memorizedPlayers.includes(idx);
+                    }).length;
+                    if (aliveMemorized >= aliveCount) {
+                        if (this._memorizedTimeout) { clearTimeout(this._memorizedTimeout); this._memorizedTimeout = null; }
+                        const starterName = pickSmartStarter(true);
+                        this.broadcast({ type: 'start_debate', starter: starterName });
+                        document.getElementById('firstPlayerName').innerText = starterName;
+                        preparePreDebateView();
+                        showView('view-pre-debate');
+                        return;
+                    }
+                }
+
+                // Débloquer phase vote (avec votes existants seulement)
+                if (this.votes && Object.keys(this.votes).length > 0) {
+                    if (this._voteTimeout) { clearTimeout(this._voteTimeout); this._voteTimeout = null; }
+                    const tallies = {};
+                    Object.values(this.votes).forEach(v => tallies[v] = (tallies[v] || 0) + 1);
+                    let victimIdx = -1; let maxVotes = 0;
+                    for (let idx in tallies) { if (tallies[idx] > maxVotes) { maxVotes = tallies[idx]; victimIdx = parseInt(idx); } }
+                    if (victimIdx !== -1 && players[victimIdx]) {
+                        if (players[victimIdx].role === 'Inconnu') {
+                            this.broadcast({ type: 'sync_guess_phase', index: victimIdx });
+                            this.handleData({ type: 'sync_guess_phase', index: victimIdx });
+                        } else {
+                            this.broadcast({ type: 'sync_elimination', index: victimIdx });
+                            finalizeElimination(victimIdx);
+                        }
+                        this.votes = {};
+                    }
+                }
+            },
+
+            // --- SESSION HÔTE / CLIENT : sauvegarde/restauration via sessionStorage ---
+            saveSession: function () {
+                if (this.mode === 'host') {
+                    sessionStorage.setItem('intrusion_host_session', JSON.stringify({
+                        roomId: this.roomId,
+                        meName: this.me.name,
+                        meAvatar: this.me.avatar
+                    }));
+                } else if (this.mode === 'client') {
+                    sessionStorage.setItem('intrusion_client_session', JSON.stringify({
+                        roomId: this.roomId,
+                        meName: this.me.name || localStorage.getItem('intrusion_last_name'),
+                        meAvatar: this.me.avatar || localStorage.getItem('intrusion_last_avatar')
+                    }));
+                }
+            },
+
+            clearSession: function () {
+                sessionStorage.removeItem('intrusion_host_session');
+                sessionStorage.removeItem('intrusion_client_session');
+                const banner = document.getElementById('resume-session-banner');
+                if (banner) banner.classList.add('d-none');
+            },
+
+            resumeSession: function () {
+                const hostRaw = sessionStorage.getItem('intrusion_host_session');
+                const clientRaw = sessionStorage.getItem('intrusion_client_session');
+
+                if (hostRaw) {
+                    const state = JSON.parse(hostRaw);
+                    this.mode = 'host';
+                    this.roomId = state.roomId;
+                    this.me.name = state.meName;
+                    this.me.avatar = state.meAvatar;
+                    this.peer = new Peer('toupil-' + this.roomId);
+                    this.updateStatus('RECONNEXION...', 'connecting');
+                    const banner = document.getElementById('resume-session-banner');
+                    if (banner) banner.classList.add('d-none');
+
+                    this.peer.on('open', () => {
+                        this.updateStatus('HÔTE : ' + this.roomId, 'online');
+                        document.getElementById('displayRoomCode').innerText = this.roomId;
+                        document.getElementById('host-room-code-display').innerText = this.roomId;
+                        document.getElementById('modalRoomCodeDisplay').innerText = this.roomId;
+                        document.getElementById('host-room-code-btn').classList.remove('d-none');
+                        document.getElementById('lobby-host-elements').classList.remove('d-none');
+                        document.getElementById('lobby-client-elements').classList.add('d-none');
+                        document.getElementById('lobby-actions-host').classList.remove('d-none');
+                        document.getElementById('mp-chat-container').classList.remove('d-none');
+                        document.body.style.paddingBottom = '200px';
+                        const placeholder = document.getElementById('mp-role-settings-placeholder');
+                        const block = document.getElementById('role-settings-block');
+                        if (placeholder && block) placeholder.appendChild(block);
+                        updateConfigFromSlider(1);
+                        showView('view-mp-lobby');
+                        this.addSelfToLobby();
+                        this.saveSession();
+                        this.displayChat('Système', '🔄 Session restaurée. Les joueurs peuvent se reconnecter.', '', true);
+                    });
+
+                    this.peer.on('connection', (conn) => {
+                        this.connections.push(conn);
+                        conn.on('data', (data) => this.handleData(data, conn));
+                        conn.on('close', () => {
+                            this.connections = this.connections.filter(c => c !== conn);
+                            this.syncLobby();
+                        });
+                    });
+
+                    this.peer.on('error', () => {
+                        alert('Impossible de reprendre la session (code expiré ou déjà utilisé).');
+                        this.clearSession();
+                    });
+                } else if (clientRaw) {
+                    const state = JSON.parse(clientRaw);
+                    this.mode = 'client';
+                    this.roomId = state.roomId;
+                    this.me.name = state.meName;
+                    this.me.avatar = state.meAvatar;
+                    this.peer = new Peer();
+                    this.updateStatus('CONNEXION...', 'connecting');
+                    const banner = document.getElementById('resume-session-banner');
+                    if (banner) banner.classList.add('d-none');
+
+                    this.peer.on('open', (id) => {
+                        const conn = this.peer.connect('toupil-' + this.roomId);
+                        this.connections = [conn];
+                        conn.on('open', () => {
+                            this.updateStatus('CONNECTÉ', 'online');
+                            document.getElementById('lobby-host-elements').classList.add('d-none');
+                            document.getElementById('lobby-client-elements').classList.remove('d-none');
+                            document.getElementById('lobby-actions-host').classList.add('d-none');
+                            document.getElementById('mp-chat-container').classList.remove('d-none');
+                            document.body.style.paddingBottom = "200px";
+                            showView('view-mp-lobby');
+                            this.saveSession();
+                            this.sendData({ type: 'join', name: this.me.name, avatar: this.me.avatar });
+                        });
+                        conn.on('data', (data) => this.handleData(data));
+                        conn.on('close', () => {
+                            if (!this.isDisconnecting) {
+                                this.startHostReconnectLoop();
+                            }
+                        });
+                    });
+
+                    this.peer.on('error', (err) => {
+                        alert("Impossible de rejoindre la salle. Vérifie le code.");
+                        this.disconnect();
+                    });
                 }
             }
         };
@@ -2328,8 +2661,130 @@
 
         function toggleHostOptionsModal() {
             const modal = document.getElementById('hostOptionsModal');
-            if (modal.classList.contains('d-none')) modal.classList.remove('d-none');
-            else modal.classList.add('d-none');
+            const forceSection = document.getElementById('host-force-elim-section');
+            const forceButtons = document.getElementById('host-force-elim-buttons');
+            const forceVoteSection = document.getElementById('host-force-vote-section');
+            const forceDebateSection = document.getElementById('host-force-debate-section');
+
+            if (modal.classList.contains('d-none')) {
+                const currentView = getCurrentViewId();
+                const isGameRunning = ['view-pass', 'view-reveal', 'view-pre-debate', 'view-debate', 'view-vote', 'view-guess', 'view-round-transition'].includes(currentView);
+
+                // Boutons force-élimination : visibles si le jeu est en cours
+                if (forceSection && forceButtons && players.length > 0 && isGameRunning) {
+                    forceButtons.innerHTML = '';
+                    players.forEach((p, idx) => {
+                        if (p.alive) {
+                            const btn = document.createElement('button');
+                            btn.className = 'btn btn-outline-danger btn-sm fw-bold';
+                            btn.innerHTML = `<i class="bi bi-x-circle-fill me-2"></i>${p.name}`;
+                            btn.onclick = () => {
+                                if (confirm(`Éliminer ${p.name} de force ?`)) {
+                                    toggleHostOptionsModal();
+                                    MP.votes = {};
+                                    if (MP._voteTimeout) { clearTimeout(MP._voteTimeout); MP._voteTimeout = null; }
+                                    finalizeElimination(idx, false);
+                                    MP.broadcast({ type: 'sync_elimination', index: idx });
+                                }
+                            };
+                            forceButtons.appendChild(btn);
+                        }
+                    });
+                    forceSection.classList.remove('d-none');
+                } else {
+                    if (forceSection) forceSection.classList.add('d-none');
+                }
+
+                // Section forcer vote : visible en phase vote
+                if (forceVoteSection) {
+                    if (currentView === 'view-vote') {
+                        forceVoteSection.classList.remove('d-none');
+                    } else {
+                        forceVoteSection.classList.add('d-none');
+                    }
+                }
+
+                // Section forcer débat : visible en phase de mémorisation
+                if (forceDebateSection) {
+                    if (currentView === 'view-pass' || currentView === 'view-reveal') {
+                        forceDebateSection.classList.remove('d-none');
+                    } else {
+                        forceDebateSection.classList.add('d-none');
+                    }
+                }
+
+                modal.classList.remove('d-none');
+            } else {
+                modal.classList.add('d-none');
+            }
+        }
+
+        function hostForceResolveVote() {
+            if (!MP.votes || Object.keys(MP.votes).length === 0) {
+                alert("Aucun vote n'a encore été enregistré.");
+                return;
+            }
+            if (confirm("Voulez-vous vraiment clôturer le vote avec les voix actuelles ?")) {
+                toggleHostOptionsModal();
+                if (MP._voteTimeout) { clearTimeout(MP._voteTimeout); MP._voteTimeout = null; }
+
+                // Déterminer la victime avec les votes reçus
+                const tallies = {};
+                Object.values(MP.votes).forEach(v => tallies[v] = (tallies[v] || 0) + 1);
+                let victimIdx = -1; let maxVotes = 0;
+                for (let idx in tallies) { if (tallies[idx] > maxVotes) { maxVotes = tallies[idx]; victimIdx = parseInt(idx); } }
+
+                if (victimIdx !== -1 && players[victimIdx]) {
+                    if (players[victimIdx].role === 'Inconnu') {
+                        MP.broadcast({ type: 'sync_guess_phase', index: victimIdx });
+                        MP.handleData({ type: 'sync_guess_phase', index: victimIdx });
+                    } else {
+                        MP.broadcast({ type: 'sync_elimination', index: victimIdx });
+                        finalizeElimination(victimIdx);
+                    }
+                    MP.votes = {};
+                }
+            }
+        }
+
+        function hostForceStartDebate() {
+            if (confirm("Forcer le début du débat (ignorer les joueurs n'ayant pas validé leur rôle) ?")) {
+                toggleHostOptionsModal();
+                if (MP._memorizedTimeout) { clearTimeout(MP._memorizedTimeout); MP._memorizedTimeout = null; }
+                const starterName = pickSmartStarter(true);
+                MP.broadcast({ type: 'start_debate', starter: starterName });
+                document.getElementById('firstPlayerName').innerText = starterName;
+                preparePreDebateView();
+                showView('view-pre-debate');
+            }
+        }
+
+        function getReconnectingPlayerView(playerIdx) {
+            const hostView = getCurrentViewId();
+            const p = players[playerIdx];
+            if (!p) return 'view-mp-lobby';
+
+            if (hostView === 'view-pass' || hostView === 'view-reveal') {
+                if (MP.memorizedPlayers && MP.memorizedPlayers.includes(playerIdx)) {
+                    return 'view-pass'; // Déjà mémorisé
+                } else {
+                    return 'view-reveal'; // Doit voir son mot
+                }
+            }
+
+            if (hostView === 'view-vote') {
+                return 'view-vote';
+            }
+
+            if (hostView === 'view-guess') {
+                if (pendingVictimIndex === playerIdx) {
+                    return 'view-guess'; // Il doit deviner le mot
+                } else {
+                    return 'view-vote'; // Les autres attendent
+                }
+            }
+
+            return hostView;
         }
 
         function hostForceRestart() {
@@ -2734,8 +3189,10 @@
             }
 
             if (timerInterval) clearInterval(timerInterval);
+            MP.debateTimeLeft = timeLeft;
             timerInterval = setInterval(() => {
                 timeLeft--;
+                MP.debateTimeLeft = timeLeft;
                 let m = Math.floor(timeLeft / 60); let s = timeLeft % 60;
                 display.innerText = (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
                 bar.style.width = ((timeLeft / seconds) * 100) + "%";
@@ -2997,6 +3454,50 @@
         // NOUVEAU: Initialiser l'affichage des mots au chargement de la page
         updateWordStatsUI();
 
+        // --- HELPERS : VUE ACTIVE ---
+        function getCurrentViewId() {
+            const views = document.querySelectorAll('div[id^="view-"]');
+            for (const v of views) {
+                if (!v.classList.contains('d-none')) return v.id;
+            }
+            return 'view-setup';
+        }
+
+        // --- HELPERS : OVERLAY RECONNEXION ---
+        function showReconnectingOverlay(msg) {
+            const overlay = document.getElementById('reconnecting-overlay');
+            const msgEl = document.getElementById('reconnecting-msg');
+            if (overlay) { overlay.classList.remove('d-none'); overlay.style.display = 'flex'; }
+            if (msgEl && msg) { msgEl.innerText = msg; }
+        }
+
+        function hideReconnectingOverlay() {
+            const overlay = document.getElementById('reconnecting-overlay');
+            if (overlay) { overlay.classList.add('d-none'); }
+        }
+
+        // --- VÉRIFICATION SESSION HÔTE / CLIENT AU CHARGEMENT ---
+        (function checkSavedSession() {
+            try {
+                const hostRaw = sessionStorage.getItem('intrusion_host_session');
+                const clientRaw = sessionStorage.getItem('intrusion_client_session');
+                const banner = document.getElementById('resume-session-banner');
+                const msg = document.getElementById('resume-session-msg');
+                if (hostRaw && banner) {
+                    const state = JSON.parse(hostRaw);
+                    if (msg) msg.innerText = `Partie interrompue en tant qu'Hôte (Code: ${state.roomId}).`;
+                    banner.classList.remove('d-none');
+                } else if (clientRaw && banner) {
+                    const state = JSON.parse(clientRaw);
+                    if (msg) msg.innerText = `Partie interrompue en tant que Joueur (Salle: ${state.roomId}).`;
+                    banner.classList.remove('d-none');
+                }
+            } catch (e) {
+                sessionStorage.removeItem('intrusion_host_session');
+                sessionStorage.removeItem('intrusion_client_session');
+            }
+        })();
+
     </script>
 
     <!-- HOST ROOM CODE BUTTON -->
@@ -3024,12 +3525,41 @@
                 style="font-size: 2.5rem; letter-spacing: 5px;">----</div>
             <p class="small text-muted mb-4">Partagez ce code avec vos amis pour qu'ils rejoignent.</p>
 
+            <div id="host-force-vote-section" class="d-none mb-3">
+                <hr class="border-secondary opacity-25">
+                <button onclick="hostForceResolveVote(); SFX.click()" class="btn btn-outline-warning w-100 py-2 fw-bold">
+                    <i class="bi bi-check-circle-fill me-2"></i> CLÔTURER LE VOTE
+                </button>
+            </div>
+
+            <div id="host-force-debate-section" class="d-none mb-3">
+                <hr class="border-secondary opacity-25">
+                <button onclick="hostForceStartDebate(); SFX.click()" class="btn btn-outline-info w-100 py-2 fw-bold">
+                    <i class="bi bi-play-fill me-2"></i> FORCER DÉBUT DÉBAT
+                </button>
+            </div>
+
+            <div id="host-force-elim-section" class="d-none mb-3">
+                <hr class="border-secondary opacity-25">
+                <h6 class="text-danger small text-uppercase mb-2">Forcer l'élimination</h6>
+                <div id="host-force-elim-buttons" class="d-flex flex-wrap gap-2 justify-content-center"></div>
+            </div>
+
             <hr class="border-secondary opacity-25">
 
             <p class="small text-warning mb-3">En cas de bug ou de problème de connexion :</p>
             <button onclick="hostForceRestart(); SFX.click()" class="btn btn-outline-danger w-100 py-3 fw-bold">
                 <i class="bi bi-arrow-counterclockwise"></i> REDÉMARRER LA PARTIE
             </button>
+        </div>
+    </div>
+
+    <!-- OVERLAY DE RECONNEXION -->
+    <div id="reconnecting-overlay" class="d-none position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 d-flex flex-column justify-content-center align-items-center" style="z-index: 4000; backdrop-filter: blur(5px);">
+        <div class="glass-card p-4 text-center" style="width: 90%; max-width: 350px; border: 1px solid var(--accent-neon);">
+            <div class="spinner-border text-warning mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
+            <h5 class="brand-font text-warning">CONNEXION PERDUE</h5>
+            <p id="reconnecting-msg" class="small text-muted mb-0">Tentative de reconnexion...</p>
         </div>
     </div>
 
