@@ -668,8 +668,15 @@
         }
 
         @keyframes pulse-waiting {
-            0%, 100% { opacity: 0.4; }
-            50% { opacity: 1; }
+
+            0%,
+            100% {
+                opacity: 0.4;
+            }
+
+            50% {
+                opacity: 1;
+            }
         }
 
         .vote-tracker-pill .vote-avatar {
@@ -753,12 +760,15 @@
         </div>
 
         <!-- BANNIÈRE DE RÉCUPÉRATION DE SESSION -->
-        <div id="resume-session-banner" class="d-none alert alert-info border-info glass-card text-center mb-4 fade-in mx-auto" style="max-width: 500px;">
+        <div id="resume-session-banner"
+            class="d-none alert alert-info border-info glass-card text-center mb-4 fade-in mx-auto"
+            style="max-width: 500px;">
             <h5 class="brand-font text-info"><i class="bi bi-arrow-clockwise"></i> SESSION INTERROMPUE</h5>
             <p class="small text-muted mb-3" id="resume-session-msg">Une partie en cours a été détectée.</p>
             <div class="d-flex gap-2 justify-content-center">
                 <button onclick="MP.resumeSession(); SFX.success()" class="btn btn-sm btn-neon">REPRENDRE</button>
-                <button onclick="MP.clearSession(); SFX.click()" class="btn btn-sm btn-outline-secondary">IGNORER</button>
+                <button onclick="MP.clearSession(); SFX.click()"
+                    class="btn btn-sm btn-outline-secondary">IGNORER</button>
             </div>
         </div>
 
@@ -1562,28 +1572,7 @@
                     this.connections.push(conn);
                     conn.on('data', (data) => this.handleData(data, conn));
                     conn.on('close', () => {
-                        this.connections = this.connections.filter(c => c !== conn);
-                        this.syncLobby();
-                        if (typeof players !== 'undefined' && players.length > 0) {
-                            const playerIndex = players.findIndex(p => p.peerId === conn.peer || p.name === conn.peerName);
-                            if (playerIndex !== -1 && players[playerIndex].alive) {
-                                const pName = players[playerIndex].name;
-                                const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                                 this.displayChat('Système', `⏳ ${pName} s'est déconnecté. Reconnexion possible pendant 1 min...`, timeStr, true);
-                                 this.broadcast({ type: 'chat', name: 'Système', message: `⏳ ${pName} s'est déconnecté. Reconnexion possible pendant 1 min...`, time: timeStr, system: true });
-                                 // Timer de grâce : 1 min avant élimination
-                                 conn._graceTimeout = setTimeout(() => {
-                                     const isBack = this.connections.some(c => c.peerName === pName && c.open);
-                                     if (!isBack && players[playerIndex] && players[playerIndex].alive) {
-                                         const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                                         this.displayChat('Système', `❌ ${pName} absent 1 min — éliminé automatiquement.`, t, true);
-                                         this.broadcast({ type: 'chat', name: 'Système', message: `❌ ${pName} absent 1 min — éliminé automatiquement.`, time: t, system: true });
-                                         finalizeElimination(playerIndex, false);
-                                         setTimeout(() => this.unblockPendingPhases(), 200);
-                                     }
-                                 }, RECONNECT_TIMEOUT_MS);
-                            }
-                        }
+                        this.handleConnectionClose(conn);
                     });
                 });
 
@@ -1643,6 +1632,11 @@
                     clearInterval(timerInterval);
                 }
 
+                if (this._reconnectInterval) {
+                    clearInterval(this._reconnectInterval);
+                    this._reconnectInterval = null;
+                }
+
                 // 1. Prévenir tous les joueurs que la salle ferme AVANT de couper
                 if (this.mode === 'host' && this.connections.length > 0) {
                     try { this.broadcast({ type: 'room_closed' }); } catch (e) { }
@@ -1695,6 +1689,7 @@
                         currentPNJWord = data.words[0];
                         currentInfiltreWord = data.words[1];
                         MP.me.index = data.myIndex;
+                        currentStep = data.myIndex;
                         pendingVictimIndex = data.pendingVictimIndex !== undefined ? data.pendingVictimIndex : -1;
                         hideReconnectingOverlay();
 
@@ -1780,7 +1775,7 @@
                                 const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                                 this.displayChat('Système', `✅ ${data.name} est de retour !`, t, true);
                                 this.broadcast({ type: 'chat', name: 'Système', message: `✅ ${data.name} est de retour !`, time: t, system: true });
-                                
+
                                 const targetView = getReconnectingPlayerView(playerIdx);
                                 const progressData = {
                                     type: 'reconnect_game',
@@ -1834,6 +1829,40 @@
                                 this.memorizedPlayers.push(data.index);
                                 this.memorizedCount++;
                             }
+
+                            // Si l'hôte est déjà dans une phase ultérieure, on synchronise immédiatement le joueur qui vient de mémoriser
+                            const hostView = getCurrentViewId();
+                            if (hostView !== 'view-pass' && hostView !== 'view-reveal') {
+                                const playerConn = this.connections.find(c => c.peerName === players[data.index].name);
+                                if (playerConn) {
+                                    const progressData = {
+                                        type: 'reconnect_game',
+                                        players: players,
+                                        config: gameConfig,
+                                        words: [currentPNJWord, currentInfiltreWord],
+                                        myIndex: data.index,
+                                        currentView: hostView,
+                                        pendingVictimIndex: pendingVictimIndex,
+                                        memorized: this.memorizedPlayers || [],
+                                        starterName: document.getElementById('firstPlayerName').innerText || (players.length > 0 ? players[0].name : '')
+                                    };
+                                    if (hostView === 'view-vote') {
+                                        const aliveCount = players.filter(p => p.alive).length;
+                                        const votesCount = this.votes ? Object.keys(this.votes).length : 0;
+                                        const voterIndices = this.votes ? Object.keys(this.votes).map(Number) : [];
+                                        progressData.voteProgress = {
+                                            count: votesCount,
+                                            total: aliveCount,
+                                            voterIndices: voterIndices
+                                        };
+                                    } else if (hostView === 'view-debate') {
+                                        progressData.debateTimeLeft = MP.debateTimeLeft || 60;
+                                    }
+                                    playerConn.send(progressData);
+                                }
+                                break;
+                            }
+
                             const alivePlayers = players.filter(p => p.alive).length;
                             if (this.memorizedCount >= alivePlayers) {
                                 if (this._memorizedTimeout) { clearTimeout(this._memorizedTimeout); this._memorizedTimeout = null; }
@@ -1845,7 +1874,6 @@
                             } else {
                                 this.broadcast({ type: 'sync_memorized_status', memorized: this.memorizedPlayers });
                                 this.renderMemorizedStatus(this.memorizedPlayers);
-                                // Timeout 30s si un joueur ne répond pas
                                 if (!this._memorizedTimeout) {
                                     this._memorizedTimeout = setTimeout(() => {
                                         this._memorizedTimeout = null;
@@ -2137,12 +2165,99 @@
                 this.syncVoteStatus();
             },
 
+            isPlayerConnected: function (playerIdx) {
+                const p = players[playerIdx];
+                if (!p) return false;
+                if (playerIdx === 0) return true; // L'hôte est toujours connecté à lui-même
+                return this.connections.some(c => c.peerName === p.name && c.open);
+            },
+
+            handleConnectionClose: function (conn) {
+                this.connections = this.connections.filter(c => c !== conn);
+                this.syncLobby();
+                if (typeof players !== 'undefined' && players.length > 0) {
+                    const playerIndex = players.findIndex(p => p.peerId === conn.peer || p.name === conn.peerName);
+                    if (playerIndex !== -1 && players[playerIndex].alive) {
+                        const pName = players[playerIndex].name;
+                        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        this.displayChat('Système', `⏳ ${pName} s'est déconnecté. Reconnexion possible pendant 1 min...`, timeStr, true);
+                        this.broadcast({ type: 'chat', name: 'Système', message: `⏳ ${pName} s'est déconnecté. Reconnexion possible pendant 1 min...`, time: timeStr, system: true });
+
+                        // Timer de grâce : 1 min avant élimination
+                        conn._graceTimeout = setTimeout(() => {
+                            const isBack = this.connections.some(c => c.peerName === pName && c.open);
+                            if (!isBack && players[playerIndex] && players[playerIndex].alive) {
+                                const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                this.displayChat('Système', `❌ ${pName} absent 1 min — éliminé automatiquement.`, t, true);
+                                this.broadcast({ type: 'chat', name: 'Système', message: `❌ ${pName} absent 1 min — éliminé automatiquement.`, time: t, system: true });
+                                finalizeElimination(playerIndex, false);
+                                setTimeout(() => this.unblockPendingPhases(), 200);
+                            }
+                        }, RECONNECT_TIMEOUT_MS);
+                    }
+                }
+
+                // Appel immédiat pour voir si les autres joueurs connectés ont tous validé / voté
+                const currentView = getCurrentViewId();
+                if (currentView === 'view-vote') {
+                    this.syncVoteStatus();
+                } else {
+                    this.unblockPendingPhases();
+                }
+            },
+
+            tryConnectToHost: function () {
+                if (this.mode !== 'client' || !this.peer || this.peer.destroyed) return;
+                if (this.connections[0] && this.connections[0].open) return;
+
+                if (this._reconnectInterval) {
+                    clearInterval(this._reconnectInterval);
+                    this._reconnectInterval = null;
+                }
+
+                this.updateStatus('RECONNEXION...', 'connecting');
+                showReconnectingOverlay("Connexion au serveur de jeu...");
+
+                try {
+                    if (this.peer.disconnected) {
+                        this.peer.reconnect();
+                    }
+                    const tryConn = this.peer.connect('toupil-' + this.roomId);
+                    this.connections = [tryConn];
+                    tryConn.on('open', () => {
+                        this.updateStatus('CONNECTÉ', 'online');
+                        hideReconnectingOverlay();
+                        document.getElementById('lobby-host-elements').classList.add('d-none');
+                        document.getElementById('lobby-client-elements').classList.remove('d-none');
+                        document.getElementById('mp-chat-container').classList.remove('d-none');
+                        document.body.style.paddingBottom = "200px";
+
+                        this.me.name = localStorage.getItem('intrusion_last_name') || 'Inconnu';
+                        this.me.avatar = localStorage.getItem('intrusion_last_avatar');
+                        this.saveSession();
+                        this.sendData({ type: 'join', name: this.me.name, avatar: this.me.avatar });
+                    });
+                    tryConn.on('data', (data) => this.handleData(data));
+                    tryConn.on('close', () => {
+                        if (!this.isDisconnecting) {
+                            this.startHostReconnectLoop();
+                        }
+                    });
+                } catch (e) {
+                    this.startHostReconnectLoop();
+                }
+            },
+
             syncVoteStatus: function () {
-                const aliveCount = players.filter(p => p.alive).length;
+                const alivePlayers = players.filter(p => p.alive);
+                const connectedAlivePlayers = alivePlayers.filter(p => {
+                    const idx = players.indexOf(p);
+                    return this.isPlayerConnected(idx);
+                });
                 const votesCount = Object.keys(this.votes).length;
-                if (votesCount >= aliveCount) {
+
+                if (votesCount >= connectedAlivePlayers.length && connectedAlivePlayers.length > 0) {
                     if (this._voteTimeout) { clearTimeout(this._voteTimeout); this._voteTimeout = null; }
-                    // All votes in! Determine victim
                     const tallies = {};
                     Object.values(this.votes).forEach(v => tallies[v] = (tallies[v] || 0) + 1);
                     let victimIdx = -1; let maxVotes = 0;
@@ -2158,9 +2273,10 @@
                     this.votes = {};
                 } else {
                     const voterIndices = Object.keys(this.votes).map(Number);
-                    this.broadcast({ type: 'sync_vote_progress', count: votesCount, total: aliveCount, voterIndices: voterIndices });
-                    this.handleData({ type: 'sync_vote_progress', count: votesCount, total: aliveCount, voterIndices: voterIndices });
-                    // Timeout 30s si des votes manquent (joueurs absents)
+                    const totalExpected = connectedAlivePlayers.length;
+                    this.broadcast({ type: 'sync_vote_progress', count: votesCount, total: totalExpected, voterIndices: voterIndices });
+                    this.handleData({ type: 'sync_vote_progress', count: votesCount, total: totalExpected, voterIndices: voterIndices });
+
                     if (!this._voteTimeout) {
                         this._voteTimeout = setTimeout(() => {
                             this._voteTimeout = null;
@@ -2170,14 +2286,17 @@
                 }
             },
 
-            // --- RECONNEXION HÔTE : boucle de polling côté client ---
             startHostReconnectLoop: function () {
+                if (this._reconnectInterval) {
+                    clearInterval(this._reconnectInterval);
+                }
                 showReconnectingOverlay("Connexion perdue. Tentative de reconnexion à l'hôte...");
                 let elapsed = 0;
-                const pollInterval = setInterval(() => {
+                this._reconnectInterval = setInterval(() => {
                     elapsed += HOST_RECONNECT_POLL_MS;
                     if (elapsed >= HOST_RECONNECT_MAX_MS) {
-                        clearInterval(pollInterval);
+                        clearInterval(this._reconnectInterval);
+                        this._reconnectInterval = null;
                         hideReconnectingOverlay();
                         alert("L'hôte n'est pas revenu après 60 secondes. La partie est terminée.");
                         this.disconnect();
@@ -2185,9 +2304,13 @@
                     }
                     try {
                         if (!this.peer || this.peer.destroyed) return;
+                        if (this.peer.disconnected) {
+                            this.peer.reconnect();
+                        }
                         const tryConn = this.peer.connect('toupil-' + this.roomId);
                         tryConn.on('open', () => {
-                            clearInterval(pollInterval);
+                            clearInterval(this._reconnectInterval);
+                            this._reconnectInterval = null;
                             this.connections = [tryConn];
                             tryConn.on('data', (d) => this.handleData(d));
                             tryConn.on('close', () => {
@@ -2200,18 +2323,21 @@
                 }, HOST_RECONNECT_POLL_MS);
             },
 
-            // --- DÉBLOQUER LES PHASES EN ATTENTE après élimination ---
             unblockPendingPhases: function () {
                 const alivePlayers = players.filter(p => p.alive);
-                const aliveCount = alivePlayers.length;
+                const currentView = getCurrentViewId();
 
-                // Débloquer phase mémorisé
-                if (this.memorizedPlayers) {
-                    const aliveMemorized = alivePlayers.filter(p => {
+                // 1. Débloquer phase mémorisé
+                if (this.memorizedPlayers && (currentView === 'view-pass' || currentView === 'view-reveal')) {
+                    const connectedAlivePlayers = alivePlayers.filter(p => {
+                        const idx = players.indexOf(p);
+                        return this.isPlayerConnected(idx);
+                    });
+                    const connectedAliveMemorized = connectedAlivePlayers.filter(p => {
                         const idx = players.indexOf(p);
                         return this.memorizedPlayers.includes(idx);
-                    }).length;
-                    if (aliveMemorized >= aliveCount) {
+                    });
+                    if (connectedAliveMemorized.length >= connectedAlivePlayers.length && connectedAlivePlayers.length > 0) {
                         if (this._memorizedTimeout) { clearTimeout(this._memorizedTimeout); this._memorizedTimeout = null; }
                         const starterName = pickSmartStarter(true);
                         this.broadcast({ type: 'start_debate', starter: starterName });
@@ -2222,27 +2348,35 @@
                     }
                 }
 
-                // Débloquer phase vote (avec votes existants seulement)
-                if (this.votes && Object.keys(this.votes).length > 0) {
-                    if (this._voteTimeout) { clearTimeout(this._voteTimeout); this._voteTimeout = null; }
-                    const tallies = {};
-                    Object.values(this.votes).forEach(v => tallies[v] = (tallies[v] || 0) + 1);
-                    let victimIdx = -1; let maxVotes = 0;
-                    for (let idx in tallies) { if (tallies[idx] > maxVotes) { maxVotes = tallies[idx]; victimIdx = parseInt(idx); } }
-                    if (victimIdx !== -1 && players[victimIdx]) {
-                        if (players[victimIdx].role === 'Inconnu') {
-                            this.broadcast({ type: 'sync_guess_phase', index: victimIdx });
-                            this.handleData({ type: 'sync_guess_phase', index: victimIdx });
-                        } else {
-                            this.broadcast({ type: 'sync_elimination', index: victimIdx });
-                            finalizeElimination(victimIdx);
+                // 2. Débloquer phase vote
+                if (this.votes && Object.keys(this.votes).length > 0 && currentView === 'view-vote') {
+                    const connectedAlivePlayers = alivePlayers.filter(p => {
+                        const idx = players.indexOf(p);
+                        return this.isPlayerConnected(idx);
+                    });
+                    const votesCount = Object.keys(this.votes).length;
+
+                    if (votesCount >= connectedAlivePlayers.length || !this._voteTimeout) {
+                        if (this._voteTimeout) { clearTimeout(this._voteTimeout); this._voteTimeout = null; }
+                        const tallies = {};
+                        Object.values(this.votes).forEach(v => tallies[v] = (tallies[v] || 0) + 1);
+                        let victimIdx = -1; let maxVotes = 0;
+                        for (let idx in tallies) { if (tallies[idx] > maxVotes) { maxVotes = tallies[idx]; victimIdx = parseInt(idx); } }
+                        if (victimIdx !== -1 && players[victimIdx]) {
+                            if (players[victimIdx].role === 'Inconnu') {
+                                this.broadcast({ type: 'sync_guess_phase', index: victimIdx });
+                                this.handleData({ type: 'sync_guess_phase', index: victimIdx });
+                            } else {
+                                this.broadcast({ type: 'sync_elimination', index: victimIdx });
+                                finalizeElimination(victimIdx);
+                            }
+                            this.votes = {};
                         }
-                        this.votes = {};
                     }
                 }
             },
 
-            // --- SESSION HÔTE / CLIENT : sauvegarde/restauration via sessionStorage ---
+            // --- SESSION HÔTE / CLIENT : sauvegarde/restauration via localStorage ---
             saveSession: function () {
                 if (this.mode === 'host') {
                     sessionStorage.setItem('intrusion_host_session', JSON.stringify({
@@ -2270,6 +2404,10 @@
                 const hostRaw = sessionStorage.getItem('intrusion_host_session');
                 const clientRaw = sessionStorage.getItem('intrusion_client_session');
 
+                try { if (this.peer) this.peer.destroy(); } catch (e) { }
+                this.peer = null;
+                this.connections = [];
+
                 if (hostRaw) {
                     const state = JSON.parse(hostRaw);
                     this.mode = 'host';
@@ -2287,27 +2425,30 @@
                         document.getElementById('host-room-code-display').innerText = this.roomId;
                         document.getElementById('modalRoomCodeDisplay').innerText = this.roomId;
                         document.getElementById('host-room-code-btn').classList.remove('d-none');
-                        document.getElementById('lobby-host-elements').classList.remove('d-none');
-                        document.getElementById('lobby-client-elements').classList.add('d-none');
-                        document.getElementById('lobby-actions-host').classList.remove('d-none');
                         document.getElementById('mp-chat-container').classList.remove('d-none');
                         document.body.style.paddingBottom = '200px';
-                        const placeholder = document.getElementById('mp-role-settings-placeholder');
-                        const block = document.getElementById('role-settings-block');
-                        if (placeholder && block) placeholder.appendChild(block);
-                        updateConfigFromSlider(1);
-                        showView('view-mp-lobby');
-                        this.addSelfToLobby();
+
+                        if (players.length > 0) {
+                            this.displayChat('Système', '🔄 Session de jeu restaurée. En attente des joueurs.', '', true);
+                        } else {
+                            document.getElementById('lobby-host-elements').classList.remove('d-none');
+                            document.getElementById('lobby-client-elements').classList.add('d-none');
+                            document.getElementById('lobby-actions-host').classList.remove('d-none');
+                            const placeholder = document.getElementById('mp-role-settings-placeholder');
+                            const block = document.getElementById('role-settings-block');
+                            if (placeholder && block) placeholder.appendChild(block);
+                            updateConfigFromSlider(1);
+                            showView('view-mp-lobby');
+                            this.addSelfToLobby();
+                        }
                         this.saveSession();
-                        this.displayChat('Système', '🔄 Session restaurée. Les joueurs peuvent se reconnecter.', '', true);
                     });
 
                     this.peer.on('connection', (conn) => {
                         this.connections.push(conn);
                         conn.on('data', (data) => this.handleData(data, conn));
                         conn.on('close', () => {
-                            this.connections = this.connections.filter(c => c !== conn);
-                            this.syncLobby();
+                            this.handleConnectionClose(conn);
                         });
                     });
 
@@ -2336,7 +2477,9 @@
                             document.getElementById('lobby-actions-host').classList.add('d-none');
                             document.getElementById('mp-chat-container').classList.remove('d-none');
                             document.body.style.paddingBottom = "200px";
-                            showView('view-mp-lobby');
+                            if (players.length === 0) {
+                                showView('view-mp-lobby');
+                            }
                             this.saveSession();
                             this.sendData({ type: 'join', name: this.me.name, avatar: this.me.avatar });
                         });
@@ -2353,6 +2496,45 @@
                         this.disconnect();
                     });
                 }
+            },
+
+            resyncAllPlayers: function () {
+                if (this.mode !== 'host') return;
+                let sentCount = 0;
+                this.connections.forEach(conn => {
+                    if (conn.open && conn.peerName) {
+                        const playerIdx = players.findIndex(p => p.name === conn.peerName);
+                        if (playerIdx !== -1) {
+                            const targetView = getReconnectingPlayerView(playerIdx);
+                            const progressData = {
+                                type: 'reconnect_game',
+                                players: players,
+                                config: gameConfig,
+                                words: [currentPNJWord, currentInfiltreWord],
+                                myIndex: playerIdx,
+                                currentView: targetView,
+                                pendingVictimIndex: pendingVictimIndex,
+                                memorized: this.memorizedPlayers || [],
+                                starterName: document.getElementById('firstPlayerName').innerText || (players.length > 0 ? players[0].name : '')
+                            };
+                            if (targetView === 'view-vote') {
+                                const aliveCount = players.filter(p => p.alive).length;
+                                const votesCount = this.votes ? Object.keys(this.votes).length : 0;
+                                const voterIndices = this.votes ? Object.keys(this.votes).map(Number) : [];
+                                progressData.voteProgress = {
+                                    count: votesCount,
+                                    total: aliveCount,
+                                    voterIndices: voterIndices
+                                };
+                            } else if (targetView === 'view-debate') {
+                                progressData.debateTimeLeft = MP.debateTimeLeft || 60;
+                            }
+                            conn.send(progressData);
+                            sentCount++;
+                        }
+                    }
+                });
+                alert(`Signal de resynchronisation envoyé à ${sentCount} joueur(s).`);
             }
         };
 
@@ -2469,7 +2651,33 @@
             try { if ('wakeLock' in navigator) { wakeLock = await navigator.wakeLock.request('screen'); } } catch (err) { }
             try { video.play().catch(e => console.log(e)); } catch (e) { }
         }
-        document.addEventListener('visibilitychange', async () => { if (document.visibilityState === 'visible') { await toggleScreenLock(); } });
+        document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'visible') {
+                await toggleScreenLock();
+                try {
+                    const hasSession = sessionStorage.getItem('intrusion_host_session') || sessionStorage.getItem('intrusion_client_session'); if (hasSession) {
+                        if (MP.peer) {
+                            if (MP.peer.destroyed) {
+                                MP.resumeSession();
+                            } else if (MP.peer.disconnected) {
+                                MP.peer.reconnect();
+                            }
+                        } else {
+                            MP.resumeSession();
+                        }
+
+                        if (MP.mode === 'client' && MP.peer && !MP.peer.destroyed) {
+                            const isConnClosed = !MP.connections[0] || MP.connections[0].open === false;
+                            if (isConnClosed) {
+                                MP.tryConnectToHost();
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error("Erreur auto-reconnect:", e);
+                }
+            }
+        });
 
         // --- PLAYER DATA & ROSTER ---
         function getStoredPlayers() {
@@ -2552,7 +2760,13 @@
                     let avatarHtml = `<div class="rounded-circle bg-secondary d-flex justify-content-center align-items-center" style="width: 50px; height: 50px;"><i class="bi bi-person-fill text-white"></i></div>`;
                     if (player.avatar) avatarHtml = `<img src="${player.avatar}" class="rounded-circle" style="width: 50px; height: 50px; object-fit: cover;">`;
 
+                    const favName = localStorage.getItem('intrusion_favorite_player');
+                    const isFavorite = favName && favName.toLowerCase() === player.name.toLowerCase();
+                    const starClass = isFavorite ? 'bi-star-fill text-warning' : 'bi-star text-secondary';
+                    const starBtn = `<button class="btn btn-sm p-0 me-2" onclick="setFavoritePlayer('${player.name}'); SFX.success()" title="Définir comme favori d'office"><i class="bi ${starClass} fs-4"></i></button>`;
+
                     item.innerHTML = `
+                    ${starBtn}
                     ${avatarHtml}
                     <div class="flex-grow-1">
                         <div class="fw-bold lh-1">${player.name}</div>
@@ -2581,7 +2795,11 @@
                 let avatarHtml = `<div class="rounded-circle bg-secondary d-flex justify-content-center align-items-center" style="width: 35px; height: 35px;"><i class="bi bi-person-fill text-white" style="font-size:0.8rem"></i></div>`;
                 if (player.avatar) avatarHtml = `<img src="${player.avatar}" class="rounded-circle" style="width: 35px; height: 35px; object-fit: cover;">`;
 
-                item.innerHTML = `${avatarHtml} <span class="fw-bold small">${player.name}</span>`;
+                const favName = localStorage.getItem('intrusion_favorite_player');
+                const isFavorite = favName && favName.toLowerCase() === player.name.toLowerCase();
+                const starHtml = isFavorite ? `<i class="bi bi-star-fill text-warning ms-auto"></i>` : '';
+
+                item.innerHTML = `${avatarHtml} <span class="fw-bold small">${player.name}</span> ${starHtml}`;
                 item.onclick = () => {
                     document.getElementById('inputPseudo').value = player.name;
                     if (player.avatar) {
@@ -2599,6 +2817,24 @@
             const modal = document.getElementById('modal-history');
             if (modal.classList.contains('d-none')) { renderHistoryList(); modal.classList.remove('d-none'); }
             else { modal.classList.add('d-none'); }
+        }
+
+        function setFavoritePlayer(name) {
+            const currentFav = localStorage.getItem('intrusion_favorite_player');
+            if (currentFav === name) {
+                localStorage.removeItem('intrusion_favorite_player');
+                localStorage.removeItem('intrusion_favorite_avatar');
+            } else {
+                localStorage.setItem('intrusion_favorite_player', name);
+                const history = getStoredPlayers();
+                const p = history.find(player => player.name === name);
+                if (p && p.avatar) {
+                    localStorage.setItem('intrusion_favorite_avatar', p.avatar);
+                } else {
+                    localStorage.removeItem('intrusion_favorite_avatar');
+                }
+            }
+            renderFullRoster();
         }
 
         function preparePreDebateView() {
@@ -2764,6 +3000,11 @@
             const p = players[playerIdx];
             if (!p) return 'view-mp-lobby';
 
+            // Si le joueur n'a pas encore mémorisé son rôle, il doit impérativement passer par l'écran de révélation
+            if (MP.memorizedPlayers && !MP.memorizedPlayers.includes(playerIdx)) {
+                return 'view-reveal';
+            }
+
             if (hostView === 'view-pass' || hostView === 'view-reveal') {
                 if (MP.memorizedPlayers && MP.memorizedPlayers.includes(playerIdx)) {
                     return 'view-pass'; // Déjà mémorisé
@@ -2924,8 +3165,10 @@
                     }
                 }
                 // Afficher le bouton "Passer" pour le joueur 1
+                // Afficher le bouton "Passer" uniquement pour l'hôte en ligne ou le joueur 1 en local
                 const skipBtn = document.getElementById('btn-skip-pair');
-                if (currentStep === 0) {
+                const isHostOrLocalFirst = MP.mode ? (MP.mode === 'host') : (currentStep === 0);
+                if (isHostOrLocalFirst) {
                     skipBtn.classList.remove('d-none');
                 } else {
                     skipBtn.classList.add('d-none');
@@ -2985,15 +3228,18 @@
                     players[i].role = rolesDeck[i].role;
                     players[i].word = rolesDeck[i].word;
                 }
-                // On envoie individuellement à chaque client son propre index
-                MP.connections.forEach((c, i) => {
-                    c.send({
-                        type: 'start_game',
-                        players: players,
-                        config: gameConfig,
-                        words: [currentPNJWord, currentInfiltreWord],
-                        myIndex: i + 1
-                    });
+                // On envoie individuellement à chaque client son propre index en se basant sur le pseudo stable
+                MP.connections.forEach((c) => {
+                    const clientIndex = players.findIndex(p => p.name === c.peerName);
+                    if (clientIndex !== -1) {
+                        c.send({
+                            type: 'start_game',
+                            players: players,
+                            config: gameConfig,
+                            words: [currentPNJWord, currentInfiltreWord],
+                            myIndex: clientIndex
+                        });
+                    }
                 });
                 revealIdentity(true);
             } else if (players.length === gameConfig.total) {
@@ -3056,9 +3302,35 @@
         function showNameInput(context = 'classic') {
             resetPhotoInput();
             const input = document.getElementById('inputPseudo');
-            input.value = localStorage.getItem('intrusion_last_name') || "";
-            if (localStorage.getItem('intrusion_last_avatar')) {
-                currentAvatarData = localStorage.getItem('intrusion_last_avatar');
+
+            const favName = localStorage.getItem('intrusion_favorite_player');
+            const favAvatar = localStorage.getItem('intrusion_favorite_avatar');
+
+            let nameToPropose = "";
+            let avatarToPropose = null;
+
+            if (favName) {
+                const isAlreadyInGame = players.some(p => p.name.toLowerCase() === favName.toLowerCase());
+                if (context === 'host' || context === 'client' || !isAlreadyInGame) {
+                    nameToPropose = favName;
+                    avatarToPropose = favAvatar;
+                }
+            }
+
+            // Si pas de profil préféré ou s'il est déjà dans la partie, on prend le dernier utilisé s'il n'est pas déjà dans la partie
+            if (!nameToPropose) {
+                const lastName = localStorage.getItem('intrusion_last_name') || "";
+                const lastAvatar = localStorage.getItem('intrusion_last_avatar') || null;
+                const isAlreadyInGame = players.some(p => p.name.toLowerCase() === lastName.toLowerCase());
+                if (context === 'host' || context === 'client' || !isAlreadyInGame) {
+                    nameToPropose = lastName;
+                    avatarToPropose = lastAvatar;
+                }
+            }
+
+            input.value = nameToPropose;
+            if (avatarToPropose) {
+                currentAvatarData = avatarToPropose;
                 document.getElementById('avatarPreview').innerHTML = `<img src="${currentAvatarData}" style="width:100%; height:100%; object-fit:cover;">`;
             } else {
                 currentAvatarData = null;
@@ -3073,9 +3345,6 @@
                 btn.innerText = "REJOINDRE LA SALLE";
                 btn.onclick = () => { saveCurrentProfile(); MP.initClient(); };
             } else {
-                input.value = ""; // Reset for classic mode next player
-                currentAvatarData = null;
-                document.getElementById('avatarPreview').innerHTML = `<i class="bi bi-person-fill fs-1 text-secondary"></i>`;
                 btn.innerText = "RÉVÉLER MON CODE";
                 btn.onclick = () => { revealIdentity(); };
             }
@@ -3128,9 +3397,9 @@
                     title.innerText = "AGENT"; title.style.color = '#fff'; desc.innerText = "Analyse les autres mots.";
                 }
             }
-            // Show skip button only for player 1 (currentStep === 0) or host in MP
             const skipBtn = document.getElementById('btn-skip-pair');
-            if (currentStep === 0 || (MP.mode === 'host')) {
+            const isHostOrLocalFirst = MP.mode ? (MP.mode === 'host') : (currentStep === 0);
+            if (isHostOrLocalFirst) {
                 skipBtn.classList.remove('d-none');
             } else {
                 skipBtn.classList.add('d-none');
@@ -3476,21 +3745,12 @@
             if (overlay) { overlay.classList.add('d-none'); }
         }
 
-        // --- VÉRIFICATION SESSION HÔTE / CLIENT AU CHARGEMENT ---
         (function checkSavedSession() {
             try {
                 const hostRaw = sessionStorage.getItem('intrusion_host_session');
                 const clientRaw = sessionStorage.getItem('intrusion_client_session');
-                const banner = document.getElementById('resume-session-banner');
-                const msg = document.getElementById('resume-session-msg');
-                if (hostRaw && banner) {
-                    const state = JSON.parse(hostRaw);
-                    if (msg) msg.innerText = `Partie interrompue en tant qu'Hôte (Code: ${state.roomId}).`;
-                    banner.classList.remove('d-none');
-                } else if (clientRaw && banner) {
-                    const state = JSON.parse(clientRaw);
-                    if (msg) msg.innerText = `Partie interrompue en tant que Joueur (Salle: ${state.roomId}).`;
-                    banner.classList.remove('d-none');
+                if (hostRaw || clientRaw) {
+                    MP.resumeSession();
                 }
             } catch (e) {
                 sessionStorage.removeItem('intrusion_host_session');
@@ -3504,7 +3764,7 @@
     <div id="host-room-code-btn" class="position-fixed d-none" style="top: 15px; right: 15px; z-index: 2000;">
         <button class="btn btn-sm btn-outline-info bg-dark fw-bold shadow"
             onclick="toggleHostOptionsModal(); SFX.click();">
-            <i class="bi bi-gear-fill"></i> Options (<span id="host-room-code-display"></span>)
+            <i class="bi bi-gear-fill"></i> Options<span id="host-room-code-display" class="d-none"></span>
         </button>
     </div>
 
@@ -3527,7 +3787,8 @@
 
             <div id="host-force-vote-section" class="d-none mb-3">
                 <hr class="border-secondary opacity-25">
-                <button onclick="hostForceResolveVote(); SFX.click()" class="btn btn-outline-warning w-100 py-2 fw-bold">
+                <button onclick="hostForceResolveVote(); SFX.click()"
+                    class="btn btn-outline-warning w-100 py-2 fw-bold">
                     <i class="bi bi-check-circle-fill me-2"></i> CLÔTURER LE VOTE
                 </button>
             </div>
@@ -3548,6 +3809,9 @@
             <hr class="border-secondary opacity-25">
 
             <p class="small text-warning mb-3">En cas de bug ou de problème de connexion :</p>
+            <button onclick="MP.resyncAllPlayers(); SFX.success()" class="btn btn-outline-info w-100 py-2 fw-bold mb-2">
+                <i class="bi bi-arrow-repeat"></i> RESYNCHRONISER LES JOUEURS
+            </button>
             <button onclick="hostForceRestart(); SFX.click()" class="btn btn-outline-danger w-100 py-3 fw-bold">
                 <i class="bi bi-arrow-counterclockwise"></i> REDÉMARRER LA PARTIE
             </button>
@@ -3555,8 +3819,11 @@
     </div>
 
     <!-- OVERLAY DE RECONNEXION -->
-    <div id="reconnecting-overlay" class="d-none position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 d-flex flex-column justify-content-center align-items-center" style="z-index: 4000; backdrop-filter: blur(5px);">
-        <div class="glass-card p-4 text-center" style="width: 90%; max-width: 350px; border: 1px solid var(--accent-neon);">
+    <div id="reconnecting-overlay"
+        class="d-none position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 d-flex flex-column justify-content-center align-items-center"
+        style="z-index: 4000; backdrop-filter: blur(5px);">
+        <div class="glass-card p-4 text-center"
+            style="width: 90%; max-width: 350px; border: 1px solid var(--accent-neon);">
             <div class="spinner-border text-warning mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
             <h5 class="brand-font text-warning">CONNEXION PERDUE</h5>
             <p id="reconnecting-msg" class="small text-muted mb-0">Tentative de reconnexion...</p>
