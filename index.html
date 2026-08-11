@@ -1540,9 +1540,15 @@
             },
 
             initHost: function () {
+                this.isDisconnecting = false;
                 this.mode = 'host';
                 this.generateRoomId();
                 const fullId = 'toupil-' + this.roomId;
+
+                if (this.peer) {
+                    try { this.peer.destroy(); } catch (e) { }
+                }
+
                 this.peer = new Peer(fullId);
                 this.updateStatus('CRÉATION...', 'connecting');
 
@@ -1561,7 +1567,7 @@
                     const placeholder = document.getElementById('mp-role-settings-placeholder');
                     const block = document.getElementById('role-settings-block');
                     if (placeholder && block) placeholder.appendChild(block);
-                    updateConfigFromSlider(1); // Set config for 1 player (host alone)
+                    updateConfigFromSlider(1);
 
                     showView('view-mp-lobby');
                     this.addSelfToLobby();
@@ -1569,7 +1575,10 @@
                 });
 
                 this.peer.on('connection', (conn) => {
+                    // Filtrage des connexions fermées pour éviter la désynchronisation
+                    this.connections = this.connections.filter(c => c.open);
                     this.connections.push(conn);
+
                     conn.on('data', (data) => this.handleData(data, conn));
                     conn.on('close', () => {
                         this.handleConnectionClose(conn);
@@ -1578,8 +1587,13 @@
 
                 this.peer.on('error', (err) => {
                     if (!this.isDisconnecting) {
-                        alert("Erreur réseau ou code introuvable.");
-                        this.disconnect();
+                        // Régénération de code si déjà pris par PeerJS après un refresh rapide
+                        if (err.type === 'unavailable-id') {
+                            this.initHost();
+                        } else {
+                            alert("Erreur réseau ou code introuvable.");
+                            this.disconnect();
+                        }
                     }
                 });
             },
@@ -1750,8 +1764,10 @@
                         }
                         break;
                     case 'join': {
-                        // Chercher une connexion existante avec ce nom (et un peer ID différent)
-                        const existingConnIndex = this.connections.findIndex(c => c.peerName === data.name && c.peer !== conn.peer);
+                        const cleanName = (data.name || '').trim();
+
+                        // 1. Fermeture des anciennes connexions mortes pour ce pseudo
+                        const existingConnIndex = this.connections.findIndex(c => c.peerName && c.peerName.trim().toLowerCase() === cleanName.toLowerCase() && c.peer !== conn.peer);
                         if (existingConnIndex !== -1) {
                             const existingConn = this.connections[existingConnIndex];
                             if (existingConn._graceTimeout) clearTimeout(existingConn._graceTimeout);
@@ -1759,22 +1775,37 @@
                             this.connections.splice(existingConnIndex, 1);
                         }
 
-                        if (this.me.name === data.name) {
-                            conn.send({ type: 'error', message: 'Ce pseudo est déjà utilisé dans cette salle.' });
+                        // 2. Empêcher d'utiliser le pseudo de l'hôte
+                        if (this.me.name.trim().toLowerCase() === cleanName.toLowerCase()) {
+                            conn.send({ type: 'error', message: 'Ce pseudo est déjà utilisé par l\'hôte.' });
                             return;
                         }
 
-                        conn.peerName = data.name;
+                        conn.peerName = cleanName;
                         conn.peerAvatar = data.avatar;
 
                         if (players.length > 0) {
-                            // Partie en cours → restaurer l'état
-                            const playerIdx = players.findIndex(p => p.name === data.name);
+                            // Partie en cours : recherche par nom
+                            let playerIdx = players.findIndex(p => p.name.trim().toLowerCase() === cleanName.toLowerCase());
+
+                            // REPLI INTELLIGENT : S'il n'y a qu'un seul joueur déconnecté dans la partie, on lui attribue cette connexion
+                            if (playerIdx === -1) {
+                                const disconnectedIndices = players.map((p, i) => ({ player: p, index: i }))
+                                    .filter(item => item.index !== 0 && !this.isPlayerConnected(item.index));
+
+                                if (disconnectedIndices.length === 1) {
+                                    playerIdx = disconnectedIndices[0].index;
+                                    conn.peerName = players[playerIdx].name; // Recalage du nom
+                                }
+                            }
+
                             if (playerIdx !== -1) {
+                                // Joueur identifié et réintégré
                                 players[playerIdx].peerId = conn.peer;
+
                                 const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                                this.displayChat('Système', `✅ ${data.name} est de retour !`, t, true);
-                                this.broadcast({ type: 'chat', name: 'Système', message: `✅ ${data.name} est de retour !`, time: t, system: true });
+                                this.displayChat('Système', `✅ ${players[playerIdx].name} est de retour !`, t, true);
+                                this.broadcast({ type: 'chat', name: 'Système', message: `✅ ${players[playerIdx].name} est de retour !`, time: t, system: true });
 
                                 const targetView = getReconnectingPlayerView(playerIdx);
                                 const progressData = {
@@ -1802,8 +1833,16 @@
                                 }
                                 conn.send(progressData);
                                 this.unblockPendingPhases();
+                            } else {
+                                // Partie en cours et impossible d'identifier le joueur : envoi d'un message d'erreur clair
+                                const activeNames = players.map(p => p.name).join(', ');
+                                conn.send({
+                                    type: 'error',
+                                    message: `Partie en cours. Pseudonyme "${cleanName}" inconnu. Joueurs dans la partie : ${activeNames}`
+                                });
                             }
                         } else {
+                            // En dehors d'une partie (dans le salon/lobby)
                             this.syncLobby();
                         }
                         break;
@@ -2501,9 +2540,24 @@
             resyncAllPlayers: function () {
                 if (this.mode !== 'host') return;
                 let sentCount = 0;
+
+                // Lister les emplacements de joueurs déconnectés
+                const disconnectedIndices = players.map((p, i) => ({ player: p, index: i }))
+                    .filter(item => item.index !== 0 && !this.isPlayerConnected(item.index));
+
                 this.connections.forEach(conn => {
-                    if (conn.open && conn.peerName) {
-                        const playerIdx = players.findIndex(p => p.name === conn.peerName);
+                    if (conn.open) {
+                        let playerIdx = -1;
+                        if (conn.peerName) {
+                            playerIdx = players.findIndex(p => p.name.trim().toLowerCase() === conn.peerName.trim().toLowerCase());
+                        }
+
+                        // Si non trouvé par nom mais qu'il y a un joueur déconnecté unique dans la partie
+                        if (playerIdx === -1 && disconnectedIndices.length === 1) {
+                            playerIdx = disconnectedIndices[0].index;
+                            conn.peerName = players[playerIdx].name;
+                        }
+
                         if (playerIdx !== -1) {
                             const targetView = getReconnectingPlayerView(playerIdx);
                             const progressData = {
@@ -2893,7 +2947,29 @@
             if (modal.classList.contains('d-none')) modal.classList.remove('d-none');
             else modal.classList.add('d-none');
         }
-        function confirmQuit() { location.reload(); }
+        function confirmQuit() {
+            MP.isDisconnecting = true;
+
+            // Purge de la session locale
+            MP.clearSession();
+
+            // Déconnexion réseau propre
+            if (MP.peer) {
+                try { MP.peer.destroy(); } catch (e) { }
+                MP.peer = null;
+            }
+            MP.connections = [];
+            MP.mode = null;
+            players = [];
+            currentStep = 0;
+
+            if (typeof timerInterval !== 'undefined' && timerInterval) {
+                clearInterval(timerInterval);
+            }
+
+            toggleQuitModal();
+            location.reload();
+        }
 
         function toggleHostOptionsModal() {
             const modal = document.getElementById('hostOptionsModal');
@@ -3749,15 +3825,30 @@
             try {
                 const hostRaw = sessionStorage.getItem('intrusion_host_session');
                 const clientRaw = sessionStorage.getItem('intrusion_client_session');
+
                 if (hostRaw || clientRaw) {
-                    MP.resumeSession();
+                    const banner = document.getElementById('resume-session-banner');
+                    const msgEl = document.getElementById('resume-session-msg');
+                    const parsed = JSON.parse(hostRaw || clientRaw);
+
+                    if (banner) {
+                        if (msgEl && parsed.roomId) {
+                            msgEl.innerText = `Une partie en cours (Code: ${parsed.roomId}) a été détectée.`;
+                        }
+                        // Affiche la bannière au lieu de forcer la reconnexion automatique
+                        banner.classList.remove('d-none');
+                    }
                 }
             } catch (e) {
                 sessionStorage.removeItem('intrusion_host_session');
                 sessionStorage.removeItem('intrusion_client_session');
             }
         })();
-
+        window.addEventListener('beforeunload', () => {
+            if (MP.peer && !MP.peer.destroyed) {
+                try { MP.peer.destroy(); } catch (e) { }
+            }
+        });
     </script>
 
     <!-- HOST ROOM CODE BUTTON -->
