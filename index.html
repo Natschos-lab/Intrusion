@@ -16,44 +16,60 @@
     <style>
         :root {
             /* DARK THEME (DEFAULT) */
-            --bg-grad-1: #020617;
-            --bg-grad-2: #1e1b4b;
-            --bg-grad-3: #310b1e;
-            --bg-grad-4: #0f172a;
-            --card-bg: rgba(15, 23, 42, 0.85);
+            --bg-grad-1: #030712;
+            --bg-grad-2: #0f172a;
+            --bg-grad-3: #1e1b4b;
+            --bg-grad-4: #111827;
+            --card-bg: rgba(15, 23, 42, 0.78);
             --primary-neon: #38bdf8;
+            --primary-glow: rgba(56, 189, 248, 0.35);
             --danger-neon: #f43f5e;
+            --danger-glow: rgba(244, 63, 94, 0.35);
             --accent-neon: #fbbf24;
+            --accent-glow: rgba(251, 191, 36, 0.35);
+            --purple-neon: #c084fc;
             --grey-neon: #94a3b8;
-            --text-main: #ffffff;
-            --text-muted: #ffffff;
-            --input-bg: #000000;
+            --text-main: #f8fafc;
+            --text-muted: rgba(255, 255, 255, 0.6);
+            --input-bg: rgba(0, 0, 0, 0.6);
             --input-text: #ffffff;
-            --border-color: rgba(255, 255, 255, 0.1);
+            --border-color: rgba(255, 255, 255, 0.12);
+            --card-border-glow: rgba(56, 189, 248, 0.15);
         }
 
         /* LIGHT THEME OVERRIDES */
         body.light-mode {
-            --bg-grad-1: #f0f9ff;
+            --bg-grad-1: #f8fafc;
             --bg-grad-2: #e0f2fe;
             --bg-grad-3: #fce7f3;
-            --bg-grad-4: #ffffff;
+            --bg-grad-4: #f1f5f9;
             --card-bg: rgba(255, 255, 255, 0.85);
             --primary-neon: #0284c7;
+            --primary-glow: rgba(2, 132, 199, 0.25);
             --danger-neon: #e11d48;
+            --danger-glow: rgba(225, 29, 72, 0.25);
             --accent-neon: #d97706;
+            --accent-glow: rgba(217, 119, 6, 0.25);
+            --purple-neon: #9333ea;
             --grey-neon: #64748b;
             --text-main: #0f172a;
             --text-muted: #475569;
             --input-bg: #ffffff;
             --input-text: #0f172a;
-            --border-color: rgba(0, 0, 0, 0.1);
+            --border-color: rgba(0, 0, 0, 0.12);
+            --card-border-glow: rgba(2, 132, 199, 0.12);
         }
 
         body {
-            background: linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2), var(--bg-grad-3), var(--bg-grad-4));
-            background-size: 400% 400%;
-            animation: cyberWave 15s ease infinite;
+            background-color: #0b0f19;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.35) 0%, transparent 45%),
+                radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.38) 0%, transparent 50%),
+                radial-gradient(circle at 25% 85%, rgba(244, 63, 94, 0.30) 0%, transparent 45%),
+                radial-gradient(circle at 85% 85%, rgba(56, 189, 248, 0.25) 0%, transparent 45%),
+                linear-gradient(135deg, #070b14, #0e172a, #1e153d, #2a0e28, #0e172a, #070b14);
+            background-size: 200% 200%, 200% 200%, 200% 200%, 200% 200%, 350% 350%;
+            animation: cyberWave 16s ease-in-out infinite alternate;
             color: var(--text-main);
             font-family: 'Poppins', sans-serif;
             min-height: 100vh;
@@ -63,28 +79,48 @@
             transition: color 0.3s, background 0.3s;
         }
 
+        body.light-mode {
+            background-color: #f8fafc;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(2, 132, 199, 0.16) 0%, transparent 45%),
+                radial-gradient(circle at 85% 30%, rgba(147, 51, 234, 0.16) 0%, transparent 50%),
+                radial-gradient(circle at 25% 85%, rgba(225, 29, 72, 0.14) 0%, transparent 45%),
+                linear-gradient(135deg, #f8fafc 0%, #e0f2fe 25%, #f3e8ff 55%, #ffe4e6 80%, #f8fafc 100%);
+            background-size: 200% 200%, 200% 200%, 200% 200%, 350% 350%;
+            animation: cyberWave 16s ease-in-out infinite alternate;
+        }
+
         @keyframes cyberWave {
             0% {
-                background-position: 0% 50%;
+                background-position: 0% 0%, 100% 0%, 0% 100%, 100% 100%, 0% 50%;
             }
-
             50% {
-                background-position: 100% 50%;
+                background-position: 100% 100%, 0% 100%, 100% 0%, 0% 0%, 100% 50%;
             }
-
             100% {
-                background-position: 0% 50%;
+                background-position: 50% 0%, 50% 100%, 100% 50%, 0% 50%, 0% 50%;
             }
         }
 
-        h1,
-        h2,
-        h3,
-        h4,
-        .brand-font {
+        /* --- TYPOGRAPHY & BRANDING --- */
+        h1, h2, h3, h4, .brand-font {
             font-family: 'Orbitron', sans-serif;
             letter-spacing: 2px;
             color: var(--text-main);
+        }
+
+        .brand-title-glow {
+            background: linear-gradient(135deg, #38bdf8 0%, #c084fc 50%, #f43f5e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.45));
+            letter-spacing: 4px;
+        }
+        body.light-mode .brand-title-glow {
+            background: linear-gradient(135deg, #0284c7 0%, #7e22ce 50%, #e11d48 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 2px 8px rgba(2, 132, 199, 0.25));
         }
 
         body.light-mode .text-white,
@@ -96,43 +132,57 @@
             color: #0f172a !important;
         }
 
-        label,
-        .form-label {
+        label, .form-label {
             color: var(--text-main) !important;
-            font-weight: 500;
+            font-weight: 600;
             opacity: 1 !important;
+            letter-spacing: 0.5px;
         }
 
+        /* --- GLASSMORPHIC CARDS --- */
         .glass-card {
             background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--border-color);
-            border-radius: 20px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s, background 0.3s;
+            border-radius: 24px;
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 1px 0 rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+            position: relative;
         }
 
-        /* --- INPUTS --- */
+        body.light-mode .glass-card {
+            box-shadow: 0 12px 36px 0 rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
+        }
+
+        /* --- INPUTS & CONTROLS --- */
         .cyber-input-group {
             display: flex;
-            border-radius: 12px;
+            border-radius: 14px;
             overflow: hidden;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            border: 1px solid var(--primary-neon);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
+            border: 1.5px solid var(--primary-neon);
+            transition: all 0.3s ease;
+        }
+
+        .cyber-input-group:focus-within {
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.4);
+            border-color: #60a5fa;
+            transform: translateY(-1px);
         }
 
         .cyber-label {
-            background-color: var(--primary-neon);
+            background: linear-gradient(135deg, var(--primary-neon), #2563eb);
             color: #fff;
             font-family: 'Orbitron', sans-serif;
             font-weight: 800;
-            padding: 0 15px;
+            padding: 0 18px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 0.9rem;
             text-transform: uppercase;
+            letter-spacing: 1px;
             min-width: 90px;
         }
 
@@ -141,209 +191,403 @@
             color: var(--input-text) !important;
             caret-color: var(--primary-neon);
             border: none;
-            padding: 15px;
+            padding: 16px;
             font-family: 'Poppins', sans-serif;
             font-weight: bold;
             font-size: 1.2rem;
             width: 100%;
             outline: none;
+            transition: background-color 0.3s;
         }
 
-        /* --- STATS BOXES --- */
+        /* Range Slider Styling (Neon Track & Centered Round Thumb) */
+        .form-range {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 8px;
+            background: linear-gradient(90deg, #38bdf8 0%, #a855f7 100%);
+            box-shadow: 0 0 14px rgba(56, 189, 248, 0.6), 0 0 25px rgba(168, 85, 247, 0.45);
+            outline: none;
+            border: none;
+            padding: 0;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+
+        body.light-mode .form-range {
+            background: linear-gradient(90deg, #0284c7 0%, #9333ea 100%);
+            box-shadow: 0 0 10px rgba(2, 132, 199, 0.35), 0 0 20px rgba(147, 51, 234, 0.25);
+        }
+
+        /* WebKit Track */
+        .form-range::-webkit-slider-runnable-track {
+            height: 8px;
+            border-radius: 8px;
+            background: linear-gradient(90deg, #38bdf8 0%, #a855f7 100%);
+            box-shadow: 0 0 14px rgba(56, 189, 248, 0.6), 0 0 25px rgba(168, 85, 247, 0.45);
+            border: none;
+        }
+
+        /* WebKit Thumb (Perfect Round & Centered) */
+        .form-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 2px solid #38bdf8;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.8), 0 2px 6px rgba(0, 0, 0, 0.4);
+            cursor: pointer;
+            margin-top: -7px;
+            transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease;
+        }
+
+        /* Firefox Track */
+        .form-range::-moz-range-track {
+            height: 8px;
+            border-radius: 8px;
+            background: linear-gradient(90deg, #38bdf8 0%, #a855f7 100%);
+            box-shadow: 0 0 14px rgba(56, 189, 248, 0.6), 0 0 25px rgba(168, 85, 247, 0.45);
+            border: none;
+        }
+
+        /* Firefox Thumb */
+        .form-range::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 2px solid #38bdf8;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.8), 0 2px 6px rgba(0, 0, 0, 0.4);
+            cursor: pointer;
+            transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease;
+        }
+
+        .form-range::-webkit-slider-thumb:hover, .form-range:active::-webkit-slider-thumb {
+            transform: scale(1.25);
+            box-shadow: 0 0 18px rgba(56, 189, 248, 1), 0 0 25px #ffffff;
+        }
+
+        .form-range::-moz-range-thumb:hover, .form-range:active::-moz-range-thumb {
+            transform: scale(1.25);
+            box-shadow: 0 0 18px rgba(56, 189, 248, 1), 0 0 25px #ffffff;
+        }
+
+        /* --- STATS / ROLE BOXES --- */
         .stat-box {
-            background: rgba(125, 125, 125, 0.1);
-            border: 2px solid var(--border-color);
-            border-radius: 15px;
-            padding: 10px 5px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1.5px solid var(--border-color);
+            border-radius: 18px;
+            padding: 12px 8px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            min-height: 100px;
-            transition: all 0.2s;
-            backdrop-filter: blur(5px);
+            min-height: 105px;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(8px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-box::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+            background: transparent;
+            transition: background 0.3s;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
         }
 
         .stat-box:active {
-            transform: scale(0.95);
+            transform: scale(0.96);
         }
 
         .box-infiltre {
-            border-color: var(--danger-neon);
+            border-color: rgba(244, 63, 94, 0.4);
+            background: rgba(244, 63, 94, 0.06);
         }
-
-        .box-infiltre .role-name {
-            color: var(--danger-neon);
-        }
+        .box-infiltre::before { background: var(--danger-neon); }
+        .box-infiltre .role-name { color: var(--danger-neon); }
+        .box-infiltre:hover { border-color: var(--danger-neon); box-shadow: 0 0 20px var(--danger-glow); }
 
         .box-inconnu {
-            border-color: var(--grey-neon);
+            border-color: rgba(192, 132, 252, 0.4);
+            background: rgba(192, 132, 252, 0.06);
         }
-
-        .box-inconnu .role-name {
-            color: var(--grey-neon);
-        }
+        .box-inconnu::before { background: var(--purple-neon); }
+        .box-inconnu .role-name { color: var(--purple-neon); }
+        .box-inconnu:hover { border-color: var(--purple-neon); box-shadow: 0 0 20px rgba(192, 132, 252, 0.35); }
 
         .box-pnj {
-            border-color: var(--primary-neon);
+            border-color: rgba(56, 189, 248, 0.4);
+            background: rgba(56, 189, 248, 0.06);
         }
-
-        .box-pnj .role-name {
-            color: var(--primary-neon);
-        }
+        .box-pnj::before { background: var(--primary-neon); }
+        .box-pnj .role-name { color: var(--primary-neon); }
+        .box-pnj:hover { border-color: var(--primary-neon); box-shadow: 0 0 20px var(--primary-glow); }
 
         .role-name {
             font-family: 'Orbitron', sans-serif;
-            font-size: 0.7rem;
-            font-weight: bold;
+            font-size: 0.72rem;
+            font-weight: 800;
             text-transform: uppercase;
-            margin-bottom: 5px;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
         }
 
         .role-count {
-            font-size: 1.8rem;
-            font-weight: 700;
+            font-size: 2rem;
+            font-weight: 800;
             color: var(--text-main);
             line-height: 1;
+            font-family: 'Orbitron', sans-serif;
         }
 
-        /* --- CONTROLS --- */
+        /* --- CONTROL BUTTONS (+ / -) --- */
         .ctrl-btn {
-            width: 30px;
-            height: 30px;
+            width: 32px;
+            height: 32px;
             padding: 0;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
             font-weight: bold;
-            font-family: 'Courier New', monospace;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
             cursor: pointer;
-            transition: 0.1s;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .ctrl-minus {
-            border: 1px solid var(--danger-neon);
+            border: 1.5px solid var(--danger-neon);
             color: var(--danger-neon);
-            background: transparent;
+            background: rgba(244, 63, 94, 0.1);
+        }
+        .ctrl-minus:hover {
+            background: var(--danger-neon);
+            color: #ffffff;
+            box-shadow: 0 0 12px var(--danger-neon);
         }
 
         .ctrl-plus {
-            border: 1px solid var(--primary-neon);
+            border: 1.5px solid var(--primary-neon);
             color: var(--primary-neon);
-            background: transparent;
+            background: rgba(56, 189, 248, 0.1);
+        }
+        .ctrl-plus:hover {
+            background: var(--primary-neon);
+            color: #ffffff;
+            box-shadow: 0 0 12px var(--primary-neon);
         }
 
         .ctrl-btn:active {
-            background: rgba(125, 125, 125, 0.2);
-            transform: scale(0.9);
+            transform: scale(0.85);
         }
 
         .ctrl-btn.disabled {
-            opacity: 0.3;
+            opacity: 0.25;
             cursor: not-allowed;
             border-color: #555;
             color: #555;
+            background: transparent;
+            box-shadow: none;
         }
 
         /* --- BUTTONS --- */
         .btn {
-            transition: all 0.1s ease-in-out;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 1px;
+            border-radius: 14px;
+            position: relative;
         }
 
         .btn:active {
-            transform: scale(0.96);
+            transform: scale(0.95);
         }
 
         .btn-neon {
-            background: linear-gradient(45deg, var(--primary-neon), #3b82f6);
+            background: linear-gradient(135deg, var(--primary-neon) 0%, #2563eb 100%);
             border: none;
-            color: #fff;
-            font-weight: 700;
-            font-family: 'Orbitron', sans-serif;
+            color: #fff !important;
+            font-weight: 800;
             text-transform: uppercase;
-            padding: 12px 20px;
-            border-radius: 12px;
-            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+            padding: 14px 24px;
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4), 0 0 25px var(--primary-glow);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .btn-neon::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(60deg, transparent 35%, rgba(255, 255, 255, 0.3) 50%, transparent 65%);
+            transform: rotate(25deg) translateX(-160%);
+            transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .btn-neon:hover {
+            box-shadow: 0 8px 32px rgba(37, 99, 235, 0.6), 0 0 40px var(--primary-glow);
+            transform: translateY(-3px) scale(1.01);
+            color: #fff;
+        }
+
+        .btn-neon:hover::after {
+            transform: rotate(25deg) translateX(160%);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            border: none;
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.35), 0 0 25px var(--accent-glow);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-warning:hover {
+            box-shadow: 0 8px 32px rgba(245, 158, 11, 0.6), 0 0 35px var(--accent-glow);
+            transform: translateY(-3px) scale(1.01);
         }
 
         .btn-stop {
-            background: rgba(125, 125, 125, 0.1);
-            border: 1px solid var(--danger-neon);
+            background: rgba(244, 63, 94, 0.08);
+            border: 1.5px solid var(--danger-neon);
             color: var(--danger-neon);
-            font-family: 'Orbitron', sans-serif;
             font-weight: bold;
             padding: 15px 20px;
-            border-radius: 12px;
+            border-radius: 14px;
+            box-shadow: 0 0 15px rgba(244, 63, 94, 0.2);
+            transition: all 0.25s ease;
+        }
+
+        .btn-stop:hover {
+            background: var(--danger-neon);
+            color: #ffffff;
+            box-shadow: 0 0 30px var(--danger-neon), 0 6px 20px rgba(244, 63, 94, 0.4);
+            transform: translateY(-2px);
         }
 
         .btn-history {
-            background: rgba(125, 125, 125, 0.1);
-            border: 1px solid var(--primary-neon);
+            background: rgba(56, 189, 248, 0.08);
+            border: 1.5px solid var(--primary-neon);
             color: var(--primary-neon);
-            border-radius: 12px;
+            border-radius: 14px;
             padding: 0 20px;
             font-size: 1.5rem;
-            transition: 0.3s;
+            transition: all 0.25s ease;
         }
 
-        .btn-history:active {
+        .btn-history:hover, .btn-history:active {
             background: var(--primary-neon);
             color: white;
+            box-shadow: 0 0 25px var(--primary-neon);
+            transform: translateY(-2px);
+        }
+
+        /* Vote Candidate Card Animations */
+        .btn-vote {
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-vote:hover {
+            transform: translateX(4px) scale(1.01);
+            border-color: var(--primary-neon) !important;
+            box-shadow: 0 4px 20px rgba(56, 189, 248, 0.25);
+            background: rgba(56, 189, 248, 0.1) !important;
+        }
+
+        .btn-vote .bi-crosshair {
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease, filter 0.3s ease;
+        }
+
+        .btn-vote:hover .bi-crosshair {
+            transform: rotate(90deg) scale(1.25);
+            color: #ff4d6d !important;
+            filter: drop-shadow(0 0 10px #f43f5e);
         }
 
         .roster-item {
-            background: rgba(125, 125, 125, 0.05);
+            background: rgba(255, 255, 255, 0.04);
             border: 1px solid var(--border-color);
             color: var(--text-main);
-            padding: 10px 15px;
-            border-radius: 12px;
+            padding: 12px 16px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             margin-bottom: 10px;
+            transition: all 0.25s ease;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .roster-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--primary-neon);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
         .stat-badge {
-            font-size: 0.7rem;
-            font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            padding: 4px 8px;
+            border-radius: 6px;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .btn-quit {
             position: fixed;
-            top: 15px;
-            left: 15px;
+            top: 18px;
+            left: 18px;
             z-index: 100;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--danger-neon);
+            background: rgba(15, 23, 42, 0.75);
+            border: 1.5px solid var(--danger-neon);
             color: var(--danger-neon);
-            width: 45px;
-            height: 45px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
-            transition: all 0.3s;
-            backdrop-filter: blur(4px);
+            font-size: 1.1rem;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 0 15px rgba(244, 63, 94, 0.25);
         }
 
-        .btn-quit:active {
+        .btn-quit:hover, .btn-quit:active {
             background: var(--danger-neon);
             color: white;
-            transform: scale(0.9);
+            transform: scale(1.08);
+            box-shadow: 0 0 25px var(--danger-neon);
         }
 
-        /* --- CORRECTION BUG SCROLL --- */
+        /* --- SCROLL CONTAINERS --- */
         .history-scroll-container {
             overflow-y: auto;
             flex-grow: 1;
             min-height: 0;
             margin-bottom: 15px;
-            padding-right: 5px;
+            padding-right: 6px;
         }
 
         .history-scroll-container::-webkit-scrollbar {
@@ -351,69 +595,84 @@
         }
 
         .history-scroll-container::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
         }
 
         .history-scroll-container::-webkit-scrollbar-thumb {
             background: var(--primary-neon);
             border-radius: 3px;
+            box-shadow: 0 0 6px var(--primary-neon);
         }
 
         .history-item {
-            background: rgba(125, 125, 125, 0.1);
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border-color);
             color: var(--text-main);
-            padding: 10px 15px;
-            border-radius: 12px;
+            padding: 12px 18px;
+            border-radius: 14px;
             cursor: pointer;
             text-align: left;
-            transition: 0.2s;
+            transition: all 0.2s ease;
             position: relative;
             user-select: none;
             margin-bottom: 10px;
-            margin-top: 5px;
             display: flex;
             align-items: center;
             gap: 15px;
         }
 
+        .history-item:hover {
+            background: rgba(56, 189, 248, 0.12);
+            border-color: var(--primary-neon);
+            transform: translateY(-1px);
+        }
+
         .history-item:active {
-            background: rgba(56, 189, 248, 0.2);
+            background: rgba(56, 189, 248, 0.25);
             transform: scale(0.98);
         }
 
+        /* --- TIMER --- */
         .timer-display {
-            font-size: 5rem;
+            font-size: 5.5rem;
             font-family: 'Orbitron', sans-serif;
             font-weight: 900;
             color: var(--text-main);
             transition: color 0.3s;
+            text-shadow: 0 0 25px rgba(56, 189, 248, 0.45);
+            letter-spacing: 3px;
+        }
+
+        #timerBar {
+            background-size: 28px 28px;
+            background-image: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.25) 25%,
+                transparent 25%,
+                transparent 50%,
+                rgba(255, 255, 255, 0.25) 50%,
+                rgba(255, 255, 255, 0.25) 75%,
+                transparent 75%,
+                transparent
+            );
+            animation: moveStripes 1.2s linear infinite;
+            box-shadow: 0 0 15px currentColor;
+            transition: width 1s linear, background-color 0.3s ease;
+        }
+
+        @keyframes moveStripes {
+            0% { background-position: 0 0; }
+            100% { background-position: 28px 0; }
         }
 
         @keyframes heartbeat {
-            0% {
-                transform: scale(1);
-            }
-
-            15% {
-                transform: scale(1.1);
-            }
-
-            30% {
-                transform: scale(1);
-            }
-
-            45% {
-                transform: scale(1.1);
-            }
-
-            60% {
-                transform: scale(1);
-            }
-
-            100% {
-                transform: scale(1);
-            }
+            0% { transform: scale(1); filter: drop-shadow(0 0 10px var(--danger-neon)); }
+            15% { transform: scale(1.08); filter: drop-shadow(0 0 30px var(--danger-neon)); }
+            30% { transform: scale(1); filter: drop-shadow(0 0 10px var(--danger-neon)); }
+            45% { transform: scale(1.08); filter: drop-shadow(0 0 30px var(--danger-neon)); }
+            60% { transform: scale(1); filter: drop-shadow(0 0 10px var(--danger-neon)); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 10px var(--danger-neon)); }
         }
 
         .timer-urgent {
@@ -421,25 +680,16 @@
             animation: heartbeat 1s infinite;
         }
 
-        .eliminated-role {
-            font-size: 2.5rem;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 900;
-            margin: 20px 0;
-            text-transform: uppercase;
-        }
-
         /* --- ANIMATIONS & TRANSITIONS --- */
         .fade-in {
-            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            animation: popIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         @keyframes popIn {
             from {
                 opacity: 0;
-                transform: scale(0.95) translateY(10px);
+                transform: scale(0.96) translateY(12px);
             }
-
             to {
                 opacity: 1;
                 transform: scale(1) translateY(0);
@@ -447,7 +697,7 @@
         }
 
         .fade-out {
-            animation: fadeOut 0.3s forwards;
+            animation: fadeOut 0.25s forwards cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         @keyframes fadeOut {
@@ -455,44 +705,19 @@
                 opacity: 1;
                 transform: scale(1);
             }
-
             to {
                 opacity: 0;
-                transform: scale(0.95);
+                transform: scale(0.96);
             }
         }
 
-        /* Effet de choc rouge lors de l'élimination */
         @keyframes shockwave {
-            0% {
-                box-shadow: inset 0 0 0 red;
-                background: rgba(255, 0, 0, 0);
-                transform: translate(0, 0);
-            }
-
-            10% {
-                box-shadow: inset 0 0 100px red;
-                background: rgba(255, 0, 0, 0.2);
-                transform: translate(-5px, 5px);
-            }
-
-            20% {
-                transform: translate(5px, -5px);
-            }
-
-            30% {
-                transform: translate(-5px, 5px);
-            }
-
-            40% {
-                transform: translate(5px, -5px);
-            }
-
-            100% {
-                box-shadow: inset 0 0 0 red;
-                background: transparent;
-                transform: translate(0, 0);
-            }
+            0% { box-shadow: inset 0 0 0 red; background: rgba(255, 0, 0, 0); transform: translate(0, 0); }
+            10% { box-shadow: inset 0 0 120px red; background: rgba(255, 0, 0, 0.25); transform: translate(-6px, 6px); }
+            20% { transform: translate(6px, -6px); }
+            30% { transform: translate(-6px, 6px); }
+            40% { transform: translate(6px, -6px); }
+            100% { box-shadow: inset 0 0 0 red; background: transparent; transform: translate(0, 0); }
         }
 
         .elimination-shock {
@@ -504,244 +729,294 @@
             background-color: var(--input-bg) !important;
             border: 2px solid var(--accent-neon) !important;
             font-weight: bold;
-            letter-spacing: 1px;
-            font-family: 'Poppins', sans-serif;
+            letter-spacing: 2px;
+            font-family: 'Orbitron', sans-serif;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.2);
+            border-radius: 14px;
         }
 
-        .btn-check:checked+.btn-outline-secondary {
-            background-color: var(--text-main);
-            color: var(--card-bg);
-            border-color: var(--text-main);
-        }
-
-        .btn-check:not(:checked)+.btn-outline-secondary {
-            color: var(--text-main);
-            border-color: var(--border-color);
-        }
-
-        .btn-check:checked+.btn-outline-custom {
-            background-color: var(--primary-neon);
-            color: #fff;
-            border-color: var(--primary-neon);
-        }
-
-        .btn-check:not(:checked)+.btn-outline-custom {
-            color: var(--text-main);
-            border-color: var(--border-color);
-        }
-
-        /* --- MULTIPLAYER UI --- */
+        /* --- MULTIPLAYER ROOM & PLAYERS --- */
         .room-code-display {
             font-family: 'Orbitron', sans-serif;
-            font-size: 2.5rem;
-            letter-spacing: 5px;
+            font-size: 2.8rem;
+            letter-spacing: 8px;
             color: var(--accent-neon);
-            text-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.5), 0 0 40px rgba(251, 191, 36, 0.2);
             margin: 15px 0;
+            font-weight: 900;
+            animation: neonPulse 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes neonPulse {
+            0% {
+                text-shadow: 0 0 15px rgba(251, 191, 36, 0.4), 0 0 30px rgba(251, 191, 36, 0.2);
+                transform: scale(1);
+            }
+            100% {
+                text-shadow: 0 0 25px rgba(251, 191, 36, 0.8), 0 0 50px rgba(251, 191, 36, 0.45);
+                transform: scale(1.02);
+            }
         }
 
         .connection-status {
             font-size: 0.8rem;
-            padding: 4px 12px;
+            padding: 5px 14px;
             border-radius: 20px;
             margin-bottom: 20px;
             display: inline-block;
+            font-weight: 700;
+            letter-spacing: 1px;
+            font-family: 'Orbitron', sans-serif;
         }
 
         .status-online {
-            background: rgba(34, 197, 94, 0.2);
+            background: rgba(34, 197, 94, 0.15);
             color: #4ade80;
-            border: 1px solid #22c55e;
+            border: 1.5px solid #22c55e;
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.25);
         }
 
         .status-offline {
-            background: rgba(244, 63, 94, 0.2);
+            background: rgba(244, 63, 94, 0.15);
             color: #fb7185;
-            border: 1px solid #f43f5e;
+            border: 1.5px solid #f43f5e;
+            box-shadow: 0 0 15px rgba(244, 63, 94, 0.25);
         }
 
         .status-connecting {
-            background: rgba(56, 189, 248, 0.2);
+            background: rgba(56, 189, 248, 0.15);
             color: #38bdf8;
-            border: 1px solid #38bdf8;
+            border: 1.5px solid #38bdf8;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
         }
 
         .player-pill {
-            background: rgba(125, 125, 125, 0.1);
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border-color);
             border-radius: 50px;
-            padding: 5px 15px;
+            padding: 8px 18px;
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 8px;
-            transition: all 0.3s;
+            gap: 12px;
+            margin-bottom: 10px;
+            transition: all 0.25s ease;
+            color: var(--text-main);
+        }
+
+        .player-pill:hover {
+            background: rgba(255, 255, 255, 0.09);
+            border-color: var(--primary-neon);
+            transform: translateX(3px);
         }
 
         .player-pill.ready {
             border-color: var(--primary-neon);
-            box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
         }
 
         .player-pill.host {
             border-color: var(--accent-neon);
+            background: rgba(251, 191, 36, 0.08);
         }
 
         .player-pill .host-badge {
-            font-size: 0.6rem;
-            background: var(--accent-neon);
+            font-size: 0.65rem;
+            background: linear-gradient(135deg, var(--accent-neon), #d97706);
             color: #000;
-            padding: 1px 5px;
-            border-radius: 4px;
-            font-weight: 800;
-        }
-
-        .vote-wait-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 20px;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 900;
+            letter-spacing: 0.5px;
         }
 
         /* --- VOTE TRACKER --- */
-        .vote-tracker {
-            width: 100%;
-            margin-top: 20px;
-        }
-
-        .vote-tracker-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--grey-neon);
-            margin-bottom: 12px;
-        }
-
-        .vote-tracker-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            justify-content: center;
-        }
-
         .vote-tracker-pill {
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 6px 14px;
+            padding: 7px 16px;
             border-radius: 50px;
-            font-size: 0.8rem;
+            font-size: 0.82rem;
             font-weight: 600;
-            transition: all 0.4s ease;
+            transition: all 0.35s ease;
             border: 1px solid var(--border-color);
-            background: rgba(125, 125, 125, 0.08);
+            background: rgba(255, 255, 255, 0.06);
         }
 
         .vote-tracker-pill.has-voted {
             border-color: #22c55e;
-            background: rgba(34, 197, 94, 0.12);
-            box-shadow: 0 0 10px rgba(34, 197, 94, 0.15);
-        }
-
-        .vote-tracker-pill.has-voted .vote-status-icon {
-            color: #4ade80;
-        }
-
-        .vote-tracker-pill.has-voted .vote-player-name {
-            color: #4ade80;
+            background: rgba(34, 197, 94, 0.15);
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.25);
         }
 
         .vote-tracker-pill.waiting {
             border-color: var(--border-color);
-            opacity: 0.6;
+            opacity: 0.65;
         }
 
-        .vote-tracker-pill.waiting .vote-status-icon {
-            color: var(--grey-neon);
-            animation: pulse-waiting 1.5s ease-in-out infinite;
-        }
-
-        .vote-tracker-pill.waiting .vote-player-name {
-            color: var(--grey-neon);
-        }
-
-        @keyframes pulse-waiting {
-
-            0%,
-            100% {
-                opacity: 0.4;
-            }
-
-            50% {
-                opacity: 1;
-            }
-        }
-
-        .vote-tracker-pill .vote-avatar {
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        .vote-tracker-pill .vote-avatar-placeholder {
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            background: rgba(125, 125, 125, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.7rem;
-        }
-
-        .vote-player-name {
-            color: var(--text-main);
-            max-width: 100px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .vote-status-icon {
-            font-size: 0.9rem;
-        }
-
+        /* --- CHAT TOGGLE BUTTON --- */
         #btn-mp-toggle {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
+            bottom: 24px;
+            right: 24px;
             z-index: 1000;
-            width: 60px;
-            height: 60px;
+            width: 58px;
+            height: 58px;
             border-radius: 50%;
-            background: var(--primary-neon);
+            background: linear-gradient(135deg, var(--primary-neon), #2563eb);
             color: white;
             border: none;
-            box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+            box-shadow: 0 6px 25px rgba(56, 189, 248, 0.5);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.5rem;
-            transition: all 0.3s;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        #btn-mp-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 30px rgba(56, 189, 248, 0.7);
         }
 
         #btn-mp-toggle:active {
-            transform: scale(0.9);
+            transform: scale(0.92);
         }
 
-        #btn-mp-toggle.active {
-            background: var(--danger-neon);
-            box-shadow: 0 0 20px rgba(244, 63, 94, 0.5);
+        /* --- THEME & CONTRAST HELPERS --- */
+        .text-muted {
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
+        body.light-mode .text-muted {
+            color: #475569 !important;
+        }
+
+        .text-light {
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+        body.light-mode .text-light {
+            color: #1e293b !important;
+        }
+
+        .alert-dark {
+            background: rgba(255, 255, 255, 0.06) !important;
+            border-color: rgba(255, 255, 255, 0.15) !important;
+            color: var(--text-main) !important;
+            border-radius: 16px;
+        }
+        body.light-mode .alert-dark {
+            background: rgba(0, 0, 0, 0.05) !important;
+            border-color: rgba(0, 0, 0, 0.12) !important;
+            color: #1e293b !important;
+        }
+
+        /* Mode Toggle (Secret / Révélé) & Generic outline custom */
+        .btn-outline-custom {
+            color: var(--text-main);
+            border: 1.5px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-outline-custom:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary-neon);
+            color: #ffffff;
+        }
+
+        .btn-check:checked + .btn-outline-custom {
+            background: linear-gradient(135deg, var(--primary-neon), #2563eb) !important;
+            color: #ffffff !important;
+            border-color: var(--primary-neon) !important;
+            box-shadow: 0 0 20px var(--primary-glow), 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+            font-weight: 800 !important;
+            transform: scale(1.02);
+            z-index: 2;
+        }
+
+        .btn-check:not(:checked) + .btn-outline-custom {
+            background: rgba(255, 255, 255, 0.04) !important;
+            color: var(--text-muted) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        body.light-mode .btn-check:not(:checked) + .btn-outline-custom {
+            background: rgba(0, 0, 0, 0.04) !important;
+            color: #64748b !important;
+        }
+
+        /* Secondary Button */
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08) !important;
+            border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
+            color: #f8fafc !important;
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.16) !important;
+            border-color: rgba(255, 255, 255, 0.3) !important;
+            color: #ffffff !important;
+        }
+
+        /* Roster Database Scroll Container */
+        #roster-list-container {
+            max-height: 55vh;
+            overflow-y: auto;
+            overflow-x: hidden !important;
+            padding-right: 6px;
+        }
+
+        #roster-list-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #roster-list-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        #roster-list-container::-webkit-scrollbar-thumb {
+            background: var(--primary-neon);
+            border-radius: 4px;
+            box-shadow: 0 0 6px var(--primary-neon);
+        }
+
+        .victory-text {
+            text-shadow: 0 0 35px currentColor, 0 0 70px currentColor;
+            letter-spacing: 4px;
+        }
+
+        .eliminated-role {
+            font-size: 2.8rem;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            margin: 20px 0;
+            text-transform: uppercase;
+            text-shadow: 0 0 25px currentColor;
+            letter-spacing: 3px;
+        }
+
+        /* --- MODAL POP ANIMATIONS --- */
+        div[id^="modal-"] .glass-card {
+            animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes modalPop {
+            from {
+                transform: scale(0.92) translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
         }
     </style>
 </head>
 
 <body class="">
 
-    <video id="noSleepVideo" playsinline loop muted class="d-none">
+    <video id="noSleepVideo" playsinline loop muted style="position: absolute; width: 1px; height: 1px; opacity: 0.01; pointer-events: none; top: 0; left: 0; z-index: -1000;">
         <source
             src="data:video/mp4;base64,AAAAHGZ0eXBpc29tAAACAGlzb21pc28ybXA0MQAAAAhmcmVlAAAAG21kYXQAAAGzABAHAAABthADAQBAAAACAAAABGdmoQAAABBjbXJhdAAAAAMAAQAAAAAAIHN0Y28AAAAAAAAAAQAAAC50cmFrAAAAXHRraGQAAAADAAAAAQAAAAAAAgAAAAAAWQAAAAEAAAAAAAAAAQAAAAAAAAAAAABmdGlhAAAAAAAUAAAEAQAAAAAAAAABAAAAACRtaW5mAAAAEHNtYWQAAAAAAAAAAAAAAAhkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAAFBzdGJsAAAAZHN0c2QAAAAAAAAAAQAAAFRhdmMxAAAAAQAAAAEAAAAAAAEAAAAAAAEAAQAAAAAAAAAAAAAABAEAAAAAAAgAAAAAEWh2Y0MBAAAAAgAAAAMAAAACc3R0cwAAAAAAAAABAAAAAgAAABBzdHN6AAAAAAAAAAEAAAACAAAAKHN0c2MAAAAAAAAAAQAAAAEAAAACAAAAAQAAABBzdGNvAAAAAAAAAAEAAAAsAAAAYdRyYXQAAAAA"
             type="video/mp4">
@@ -754,7 +1029,7 @@
     <div class="container py-4">
 
         <div class="text-center mb-4 fade-in">
-            <h1 class="display-5 fw-bold brand-font">
+            <h1 class="display-5 fw-bold brand-font brand-title-glow">
                 <i class="bi bi-incognito"></i> INTRUSION
             </h1>
         </div>
@@ -857,14 +1132,6 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="form-check form-switch mb-4 d-flex justify-content-center gap-2 align-items-center">
-                        <input class="form-check-input" type="checkbox" role="switch" id="optWakeLock" checked
-                            style="width: 50px; height: 25px; cursor: pointer;">
-                        <label class="form-check-label small text-uppercase" for="optWakeLock">
-                            <i class="bi bi-brightness-high"></i> Écran allumé
-                        </label>
                     </div>
 
                     <div class="p-3 border border-secondary rounded mb-4 bg-dark bg-opacity-25">
@@ -984,7 +1251,7 @@
                         </button>
                     </div>
 
-                    <div id="roster-list-container" class="mb-4" style="max-height: 60vh; overflow-y: auto;">
+                    <div id="roster-list-container" class="mb-4">
                     </div>
 
                     <button onclick="showView('view-setup'); SFX.click()" class="btn btn-secondary w-100">RETOUR
@@ -1848,10 +2115,15 @@
                         break;
                     }
                     case 'error':
+                        hideReconnectingOverlay();
                         alert(data.message);
                         this.disconnect();
                         break;
                     case 'sync_lobby':
+                        hideReconnectingOverlay();
+                        if (!players || players.length === 0) {
+                            showView('view-mp-lobby');
+                        }
                         this.renderLobby(data.players);
                         break;
                     case 'start_game':
@@ -2092,13 +2364,31 @@
 
             syncLobby: function () {
                 if (this.mode !== 'host') return;
+                
+                // Nettoyage des connexions fermées ou mortes (WebRTC)
+                this.connections = this.connections.filter(c => {
+                    if (!c.open) return false;
+                    if (c.peerConnection) {
+                        const state = c.peerConnection.connectionState;
+                        const iceState = c.peerConnection.iceConnectionState;
+                        if (state === 'disconnected' || state === 'failed' || state === 'closed' ||
+                            iceState === 'disconnected' || iceState === 'failed' || iceState === 'closed') {
+                            try { c.close(); } catch(e){}
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+
                 const lobbyPlayers = [{ name: this.me.name, avatar: this.me.avatar, isHost: true }];
                 this.connections.forEach(c => {
-                    lobbyPlayers.push({ name: c.peerName || '...', avatar: c.peerAvatar });
+                    if (c.peerName) {
+                        lobbyPlayers.push({ name: c.peerName, avatar: c.peerAvatar });
+                    }
                 });
                 this.renderLobby(lobbyPlayers);
                 this.broadcast({ type: 'sync_lobby', players: lobbyPlayers });
-                updateConfigFromSlider(lobbyPlayers.length);
+                updateConfigFromSlider(lobbyPlayers.length, false);
             },
 
             renderLobby: function (list) {
@@ -2153,6 +2443,11 @@
                 this.memorizedCount = 0;
                 this.stopTimerVotes = 0;
                 this.memorizedPlayers = [];
+
+                // Effacer la session hôte : l'état de jeu en mémoire ne survit pas à un refresh
+                // Seul le lobby peut être repris après un refresh
+                sessionStorage.removeItem('intrusion_host_session');
+
                 // Setup roles locally
                 initGame(true); // true means networking mode
 
@@ -2302,12 +2597,18 @@
                     let victimIdx = -1; let maxVotes = 0;
                     for (let idx in tallies) { if (tallies[idx] > maxVotes) { maxVotes = tallies[idx]; victimIdx = parseInt(idx); } }
 
-                    if (players[victimIdx].role === 'Inconnu') {
-                        this.broadcast({ type: 'sync_guess_phase', index: victimIdx });
-                        this.handleData({ type: 'sync_guess_phase', index: victimIdx });
-                    } else {
-                        this.broadcast({ type: 'sync_elimination', index: victimIdx });
-                        finalizeElimination(victimIdx);
+                    if (victimIdx !== -1 && players[victimIdx]) {
+                        if (players[victimIdx].role === 'Inconnu') {
+                            this.broadcast({ type: 'sync_guess_phase', index: victimIdx });
+                            this.handleData({ type: 'sync_guess_phase', index: victimIdx });
+                        } else {
+                            this.broadcast({ type: 'sync_elimination', index: victimIdx });
+                            finalizeElimination(victimIdx);
+                        }
+                    } else if (connectedAlivePlayers.length > 0) {
+                        const fallbackIdx = players.indexOf(connectedAlivePlayers[0]);
+                        this.broadcast({ type: 'sync_elimination', index: fallbackIdx });
+                        finalizeElimination(fallbackIdx);
                     }
                     this.votes = {};
                 } else {
@@ -2499,10 +2800,11 @@
                     const state = JSON.parse(clientRaw);
                     this.mode = 'client';
                     this.roomId = state.roomId;
-                    this.me.name = state.meName;
-                    this.me.avatar = state.meAvatar;
+                    this.me.name = state.meName || localStorage.getItem('intrusion_last_name') || 'Inconnu';
+                    this.me.avatar = state.meAvatar || localStorage.getItem('intrusion_last_avatar');
                     this.peer = new Peer();
                     this.updateStatus('CONNEXION...', 'connecting');
+                    showReconnectingOverlay("Reconnexion à la salle...");
                     const banner = document.getElementById('resume-session-banner');
                     if (banner) banner.classList.add('d-none');
 
@@ -2516,9 +2818,6 @@
                             document.getElementById('lobby-actions-host').classList.add('d-none');
                             document.getElementById('mp-chat-container').classList.remove('d-none');
                             document.body.style.paddingBottom = "200px";
-                            if (players.length === 0) {
-                                showView('view-mp-lobby');
-                            }
                             this.saveSession();
                             this.sendData({ type: 'join', name: this.me.name, avatar: this.me.avatar });
                         });
@@ -2531,6 +2830,7 @@
                     });
 
                     this.peer.on('error', (err) => {
+                        hideReconnectingOverlay();
                         alert("Impossible de rejoindre la salle. Vérifie le code.");
                         this.disconnect();
                     });
@@ -2539,9 +2839,40 @@
 
             resyncAllPlayers: function () {
                 if (this.mode !== 'host') return;
-                let sentCount = 0;
 
-                // Lister les emplacements de joueurs déconnectés
+                // Nettoyage des connexions fermées ou mortes (WebRTC)
+                this.connections = this.connections.filter(c => {
+                    if (!c.open) return false;
+                    if (c.peerConnection) {
+                        const state = c.peerConnection.connectionState;
+                        const iceState = c.peerConnection.iceConnectionState;
+                        if (state === 'disconnected' || state === 'failed' || state === 'closed' ||
+                            iceState === 'disconnected' || iceState === 'failed' || iceState === 'closed') {
+                            try { c.close(); } catch(e){}
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+
+                // Supprimer les connexions qui n'ont jamais envoyé de pseudo ('join')
+                this.connections = this.connections.filter(c => c.peerName);
+
+                // Si la partie n'a pas encore commencé (dans le salon/lobby)
+                if (!players || players.length === 0) {
+                    const lobbyPlayers = [{ name: this.me.name, avatar: this.me.avatar, isHost: true }];
+                    this.connections.forEach(c => {
+                        lobbyPlayers.push({ name: c.peerName, avatar: c.peerAvatar });
+                    });
+                    this.renderLobby(lobbyPlayers);
+                    this.broadcast({ type: 'sync_lobby', players: lobbyPlayers });
+                    updateConfigFromSlider(lobbyPlayers.length, false);
+                    alert(`Salon resynchronisé. ${this.connections.length} joueur(s) connecté(s).`);
+                    return;
+                }
+
+                // Si la partie est en cours
+                let sentCount = 0;
                 const disconnectedIndices = players.map((p, i) => ({ player: p, index: i }))
                     .filter(item => item.index !== 0 && !this.isPlayerConnected(item.index));
 
@@ -2583,12 +2914,17 @@
                             } else if (targetView === 'view-debate') {
                                 progressData.debateTimeLeft = MP.debateTimeLeft || 60;
                             }
-                            conn.send(progressData);
-                            sentCount++;
+                            
+                            try {
+                                conn.send(progressData);
+                                sentCount++;
+                            } catch (e) {
+                                console.error("Échec de l'envoi de la resynchronisation à", conn.peerName, e);
+                            }
                         }
                     }
                 });
-                alert(`Signal de resynchronisation envoyé à ${sentCount} joueur(s).`);
+                alert(`Signal de resynchronisation envoyé à ${sentCount} joueur(s) en jeu.`);
             }
         };
 
@@ -2695,16 +3031,54 @@
         }
 
         let wakeLock = null;
-        async function toggleScreenLock() {
-            const isEnabled = document.getElementById('optWakeLock').checked;
-            const video = document.getElementById('noSleepVideo');
-            if (!isEnabled) {
-                if (wakeLock !== null) { wakeLock.release().then(() => { wakeLock = null; }); }
-                video.pause(); return;
+
+        async function requestWakeLock() {
+            if ('wakeLock' in navigator) {
+                try {
+                    if (wakeLock === null) {
+                        wakeLock = await navigator.wakeLock.request('screen');
+                        console.log('Screen Wake Lock acquired.');
+                        wakeLock.addEventListener('release', () => {
+                            wakeLock = null;
+                            console.log('Screen Wake Lock released.');
+                        });
+                    }
+                } catch (err) {
+                    console.warn(`Screen Wake Lock failed: ${err.name}, ${err.message}`);
+                }
             }
-            try { if ('wakeLock' in navigator) { wakeLock = await navigator.wakeLock.request('screen'); } } catch (err) { }
-            try { video.play().catch(e => console.log(e)); } catch (e) { }
+
+            try {
+                const video = document.getElementById('noSleepVideo');
+                if (video && video.paused) {
+                    await video.play();
+                    console.log('Anti-sleep video started.');
+                }
+            } catch (e) {
+                console.warn('Anti-sleep video play failed:', e);
+            }
         }
+
+        async function toggleScreenLock() {
+            await requestWakeLock();
+        }
+
+        // Active automatiquement le maintien d'écran éveillé dès la première interaction de l'utilisateur
+        const handleFirstInteraction = async () => {
+            await requestWakeLock();
+            document.removeEventListener('click', handleFirstInteraction);
+            document.removeEventListener('touchstart', handleFirstInteraction);
+        };
+        document.addEventListener('click', handleFirstInteraction);
+        document.addEventListener('touchstart', handleFirstInteraction);
+
+        // Avant de fermer/rafraîchir la page, avertir les clients si on est hôte en jeu
+        window.addEventListener('beforeunload', () => {
+            if (MP.mode === 'host' && players && players.length > 0) {
+                try { MP.broadcast({ type: 'room_closed' }); } catch(e){}
+            }
+        });
+
         document.addEventListener('visibilitychange', async () => {
             if (document.visibilityState === 'visible') {
                 await toggleScreenLock();
@@ -3113,22 +3487,31 @@
         }
 
         // --- CONFIG LOGIC ---
-        function updateConfigFromSlider(totalOverride = null) {
+        function updateConfigFromSlider(totalOverride = null, forceDefault = true) {
             const val = totalOverride !== null ? totalOverride : parseInt(document.getElementById('rangePlayers').value);
             gameConfig.total = val;
             if (totalOverride === null) {
                 document.getElementById('displayPlayerCount').innerText = val;
             }
-            let inf = 1, inc = 0;
-            if (val >= 5 && val <= 6) { inf = 1; inc = 1; }
-            else if (val >= 7 && val <= 8) { inf = 2; inc = 1; }
-            else if (val >= 9 && val <= 10) { inf = 3; inc = 1; }
-            else if (val >= 11 && val <= 12) { inf = 3; inc = 2; }
-            else if (val >= 13 && val <= 14) { inf = 4; inc = 2; }
-            else if (val >= 15 && val <= 16) { inf = 4; inc = 3; }
-            else if (val >= 17 && val <= 18) { inf = 5; inc = 3; }
-            else if (val >= 19) { inf = 5; inc = 4; }
-            gameConfig.infiltres = inf; gameConfig.inconnus = inc;
+            if (forceDefault) {
+                let inf = 1, inc = 0;
+                if (val >= 5 && val <= 6) { inf = 1; inc = 1; }
+                else if (val >= 7 && val <= 8) { inf = 2; inc = 1; }
+                else if (val >= 9 && val <= 10) { inf = 3; inc = 1; }
+                else if (val >= 11 && val <= 12) { inf = 3; inc = 2; }
+                else if (val >= 13 && val <= 14) { inf = 4; inc = 2; }
+                else if (val >= 15 && val <= 16) { inf = 4; inc = 3; }
+                else if (val >= 17 && val <= 18) { inf = 5; inc = 3; }
+                else if (val >= 19) { inf = 5; inc = 4; }
+                gameConfig.infiltres = inf; gameConfig.inconnus = inc;
+            } else {
+                const maxBadGuys = Math.max(1, val - 1);
+                while (gameConfig.infiltres + gameConfig.inconnus > maxBadGuys) {
+                    if (gameConfig.inconnus > 0) gameConfig.inconnus--;
+                    else if (gameConfig.infiltres > 1) gameConfig.infiltres--;
+                    else break;
+                }
+            }
             updateUIStats();
         }
 
@@ -3168,7 +3551,10 @@
 
         // --- LOGIC: SELECT SMART STARTER ---
         function pickSmartStarter(isFirstRound) {
-            const alive = players.filter(p => p.alive);
+            const alive = (players || []).filter(p => p && p.alive);
+            if (alive.length === 0) {
+                return (players && players[0]) ? players[0].name : "Agent";
+            }
             let candidates;
 
             // Règle 1 : Inconnu ne commence pas au round 1
@@ -3185,8 +3571,12 @@
 
             if (freshCandidates.length > 0) {
                 chosenPlayer = freshCandidates[Math.floor(Math.random() * freshCandidates.length)];
-            } else {
+            } else if (candidates.length > 0) {
                 chosenPlayer = candidates[Math.floor(Math.random() * candidates.length)];
+            }
+
+            if (!chosenPlayer) {
+                chosenPlayer = alive[0] || { name: "Agent" };
             }
 
             previousStarters.push(chosenPlayer.name);
@@ -3324,12 +3714,11 @@
                     players[i].role = rolesDeck[i].role;
                     players[i].word = rolesDeck[i].word;
                 }
-                updatePassScreen();
+                handlePassClick();
             } else {
                 // Première partie : seul le joueur 1 est enregistré, mettre à jour son rôle
                 if (players.length > 0) {
-                    players[0].role = rolesDeck[0].role;
-                    players[0].word = rolesDeck[0].word;
+                    players.pop();
                 }
                 revealIdentity();
             }
@@ -3528,9 +3917,14 @@
 
             const btn = document.getElementById('btn-force-vote');
             if (btn) {
-                btn.classList.remove('disabled');
-                btn.onclick = () => { handleForceVoteClick(); SFX.click(); };
-                btn.innerHTML = '<i class="bi bi-stop-circle"></i> ARRÊTER & VOTER';
+                if (MP.mode && MP.me.index !== null && players[MP.me.index] && !players[MP.me.index].alive) {
+                    btn.classList.add('d-none');
+                } else {
+                    btn.classList.remove('d-none');
+                    btn.classList.remove('disabled');
+                    btn.onclick = () => { handleForceVoteClick(); SFX.click(); };
+                    btn.innerHTML = '<i class="bi bi-stop-circle"></i> ARRÊTER & VOTER';
+                }
             }
 
             if (timerInterval) clearInterval(timerInterval);
@@ -3748,6 +4142,22 @@
             const winMsg = document.getElementById('winMessage');
             continueDiv.classList.remove('d-none'); winDiv.classList.add('d-none');
 
+            // En mode MP, seul l'hôte peut cliquer sur "PRÉPARER TOUR SUIVANT"
+            const nextRoundBtn = continueDiv.querySelector('button');
+            if (nextRoundBtn) {
+                if (MP.mode === 'client') {
+                    nextRoundBtn.disabled = true;
+                    nextRoundBtn.style.opacity = '0.4';
+                    nextRoundBtn.title = "En attente de l'hôte...";
+                    nextRoundBtn.innerHTML = `<i class="bi bi-hourglass-split"></i> EN ATTENTE DE L'HÔTE...`;
+                } else {
+                    nextRoundBtn.disabled = false;
+                    nextRoundBtn.style.opacity = '';
+                    nextRoundBtn.title = '';
+                    nextRoundBtn.innerHTML = `<i class="bi bi-arrow-clockwise"></i> PRÉPARER TOUR SUIVANT`;
+                }
+            }
+
             if (totalBadGuys === 0) {
                 SFX.success(); continueDiv.classList.add('d-none'); winDiv.classList.remove('d-none');
                 winMsg.innerText = "VICTOIRE DES CIVILS !"; winMsg.className = "brand-font mb-4 victory-text text-info";
@@ -3766,6 +4176,9 @@
         }
 
         function setupNextRound(forcedStarter = null, fromSync = false) {
+            // En mode MP, seul l'hôte peut choisir le starter — les clients attendent le sync
+            if (MP.mode === 'client' && !fromSync) return;
+
             const starterName = forcedStarter || pickSmartStarter(false);
 
             if (MP.mode === 'host' && !fromSync) {
