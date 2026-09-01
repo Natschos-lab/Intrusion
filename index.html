@@ -2048,7 +2048,15 @@
                 <i class="bi bi-exclamation-diamond-fill text-warning fs-5"></i>
             </div>
             
-            <p id="tie-break-subtitle" class="text-muted small mb-3">Le destin cybernétique tranche l'égalité...</p>
+            <p id="tie-break-subtitle" class="text-muted small mb-2">Le destin cybernétique tranche l'égalité...</p>
+
+            <!-- CONTENEUR DES AGENTS EN ÉGALITÉ (CASES AVEC TÊTES) -->
+            <div id="tie-break-candidates-container" class="mb-2 w-100">
+                <div class="small text-danger text-uppercase fw-bold mb-2 d-flex align-items-center justify-content-center gap-1" style="font-size: 0.72rem; letter-spacing: 0.8px;">
+                    <i class="bi bi-crosshair"></i> AGENTS EN DANGER D'ÉLIMINATION
+                </div>
+                <div id="tie-break-candidates-grid" class="d-flex flex-wrap justify-content-center gap-2"></div>
+            </div>
             
             <!-- 3D SCENE CONTAINER -->
             <div id="tie-break-scene" class="tie-3d-scene my-2"></div>
@@ -2121,266 +2129,1037 @@
         document.getElementById('inputPseudo').addEventListener('keypress', function (e) { if (e.key === 'Enter') revealIdentity(); });
         document.getElementById('inputGuessWord').addEventListener('keypress', function (e) { if (e.key === 'Enter') { validateGuess(); SFX.click(); } });
 
-        // --- STATE ---
-        let gameConfig = { total: 4, infiltres: 1, inconnus: 0, pnj: 3, mode: 'secret' };
-        let players = [];
-        let currentStep = 0;
-        let rolesDeck = [];
-        let currentPNJWord = "";
-        let currentInfiltreWord = "";
-        let previousStarters = [];
-        let timerInterval = null;
-        let pendingVictimIndex = -1;
-        let currentAvatarData = null;
-
-        // --- RECONNECTION CONSTANTS ---
-        const RECONNECT_TIMEOUT_MS = 60000;   // 1 min avant élimination automatique
-        const HOST_RECONNECT_POLL_MS = 3000;   // Client retente toutes les 3s
-        const HOST_RECONNECT_MAX_MS = 60000; // Attente max 1 min pour l'hôte
-
-        // --- DATA ---
+        // --- DATABASE OF WORD PAIRS ---
         const wordPairs = [
-            ["Pyramide", "Pharaon"], ["Guitare", "Violon"], ["Bière", "Vin"], ["McDo", "Burger King"],
-            ["Facebook", "Twitter"], ["Plage", "Piscine"], ["Thé", "Café"], ["Lune", "Soleil"],
-            ["Train", "Métro"], ["Chat", "Chien"], ["PC", "Tablette"], ["Foot", "Rugby"],
-            ["Netflix", "YouTube"], ["Batman", "Superman"], ["Pain au Choc", "Croissant"], ["Ski", "Snowboard"],
-            ["Ketchup", "Mayo"], ["Android", "iPhone"], ["Chocolat", "Vanille"], ["Cinema", "Netflix"],
-            ["Paris", "Londres"], ["Rome", "Athènes"], ["Madrid", "Barcelone"], ["Berlin", "Amsterdam"],
-            ["Lisbonne", "Porto"], ["Mer", "Océan"], ["Lac", "Étang"], ["Rivière", "Fleuve"],
-            ["Montagne", "Colline"], ["Forêt", "Jungle"], ["Désert", "Savane"], ["Pluie", "Neige"],
-            ["Vent", "Tempête"], ["Nuage", "Brouillard"], ["Soleil", "Étoile"], ["Matin", "Soir"],
-            ["Jour", "Nuit"], ["Printemps", "Automne"], ["Été", "Hiver"], ["Chaud", "Froid"],
-            ["Feu", "Glace"], ["Eau", "Glace"], ["Vapeur", "Fumée"], ["Or", "Argent"],
-            ["Cuivre", "Fer"], ["Bois", "Métal"], ["Verre", "Plastique"], ["Pierre", "Brique"],
-            ["Mur", "Clôture"], ["Porte", "Fenêtre"], ["Escalier", "Ascenseur"], ["Maison", "Appartement"],
-            ["Villa", "Chalet"], ["Hôtel", "Auberge"], ["École", "Université"], ["Classe", "Amphithéâtre"],
-            ["Livre", "Magazine"], ["Journal", "Blog"], ["Stylo", "Crayon"], ["Feutre", "Marqueur"],
-            ["Gomme", "Taille-crayon"], ["Table", "Bureau"], ["Chaise", "Fauteuil"], ["Canapé", "Lit"],
-            ["Oreiller", "Coussin"], ["Couette", "Couverture"], ["Réveil", "Horloge"], ["Montre", "Bracelet"],
-            ["Bague", "Collier"], ["Chapeau", "Casquette"], ["Pull", "Sweat"], ["Veste", "Manteau"],
-            ["Jean", "Pantalon"], ["Short", "Bermuda"], ["Robe", "Jupe"], ["Chaussures", "Baskets"],
-            ["Bottes", "Sandales"], ["Chaussettes", "Collants"], ["Écharpe", "Foulard"], ["Gants", "Moufles"],
-            ["Parapluie", "Imperméable"], ["Sac", "Valise"], ["Cartable", "Sac à dos"], ["Clé", "Serrure"],
-            ["Télécommande", "Manette"], ["Télévision", "Écran"], ["Radio", "Podcast"], ["Film", "Série"],
-            ["Cinéma", "Théâtre"], ["Acteur", "Réalisateur"], ["Chanteur", "Musicien"], ["Groupe", "Orchestre"],
-            ["Piano", "Clavier"], ["Batterie", "Tambour"], ["Micro", "Haut-parleur"], ["Casque", "Écouteurs"],
-            ["Photo", "Vidéo"], ["Caméra", "Appareil photo"], ["Peinture", "Dessin"], ["Crayon", "Pinceau"],
-            ["Couleur", "Teinte"], ["Rouge", "Rose"], ["Bleu", "Vert"], ["Jaune", "Orange"],
-            ["Noir", "Blanc"], ["Gris", "Beige"], ["Clair", "Sombre"], ["Rapide", "Lent"],
-            ["Fort", "Faible"], ["Grand", "Petit"], ["Large", "Étroit"], ["Lourd", "Léger"],
-            ["Plein", "Vide"], ["Ouvert", "Fermé"], ["Rond", "Carré"], ["Triangle", "Rectangle"],
-            ["Nombre", "Chiffre"], ["Addition", "Soustraction"], ["Multiplication", "Division"], ["Problème", "Énigme"],
-            ["Jeu", "Jouet"], ["Puzzle", "Casse-tête"], ["Cartes", "Dominos"], ["Échecs", "Dames"],
-            ["Dés", "Jetons"], ["Football", "Basket"], ["Tennis", "Badminton"], ["Golf", "Mini-golf"],
-            ["Natation", "Plongée"], ["Course", "Marathon"], ["Ski", "Patinage"], ["Vélo", "Trottinette"],
-            ["Moto", "Scooter"], ["Voiture", "Camion"], ["Bus", "Tram"], ["Avion", "Hélicoptère"],
-            ["Bateau", "Ferry"], ["Port", "Marina"], ["Route", "Autoroute"], ["Pont", "Tunnel"],
-            ["Feu rouge", "Stop"], ["Carte", "GPS"], ["Boussole", "Carte"], ["Restaurant", "Café"],
-            ["Bistrot", "Brasserie"], ["Menu", "Carte"], ["Entrée", "Plat"], ["Plat", "Dessert"],
-            ["Fromage", "Yaourt"], ["Lait", "Crème"], ["Beurre", "Margarine"], ["Pain", "Brioche"],
-            ["Croissant", "Pain au lait"], ["Gâteau", "Tarte"], ["Chocolat", "Caramel"], ["Vanille", "Fraise"],
-            ["Pomme", "Poire"], ["Banane", "Mangue"], ["Orange", "Clémentine"], ["Citron", "Pamplemousse"],
-            ["Fraise", "Framboise"], ["Raisin", "Cerise"], ["Salade", "Crudités"], ["Tomate", "Concombre"],
-            ["Carotte", "Betterave"], ["Oignon", "Échalote"], ["Ail", "Gingembre"], ["Sel", "Poivre"],
-            ["Sucre", "Miel"], ["Épices", "Herbes"], ["Café", "Expresso"], ["Thé", "Infusion"],
-            ["Eau", "Jus"], ["Soda", "Limonade"], ["Bière", "Cidre"], ["Vin rouge", "Vin blanc"],
-            ["Champagne", "Prosecco"], ["Bouteille", "Canette"], ["Verre", "Tasse"], ["Assiette", "Bol"],
-            ["Fourchette", "Cuillère"], ["Couteau", "Spatule"], ["Poêle", "Casserole"], ["Four", "Micro-ondes"],
-            ["Frigo", "Congélateur"], ["Cuisine", "Salle à manger"], ["Salon", "Séjour"], ["Salle de bain", "Toilettes"],
-            ["Douche", "Baignoire"], ["Savon", "Gel douche"], ["Shampoing", "Après-shampoing"], ["Serviette", "Peignoir"],
-            ["Brosse", "Peigne"], ["Dentifrice", "Bain de bouche"], ["Parfum", "Déodorant"], ["Crème", "Lotion"],
-            ["Médecin", "Infirmier"], ["Hôpital", "Clinique"], ["Pharmacie", "Parapharmacie"], ["Maladie", "Rhume"],
-            ["Fièvre", "Toux"], ["Médicament", "Pilule"], ["Vaccin", "Injection"], ["Sport", "Exercice"],
-            ["Yoga", "Pilates"], ["Danse", "Chorégraphie"], ["Musique", "Chanson"], ["Paroles", "Refrain"],
-            ["Couplet", "Pont"], ["Silence", "Calme"], ["Bruit", "Vacarme"], ["Ville", "Village"],
-            ["Quartier", "Centre-ville"], ["Marché", "Supermarché"], ["Boutique", "Magasin"], ["Caisse", "Panier"],
-            ["Ticket", "Facture"], ["Prix", "Tarif"], ["Réduction", "Promotion"], ["Cadeau", "Surprise"],
-            ["Noël", "Nouvel An"], ["Anniversaire", "Fête"], ["Mariage", "Fiançailles"], ["Invité", "Hôte"],
-            ["Famille", "Cousins"], ["Parents", "Enfants"], ["Frère", "Sœur"], ["Grand-père", "Grand-mère"],
-            ["Bébé", "Enfant"], ["Ami", "Copain"], ["Voisin", "Collègue"], ["Patron", "Employé"],
-            ["Travail", "Bureau"], ["Réunion", "Conférence"], ["Projet", "Mission"], ["Objectif", "But"],
-            ["Succès", "Victoire"], ["Échec", "Erreur"], ["Chance", "Hasard"], ["Règle", "Loi"],
-            ["Justice", "Tribunal"], ["Police", "Gendarmerie"], ["Pompiers", "Ambulance"], ["Urgence", "Secours"],
-            ["Danger", "Risque"], ["Sécurité", "Protection"], ["Secret", "Mystère"], ["Indice", "Preuve"],
-            ["Question", "Réponse"], ["Problème", "Solution"], ["Idée", "Concept"], ["Plan", "Stratégie"],
-            ["Début", "Fin"], ["Avant", "Après"], ["Toujours", "Jamais"], ["Souvent", "Parfois"],
-            ["Vrai", "Faux"], ["Oui", "Non"], ["Raclette", "Fondue"], ["Mojito", "Spritz"],
-            ["Uber", "Taxi"], ["Vinted", "LeBonCoin"], ["Télétravail", "Bureau"], ["Climatisation", "Ventilateur"],
-            ["Barbecue", "Plancha"], ["Pétanque", "Mölkky"], ["Koh-Lanta", "Fort Boyard"], ["Astérix", "Tintin"],
-            ["Pokémon", "Digimon"], ["Zidane", "Mbappé"], ["Frites", "Potatoes"], ["Boxer", "Caleçon"],
-            ["Barbe", "Moustache"], ["Tatouage", "Piercing"], ["Camping", "Hôtel"], ["Influenceur", "Vedette"],
-            ["Tacos", "Kebab"], ["Sushi", "Maki"], ["Vampire", "Loup-garou"], ["Zombie", "Fantôme"],
-            ["TikTok", "Instagram"], ["Emoji", "GIF"], ["Selfie", "Portrait"], ["Billard", "Baby-foot"],
-            ["Piscine", "Jacuzzi"], ["Nutella", "Confiture"], ["Crocs", "Tongs"], ["Jul", "Ninho"],
-            ["Ascenseur", "Escalator"], ["Aigle", "Faucon"], ["Tigre", "Lion"], ["Dauphin", "Requin"],
-            ["Panda", "Ours"], ["Cheval", "Âne"], ["Guêpe", "Abeille"], ["Papillon", "Libellule"],
-            ["Araignée", "Scorpion"], ["Mouche", "Moustique"], ["Superman", "Spiderman"], ["Mario", "Luigi"],
-            ["Harry Potter", "Frodon"], ["Yoda", "Gandalf"], ["Star Wars", "Star Trek"], ["Marvel", "DC Comics"],
-            ["Naruto", "Dragon Ball"], ["Zelda", "Mario"], ["Pizza", "Pâtes"], ["Sushi", "Ramen"],
-            ["Burger", "Hot-dog"], ["Tacos", "Burrito"], ["Or", "Diamant"], ["Rubis", "Saphir"],
-            ["Collier", "Bracelet"], ["Perle", "Bijou"], ["Snapchat", "TikTok"], ["Google", "Yahoo"],
-            ["Windows", "MacOS"], ["Word", "Excel"], ["Guitare", "Basse"], ["Piano", "Orgue"],
-            ["Trompette", "Saxophone"], ["Violon", "Violoncelle"], ["Paris", "Marseille"], ["New York", "Los Angeles"],
-            ["Londres", "Dublin"], ["Tokyo", "Séoul"], ["Tennis", "Ping-pong"], ["Rugby", "Football Américain"],
-            ["Golf", "Hockey"], ["Boxe", "Judo"], ["Velo", "Moto"], ["Bus", "Car"],
-            ["Scooter", "Trottinette"], ["Skate", "Roller"], ["Stylo", "Feutre"], ["Crayon", "Porte-mine"],
-            ["Ciseaux", "Cutter"], ["Règle", "Équerre"], ["Chaise", "Tabouret"], ["Canapé", "Fauteuil"],
-            ["Lit", "Hamac"], ["Tapis", "Moquette"], ["Pomme", "Poire"], ["Banane", "Ananas"],
-            ["Melon", "Pastèque"], ["Citron", "Orange"], ["Tiime", "Pennylane"], ["Ivre", "Sobre"],
-            ["Crépuscule", "Aurore"], ["Trump", "Poutine"], ["Gay", "Lesbienne"], ["Chine", "Corée"],
-            ["Amende", "Prune"], ["Disneyland", "Europa-Park"], ["Pauvre", "Riche"], ["Tombe", "Cercueil"],
-            ["Mariage", "Enterrement"], ["Photographie", "Peinture"], ["Architecte", "Ouvrier"], ["Carnivore", "Herbivore"],
-            ["Musculation", "Crossfit"], ["Lego", "Playmobil"], ["Barbie", "Poupée"], ["Interstellar", "Avatar"],
-            ["Zelda", "Link"], ["Pikachu", "Salamèche"], ["Sith", "Jedi"], ["Hobbit", "Nain"],
-            ["Elfe", "Fée"], ["Dragon", "Dinosaure"], ["Viking", "Barbare"], ["Samouraï", "Ninja"],
-            ["Cowboy", "Indien"], ["Pirate", "Corsaire"], ["Robot", "Cyborg"], ["Alien", "Extraterrestre"],
-            ["Matrix", "Inception"], ["Simpson", "South Park"], ["Friends", "How I Met Your Mother"], ["Monopoly", "La Bonne Paye"],
-            ["Uno", "Monopoly"], ["Poker", "Blackjack"], ["Sudoku", "Mots fléchés"], ["Mots croisés", "Scrabble"],
-            ["Tetris", "Pac-Man"], ["PlayStation", "Xbox"], ["Discord", "Skype"], ["Waze", "Google Maps"],
-            ["Spotify", "Deezer"], ["Wikipedia", "Dictionnaire"], ["Crêpe", "Gaufre"], ["Pancake", "Blini"],
-            ["Donut", "Beignet"], ["Muffin", "Cupcake"], ["Baguette", "Ficelle"], ["Mie", "Croûte"],
-            ["Farine", "Levure"], ["Omelette", "Œuf brouillé"], ["Saucisson", "Chorizo"], ["Jambon", "Lardon"],
-            ["Pâté", "Rillettes"], ["Foie gras", "Mousse de canard"], ["Saumon", "Truite"], ["Thon", "Sardine"],
-            ["Huître", "Moule"], ["Crevette", "Gambas"], ["Homard", "Langouste"], ["Riz", "Semoule"],
-            ["Lasagnes", "Gratin"], ["Pizza", "Calzone"], ["Kebab", "Shawarma"], ["Couscous", "Tajine"],
-            ["Nem", "Samoussa"], ["Wasabi", "Moutarde"], ["Cornichon", "Câpre"], ["Olive verte", "Olive noire"],
-            ["Vinaigre", "Huile"], ["Cacao", "Chocolat en poudre"], ["Nutella", "Pâte à tartiner"], ["Miel", "Sirop d'érable"],
-            ["Bougie", "Lampe"], ["Ampoule", "LED"], ["Allumette", "Briquet"], ["Cendre", "Poussière"],
-            ["Balai", "Aspirateur"], ["Serpillière", "Éponge"], ["Seau", "Bassine"], ["Robinet", "Tuyau"],
-            ["Vis", "Clou"], ["Marteau", "Maillet"], ["Tournevis", "Perceuse"], ["Scie", "Hache"],
-            ["Échelle", "Escabeau"], ["Toit", "Plafond"], ["Sol", "Plancher"], ["Tapis", "Paillasson"],
-            ["Rideau", "Volet"], ["Drap", "Housse de couette"], ["Matelas", "Sommier"], ["Tiroir", "Placard"],
-            ["Cintre", "Portemanteau"], ["Laine", "Coton"], ["Soie", "Velours"], ["Cuir", "Daim"],
-            ["Bouton", "Fermeture éclair"], ["Aiguille", "Épingle"], ["Fil", "Corde"], ["Scotch", "Colle"],
-            ["Carton", "Papier"], ["Enveloppe", "Timbre"], ["Dent", "Molaire"], ["Langue", "Palais"],
-            ["Œil", "Pupille"], ["Cil", "Sourcil"], ["Cheveux", "Poils"], ["Main", "Poignet"],
-            ["Doigt", "Pouce"], ["Ongle", "Griffe"], ["Coude", "Genou"], ["Cœur", "Poumon"],
-            ["Sang", "Veine"], ["Os", "Squelette"], ["Cerveau", "Pensée"], ["Muscle", "Graisse"],
-            ["Ride", "Bouton"], ["Lunettes", "Lentilles"], ["Rouge à lèvres", "Gloss"], ["Mascara", "Eye-liner"],
-            ["Vernis", "Dissolvant"], ["Rasoir", "Épilateur"], ["Savon", "Gel hydroalcoolique"], ["Mouchoir", "Serviette papier"],
-            ["Pansement", "Bandage"], ["Béquille", "Fauteuil roulant"], ["Thermomètre", "Stéthoscope"], ["Virus", "Bactérie"],
-            ["Allergie", "Intolérance"], ["Sommeil", "Sieste"], ["Rêve", "Cauchemar"], ["Ronflement", "Apnée"],
-            ["Lave", "Magma"], ["Volcan", "Cratère"], ["Tremblement de terre", "Tsunami"], ["Ouragan", "Tornade"],
-            ["Éclair", "Tonnerre"], ["Arc-en-ciel", "Aurore boréale"], ["Planète", "Astéroïde"], ["Galaxie", "Univers"],
-            ["Atome", "Molécule"], ["Feuille", "Pétale"], ["Branche", "Tronc"], ["Racine", "Graine"],
-            ["Herbe", "Pelouse"], ["Cactus", "Plante grasse"], ["Rose", "Tulipe"], ["Chêne", "Sapin"],
-            ["Champignon", "Truffe"], ["Loup", "Renard"], ["Roi", "Empereur"], ["Reine", "Princesse"],
-            ["Château", "Palais"], ["Prison", "Cachot"], ["Menottes", "Chaînes"], ["Voleur", "Cambrioleur"],
-            ["Assassin", "Tueur"], ["Arme", "Pistolet"], ["Guerre", "Bataille"], ["Paix", "Trêve"],
-            ["Drapeau", "Bannière"], ["Hymne", "Chant"], ["Vote", "Élection"], ["Maire", "Président"],
-            ["Loi", "Décret"], ["Banque", "Coffre-fort"], ["Carte bleue", "Chéquier"], ["Monnaie", "Billet"],
-            ["Or", "Lingot"], ["Diamant", "Cristal"], ["Histoire", "Géographie"], ["Maths", "Physique"],
-            ["Chimie", "Biologie"], ["Français", "Anglais"], ["Grammaire", "Orthographe"], ["Verbe", "Nom"],
-            ["Passé", "Futur"], ["Hier", "Demain"], ["Maintenant", "Bientôt"], ["Amour", "Amitié"],
-            ["Passeport", "Visa"], ["Valise", "Sac de voyage"], ["Tente", "Caravane"], ["Camping-car", "Mobil-home"],
-            ["Kayak", "Canoë"], ["Radeau", "Barque"], ["Sous-marin", "Paquebot"], ["Montgolfière", "Dirigeable"],
-            ["Parachute", "Parapente"], ["Fusée", "Navette spatiale"], ["Tracteur", "Bulldozer"], ["Grue", "Pelle mécanique"],
-            ["Ambulance", "Corbillard"], ["Limousine", "Berline"], ["Décapotable", "Cabriolet"], ["Essence", "Diesel"],
-            ["Pneu", "Roue"], ["Volant", "Guidon"], ["Frein", "Accélérateur"], ["Siège", "Banquette"],
-            ["Minecraft", "Roblox"], ["Fortnite", "Apex Legends"], ["Batman", "Iron Man"], ["Shrek", "Grinch"],
-            ["Sherlock Holmes", "Hercule Poirot"], ["Barbie", "Ken"], ["Manga", "Comics"], ["Dracula", "Frankenstein"],
-            ["Gandalf", "Dumbledore"], ["Witcher", "Skyrim"], ["Boulanger", "Pâtissier"], ["Avocat", "Juge"],
-            ["Pilote", "Capitaine"], ["Dentiste", "Orthodontiste"], ["Astronaute", "Cosmonaute"], ["Pêcheur", "Chasseur"],
-            ["Espion", "Détective"], ["Barman", "Serveur"], ["Journaliste", "Animateur"], ["Magicien", "Illusionniste"],
-            ["Churros", "Beignet"], ["Lasagnes", "Cannellonis"], ["Couscous", "Paëlla"], ["Kombucha", "Kéfir"],
-            ["Espresso", "Ristretto"], ["Cappuccino", "Latte"], ["Guacamole", "Houmous"], ["Tiramisu", "Panna Cotta"],
-            ["Cheesecake", "Fondant"], ["Nuggets", "Tenders"], ["Mozzarella", "Burrata"], ["Cheddar", "Gouda"],
-            ["Brie", "Camembert"], ["Risotto", "Polenta"], ["Pop-corn", "Barbe à papa"], ["Powerbank", "Chargeur"],
-            ["Enceinte", "Barre de son"], ["Clef USB", "Disque dur"], ["Projecteur", "Téléviseur"], ["Clavier", "Souris"],
-            ["Ring Light", "Trépied"], ["Kindle", "Livre de poche"], ["ChatGPT", "Midjourney"], ["Vinted", "Depop"],
-            ["Shazam", "SoundHound"], ["QR Code", "Code-barres"], ["Bluetooth", "Wi-Fi"], ["Calculatrice", "Chronomètre"],
-            ["Agrafeuse", "Trombone"], ["Post-it", "Carnet"], ["Costume", "Smoking"], ["Cravate", "Nœud papillon"],
-            ["Casquette", "Béret"], ["Talons", "Escarpins"], ["Pyjama", "Nuisette"], ["Maillot de bain", "Bikini"],
-            ["Collant", "Bas"], ["Robe de mariée", "Robe de soirée"], ["Bonnet", "Cagoule"], ["Musée", "Galerie"],
-            ["Bowling", "Laser game"], ["Parc d'attractions", "Fête foraine"], ["Stade", "Gymnase"], ["Bibliothèque", "Librairie"],
-            ["Aéroport", "Gare"], ["Casino", "Salle d'arcade"], ["Discothèque", "Bar dansant"], ["Supermarché", "Épicerie"],
-            ["Gratte-ciel", "Tour"], ["Éclipse", "Superlune"], ["Comète", "Météorite"], ["Trou noir", "Nébuleuse"],
-            ["Laser", "Faisceau"], ["Microscope", "Télescope"], ["Thermomètre", "Baromètre"], ["ADN", "Cellule"],
-            ["Fossile", "Ambre"], ["Banquise", "Iceberg"], ["Geyser", "Source chaude"], ["Cauchemar", "Insomnie"],
-            ["Stress", "Anxiété"], ["Bonheur", "Joie"], ["Jalousie", "Envie"], ["Colère", "Rage"],
-            ["Hypnose", "Méditation"], ["Labyrinthe", "Dédale"], ["Mirage", "Illusion"], ["Énigme", "Charade"],
-            ["Surnaturel", "Paranormal"], ["Malédiction", "Sortilège"], ["Symphonie", "Opéra"], ["Salsa", "Tango"],
-            ["Théâtre", "Comédie musicale"], ["Sculpture", "Statue"], ["Poésie", "Roman"], ["Graffiti", "Fresque"],
-            ["Horoscope", "Tarot"], ["Karma", "Destin"], ["Défi", "Pari"], ["Escape game", "Chasse au trésor"],
-            ["Centaure", "Minotaure"], ["Sirène", "Nymphe"], ["Phénix", "Griffon"], ["Sphinx", "Gargouille"],
-            ["Utopie", "Dystopie"], ["Paradoxe", "Dilemme"], ["Éthique", "Morale"], ["Optimisme", "Pessimisme"],
-            ["Inflation", "Déflation"], ["Action", "Obligation"], ["Monopole", "Oligopole"], ["Subvention", "Allocation"],
-            ["Bourse", "Crypto"], ["Brainstorming", "Workshop"], ["Startup", "Licorne"], ["Burnout", "Boreout"],
-            ["Tribord", "Bâbord"], ["Proue", "Poupe"], ["Gouvernail", "Ancre"], ["Mousqueton", "Manille"],
-            ["Marée haute", "Marée basse"], ["Gladiateur", "Légionnaire"], ["Sultan", "Émir"], ["Scribe", "Copiste"],
-            ["Sarcophage", "Mausolée"], ["Donjon", "Rempart"], ["Stalactite", "Stalagmite"], ["Quartz", "Obsidienne"],
-            ["Améthyste", "Émeraude"], ["Silex", "Granit"], ["Filon", "Gisement"], ["Uranium", "Plutonium"],
-            ["Infrarouge", "Ultraviolet"], ["Fusion", "Fission"], ["Électron", "Proton"], ["Pesanteur", "Gravité"],
-            ["Métaphore", "Allégorie"], ["Argot", "Jargon"], ["Pastiche", "Parodie"], ["Préface", "Postface"],
-            ["Pseudonyme", "Anonyme"], ["Doublage", "Voix off"], ["Storyboard", "Script"], ["Coulisses", "Loges"],
-            ["Doublure", "Cascadeur"], ["Déjà-vu", "Prémonition"], ["Placebo", "Nocebo"], ["Phobie", "Obsession"],
-            ["Amnésie", "Démence"], ["Origami", "Calligraphie"], ["Poterie", "Céramique"], ["Philatélie", "Numismatique"],
-            ["Brocante", "Vide-grenier"], ["Couture", "Tricot"], ["Flamber", "Caraméliser"], ["Émincer", "Hacher"],
-            ["Bain-marie", "Mijoteuse"], ["Marinade", "Saumure"], ["Mousson", "Typhon"], ["Canicule", "Sécheresse"],
-            ["Blizzard", "Verglas"], ["Toundra", "Taïga"], ["Alibi", "Mobile"], ["Flagrant délit", "Récidive"],
-            ["Perquisition", "Saisie"], ["Verdict", "Sentence"], ["Légitime défense", "Préméditation"], ["Catapulte", "Trébuchet"],
-            ["Camouflage", "Furtivité"], ["Siège", "Blocus"], ["Tranchée", "Bunker"], ["Façade", "Pignon"],
-            ["Poutre", "Charpente"], ["Fondations", "Piliers"], ["Dôme", "Coupole"], ["Échafaudage", "Treuil"],
-            ["Turbulence", "Trou d'air"], ["Pilote automatique", "Radar"], ["Atterrissage", "Amerrissage"], ["Hublot", "Cockpit"],
-            ["Solstice", "Équinoxe"], ["Année-lumière", "Parsec"], ["Méridien", "Équateur"], ["Fuseau horaire", "Jetlag"],
-            ["Éolien", "Solaire"], ["Biomasse", "Géothermie"], ["Recyclage", "Compostage"], ["Gala", "Cérémonie"],
-            ["Protocole", "Étiquette"], ["Discours", "Éloge"], ["Inauguration", "Vernissage"], ["Newsletter", "Communiqué"],
-            ["Teaser", "Bande-annonce"], ["Slogan", "Logo"], ["Infographie", "Diagramme"], ["Hormone", "Enzyme"],
-            ["Neurone", "Synapse"], ["Anticorps", "Globule blanc"], ["Gène", "Chromosome"], ["Esprit", "Conscience"],
-            ["Rond-point", "Carrefour"], ["Trottoir", "Chaussée"], ["Passage piéton", "Feu piéton"], ["Mobilier urbain", "Éclairage public"],
-            ["Moisson", "Vendange"], ["Silo", "Grange"], ["Engrais", "Compost"], ["Serre", "Verger"],
-            ["Embrayage", "Boîte de vitesses"], ["Amortisseur", "Suspension"], ["Bougie d'allumage", "Injecteur"], ["Radiateur", "Alternateur"],
-            ["Devis", "Facture"], ["Bilan", "Inventaire"], ["Archivage", "Indexation"], ["Organigramme", "Planning"],
-            ["Mixage", "Mastering"], ["Gain", "Volume"], ["Égaliseur", "Compresseur"], ["Écho", "Réverbération"],
-            ["Endurance", "Résistance"], ["Échauffement", "Récupération"], ["Courbature", "Crampe"], ["Calories", "Métabolisme"],
-            ["Escale", "Transit"], ["Bagage en soute", "Bagage cabine"], ["Hors-saison", "Haute-saison"], ["Excursion", "Circuit"],
-            ["Gravure", "Sérigraphie"], ["Impression", "Reproduction"], ["Trame", "Pixel"], ["Nuancier", "Palette"],
-            ["Acide", "Basique"], ["Oxydation", "Fermentation"], ["Solvant", "Diluant"], ["Fusion", "Solidification"],
-            ["Plâtre", "Ciment"], ["Isolation", "Étanchéité"], ["Béton", "Goudron"], ["Faïence", "Carrelage"],
-            ["Détergent", "Désinfectant"], ["Eau de Javel", "Lessive"], ["Anticalcaire", "Dégraissant"], ["Lessive", "Adoucissant"],
-            ["Tissage", "Filage"], ["Doublure", "Rembourrage"], ["Ourlet", "Couture"], ["Patron", "Modèle"],
-            ["Saveur", "Arôme"], ["Odorat", "Goût"], ["Texture", "Consistance"], ["Luminosité", "Contraste"],
-            ["Radiographie", "Échographie"], ["Scanner", "IRM"], ["Anesthésie", "Sédation"], ["Biopsie", "Prélèvement"],
-            ["Bénévolat", "Charité"], ["Association", "ONG"], ["Donation", "Mécénat"], ["Subvention", "Parrainage"],
-            ["Métropole", "Mégapole"], ["Émigration", "Immigration"], ["Densité", "Population"], ["Frontière", "Douane"],
-            ["Crampons", "Pointes"], ["Tatami", "Ring"], ["Protège-tibia", "Genouillère"], ["Chronomètre", "Sifflet"],
-            ["Pétrissage", "Levage"], ["Grillade", "Rôtissage"], ["Déglaçage", "Réduction"], ["Cuisson", "Mijotage"],
-            ["Millénaire", "Siècle"], ["Chronologie", "Frise historique"], ["Fuseau horaire", "Méridien"], ["Simultané", "Successif"],
-            ["Audience", "Cible"], ["Publicité", "Propagande"], ["Conversion", "Clic"], ["Sondage", "Statistiques"],
-            ["Soudure", "Assemblage"], ["Alliage", "Fusion"], ["Boulon", "Écrou"], ["Clé à molette", "Pince multiprise"],
-            ["Thèse", "Mémoire"], ["Plagiat", "Citation"], ["Bulletin", "Diplôme"], ["Soutenance", "Examen"],
-            ["Loyer", "Caution"], ["Franchise", "Sinistre"], ["Bail", "Contrat"], ["Copropriété", "Syndic"],
-            ["Altitude", "Dénivelé"], ["Latitude", "Longitude"], ["Relief", "Topographie"], ["Échelle", "Légende"],
-            ["Entretien", "Recrutement"], ["Préavis", "Période d'essai"], ["Licenciement", "Démission"], ["Promotion", "Mutation"],
-            ["Satellite", "Sonde"], ["Rover", "Lander"], ["Fusée", "Missile"], ["Orbite", "Trajectoire"],
-            ["Jazz", "Blues"], ["Salsa", "Bachata"], ["Opéra", "Ballet"], ["Partition", "Tablature"],
-            ["Baroque", "Rococo"], ["Gothique", "Roman"], ["Renaissance", "Classicisme"], ["Cubisme", "Surréalisme"],
-            ["Disjoncteur", "Fusible"], ["Siphon", "Bonde"], ["Gaine", "Câble"], ["Prise", "Interrupteur"],
-            ["Tirade", "Monologue"], ["Réplique", "Dialogue"], ["Improvisation", "Sketch"], ["Coup de théâtre", "Quiproquo"],
-            ["Reliure", "Brochure"], ["Typographie", "Calibrage"], ["Édition", "Impression"], ["Tome", "Volume"],
-            ["Obturateur", "Diaphragme"], ["Focale", "Zoom"], ["Trépied", "Monopode"], ["Exposition", "Sensibilité"],
-            ["Châssis", "Carrosserie"], ["Monospace", "SUV"], ["Berline", "Citadine"], ["Hybride", "Électrique"],
-            ["Ganache", "Praliné"], ["Meringue", "Chantilly"], ["Nappage", "Glaçage"], ["Génoise", "Biscuit"],
-            ["Perforatrice", "Plastifieuse"], ["Surligneur", "Correcteur"], ["Classeur", "Chemise"], ["Punaise", "Adhésif"],
-            ["Rayon", "Diamètre"], ["Tangente", "Sécante"], ["Périmètre", "Aire"], ["Hypoténuse", "Diagonale"],
-            ["SEO", "SEA"], ["Algorithme", "Code"], ["Hébergement", "Domaine"], ["Base de données", "Cloud"],
-            ["Blockchain", "Grand livre"], ["Minage", "Staking"], ["Wallet", "Clé privée"], ["Jeton", "Crypto-monnaie"],
-            ["Cardiologue", "Neurologue"], ["Pédiatre", "Gériatre"], ["Radiologue", "Généraliste"], ["Chirurgien", "Interne"],
-            ["Anticyclone", "Dépression"], ["Isobare", "Isotherme"], ["Alizé", "Mistral"], ["Anémomètre", "Girouette"],
-            ["Coutume", "Tradition"], ["Rite", "Rituel"], ["Mythe", "Croyance"], ["Tabou", "Interdit"],
-            ["Col", "Encolure"], ["Manche", "Manchette"], ["Fermeture", "Boutonnage"], ["Pli", "Fronce"],
-            ["Clause", "Avenant"], ["Préambule", "Articles"], ["Jurisprudence", "Doctrine"], ["Procureur", "Magistrat"],
-            ["Respawn", "Spawn"], ["Loot", "Drop"], ["Quête", "Campagne"], ["Guilde", "Clan"],
-            ["Cocktail", "Mocktail"], ["Shaker", "Pilon"], ["Glaçon", "Glace pilée"], ["Shot", "Galopin"],
-            ["Haltère", "Kettlebell"], ["Tapis de course", "Vélo elliptique"], ["Tractions", "Pompes"], ["Gainage", "Abdos"],
-            ["All inclusive", "Demi-pension"], ["Chambre double", "Suite"], ["Check-in", "Check-out"], ["Room service", "Conciergerie"],
-            ["Vassal", "Suzerain"], ["Fief", "Seigneurie"], ["Chevalier", "Écuyer"], ["Tribut", "Impôt"],
-            ["Isolation phonique", "Insonorisation"], ["Acoustique", "Sonorité"], ["Fréquence", "Longueur d'onde"], ["Décibel", "Hertz"],
-            ["Syllogisme", "Sophisme"], ["Prémisse", "Postulat"], ["Théorie", "Pratique"], ["Abstrait", "Concret"]
+            ["Neurone", "Synapse"],
+            ["Anticorps", "Globule blanc"],
+            ["G�ne", "Chromosome"],
+            ["Esprit", "Conscience"],
+            ["Rond-point", "Carrefour"],
+            ["Trottoir", "Chauss�e"],
+            ["Passage pi�ton", "Feu pi�ton"],
+            ["Mobilier urbain", "�clairage public"],
+            ["Moisson", "Vendange"],
+            ["Silo", "Grange"],
+            ["Engrais", "Compost"],
+            ["Serre", "Verger"],
+            ["Embrayage", "Bo�te de vitesses"],
+            ["Amortisseur", "Suspension"],
+            ["Radiateur", "Alternateur"],
+            ["Devis", "Facture"],
+            ["Bilan", "Inventaire"],
+            ["Archivage", "Indexation"],
+            ["Organigramme", "Planning"],
+            ["Audience", "Cible"],
+            ["Publicit�", "Propagande"],
+            ["Conversion", "Clic"],
+            ["Soudure", "Assemblage"],
+            ["Alliage", "Fusion"],
+            ["Boulon", "�crou"],
+            ["Th�se", "M�moire"],
+            ["Plagiat", "Citation"],
+            ["Bulletin", "Dipl�me"],
+            ["Loyer", "Caution"],
+            ["Franchise", "Sinistre"],
+            ["Bail", "Contrat"],
+            ["Altitude", "D�nivel�"],
+            ["Latitude", "Longitude"],
+            ["Relief", "Topographie"],
+            ["�chelle", "L�gende"],
+            ["Cardiologue", "Neurologue"],
+            ["Pédiatre", "Gériatre"],
+            ["Radiologue", "Généraliste"],
+            ["Chirurgien", "Interne"],
+            ["Anticyclone", "Dépression"],
+            ["Isobare", "Isotherme"],
+            ["Alizé", "Mistral"],
+            ["Anémomètre", "Girouette"],
+            ["Coutume", "Tradition"],
+            ["Rite", "Rituel"],
+            ["Mythe", "Croyance"],
+            ["Tabou", "Interdit"],
+            ["Col", "Encolure"],
+            ["Manche", "Manchette"],
+            ["Fermeture", "Boutonnage"],
+            ["Pli", "Fronce"],
+            ["Clause", "Avenant"],
+            ["Préambule", "Articles"],
+            ["Jurisprudence", "Doctrine"],
+            ["Procureur", "Magistrat"],
+            ["Respawn", "Spawn"],
+            ["Loot", "Drop"],
+            ["Quête", "Campagne"],
+            ["Guilde", "Clan"],
+            ["Cocktail", "Mocktail"],
+            ["Shaker", "Pilon"],
+            ["Glaçon", "Glace pilée"],
+            ["Shot", "Galopin"],
+            ["Haltère", "Kettlebell"],
+            ["Tapis de course", "Vélo elliptique"],
+            ["Tractions", "Pompes"],
+            ["Gainage", "Abdos"],
+            ["All inclusive", "Demi-pension"],
+            ["Chambre double", "Suite"],
+            ["Check-in", "Check-out"],
+            ["Room service", "Conciergerie"],
+            ["Vassal", "Suzerain"],
+            ["Fief", "Seigneurie"],
+            ["Chevalier", "Écuyer"],
+            ["Tribut", "Impôt"],
+            ["Isolation phonique", "Insonorisation"],
+            ["Acoustique", "Sonorité"],
+            ["Fréquence", "Longueur d'onde"],
+            ["Décibel", "Hertz"],
+            ["Syllogisme", "Sophisme"],
+            ["Prémisse", "Postulat"],
+            ["Théorie", "Pratique"],
+            ["Abstrait", "Concret"],
+            ["Ring Light", "Tr�pied"],
+            ["Kindle", "Livre de poche"],
+            ["ChatGPT", "Midjourney"],
+            ["Vinted", "Depop"],
+            ["Shazam", "SoundHound"],
+            ["QR Code", "Code-barres"],
+            ["Bluetooth", "Wi-Fi"],
+            ["Calculatrice", "Chronom�tre"],
+            ["Agrafeuse", "Trombone"],
+            ["Post-it", "Carnet"],
+            ["Costume", "Smoking"],
+            ["M�tropole", "M�gapole"],
+            ["�migration", "Immigration"],
+            ["Densit�", "Population"],
+            ["Fronti�re", "Douane"],
+            ["Crampons", "Pointes"],
+            ["Tatami", "Ring"],
+            ["Prot�ge-tibia", "Genouill�re"],
+            ["Chronom�tre", "Sifflet"],
+            ["P�trissage", "Levage"],
+            ["Grillade", "R�tissage"],
+            ["D�gla�age", "R�duction"],
+            ["Cuisson", "Mijotage"],
+            ["Mill�naire", "Si�cle"],
+            ["Chronologie", "Frise historique"],
+            ["Simultan�", "Successif"],
+            ["Pyramide", "Pharaon"],
+            ["Guitare", "Violon"],
+            ["Bi�re", "Vin"],
+            ["Facebook", "Twitter"],
+            ["Plage", "Piscine"],
+            ["Th�", "Caf�"],
+            ["Lune", "Soleil"],
+            ["Train", "M�tro"],
+            ["Chat", "Chien"],
+            ["PC", "Tablette"],
+            ["Foot", "Rugby"],
+            ["Netflix", "YouTube"],
+            ["Batman", "Superman"],
+            ["Pain au Choc", "Croissant"],
+            ["Ketchup", "Mayo"],
+            ["Android", "iPhone"],
+            ["Chocolat", "Vanille"],
+            ["Paris", "Londres"],
+            ["Rome", "Ath�nes"],
+            ["Madrid", "Barcelone"],
+            ["Lisbonne", "Porto"],
+            ["Mer", "Oc�an"],
+            ["Lac", "�tang"],
+            ["Rivi�re", "Fleuve"],
+            ["Montagne", "Colline"],
+            ["For�t", "Jungle"],
+            ["D�sert", "Savane"],
+            ["Pluie", "Neige"],
+            ["Vent", "Temp�te"],
+            ["Nuage", "Brouillard"],
+            ["Soleil", "�toile"],
+            ["Matin", "Soir"],
+            ["Jour", "Nuit"],
+            ["Printemps", "Automne"],
+            ["�t�", "Hiver"],
+            ["Chaud", "Froid"],
+            ["Feu", "Glace"],
+            ["Eau", "Glace"],
+            ["Vapeur", "Fum�e"],
+            ["Or", "Argent"],
+            ["Cuivre", "Fer"],
+            ["Bois", "M�tal"],
+            ["Verre", "Plastique"],
+            ["Pierre", "Brique"],
+            ["Mur", "Cl�ture"],
+            ["Porte", "Fen�tre"],
+            ["Escalier", "Ascenseur"],
+            ["Villa", "Chalet"],
+            ["H�tel", "Auberge"],
+            ["�cole", "Universit�"],
+            ["Livre", "Magazine"],
+            ["Journal", "Blog"],
+            ["Stylo", "Crayon"],
+            ["Feutre", "Marqueur"],
+            ["Gomme", "Taille-crayon"],
+            ["Table", "Bureau"],
+            ["Chaise", "Fauteuil"],
+            ["Oreiller", "Coussin"],
+            ["Couette", "Couverture"],
+            ["R�veil", "Horloge"],
+            ["Bague", "Collier"],
+            ["Chapeau", "Casquette"],
+            ["Pull", "Sweat"],
+            ["Veste", "Manteau"],
+            ["Jean", "Pantalon"],
+            ["Short", "Bermuda"],
+            ["Robe", "Jupe"],
+            ["Chaussures", "Baskets"],
+            ["Bière", "Vin"],
+            ["McDo", "Burger King"],
+            ["Thé", "Café"],
+            ["Train", "Métro"],
+            ["Ski", "Snowboard"],
+            ["Cinema", "Netflix"],
+            ["Rome", "Athènes"],
+            ["Berlin", "Amsterdam"],
+            ["Mer", "Océan"],
+            ["Lac", "Étang"],
+            ["Rivière", "Fleuve"],
+            ["Forêt", "Jungle"],
+            ["Désert", "Savane"],
+            ["Vent", "Tempête"],
+            ["Soleil", "Étoile"],
+            ["Été", "Hiver"],
+            ["Vapeur", "Fumée"],
+            ["Bois", "Métal"],
+            ["Mur", "Clôture"],
+            ["Porte", "Fenêtre"],
+            ["Maison", "Appartement"],
+            ["Hôtel", "Auberge"],
+            ["École", "Université"],
+            ["Classe", "Amphithéâtre"],
+            ["Canapé", "Lit"],
+            ["Réveil", "Horloge"],
+            ["Montre", "Bracelet"],
+            ["Bottes", "Sandales"],
+            ["Chaussettes", "Collants"],
+            ["Écharpe", "Foulard"],
+            ["Gants", "Moufles"],
+            ["Parapluie", "Imperméable"],
+            ["Sac", "Valise"],
+            ["Cartable", "Sac à dos"],
+            ["Clé", "Serrure"],
+            ["Télécommande", "Manette"],
+            ["Télévision", "Écran"],
+            ["Radio", "Podcast"],
+            ["Film", "Série"],
+            ["Cinéma", "Théâtre"],
+            ["Acteur", "Réalisateur"],
+            ["Chanteur", "Musicien"],
+            ["Groupe", "Orchestre"],
+            ["Piano", "Clavier"],
+            ["Batterie", "Tambour"],
+            ["Micro", "Haut-parleur"],
+            ["Casque", "Écouteurs"],
+            ["Photo", "Vidéo"],
+            ["Caméra", "Appareil photo"],
+            ["Peinture", "Dessin"],
+            ["Crayon", "Pinceau"],
+            ["Couleur", "Teinte"],
+            ["Rouge", "Rose"],
+            ["Bleu", "Vert"],
+            ["Jaune", "Orange"],
+            ["Noir", "Blanc"],
+            ["Gris", "Beige"],
+            ["Clair", "Sombre"],
+            ["Rapide", "Lent"],
+            ["Fort", "Faible"],
+            ["Grand", "Petit"],
+            ["Large", "Étroit"],
+            ["Lourd", "Léger"],
+            ["Plein", "Vide"],
+            ["Ouvert", "Fermé"],
+            ["Rond", "Carré"],
+            ["Triangle", "Rectangle"],
+            ["Nombre", "Chiffre"],
+            ["Addition", "Soustraction"],
+            ["Multiplication", "Division"],
+            ["Problème", "Énigme"],
+            ["Jeu", "Jouet"],
+            ["Puzzle", "Casse-tête"],
+            ["Cartes", "Dominos"],
+            ["Échecs", "Dames"],
+            ["Dés", "Jetons"],
+            ["Football", "Basket"],
+            ["Tennis", "Badminton"],
+            ["Golf", "Mini-golf"],
+            ["Natation", "Plongée"],
+            ["Course", "Marathon"],
+            ["Ski", "Patinage"],
+            ["Vélo", "Trottinette"],
+            ["Moto", "Scooter"],
+            ["Voiture", "Camion"],
+            ["Bus", "Tram"],
+            ["Avion", "Hélicoptère"],
+            ["Bateau", "Ferry"],
+            ["Port", "Marina"],
+            ["Route", "Autoroute"],
+            ["Pont", "Tunnel"],
+            ["Feu rouge", "Stop"],
+            ["Carte", "GPS"],
+            ["Boussole", "Carte"],
+            ["Restaurant", "Café"],
+            ["Bistrot", "Brasserie"],
+            ["Menu", "Carte"],
+            ["Entrée", "Plat"],
+            ["Plat", "Dessert"],
+            ["Fromage", "Yaourt"],
+            ["Lait", "Crème"],
+            ["Beurre", "Margarine"],
+            ["Pain", "Brioche"],
+            ["Croissant", "Pain au lait"],
+            ["Gâteau", "Tarte"],
+            ["Chocolat", "Caramel"],
+            ["Vanille", "Fraise"],
+            ["Pomme", "Poire"],
+            ["Banane", "Mangue"],
+            ["Orange", "Clémentine"],
+            ["Citron", "Pamplemousse"],
+            ["Fraise", "Framboise"],
+            ["Raisin", "Cerise"],
+            ["Salade", "Crudités"],
+            ["Tomate", "Concombre"],
+            ["Carotte", "Betterave"],
+            ["Oignon", "Échalote"],
+            ["Ail", "Gingembre"],
+            ["Sel", "Poivre"],
+            ["Sucre", "Miel"],
+            ["Épices", "Herbes"],
+            ["Café", "Expresso"],
+            ["Thé", "Infusion"],
+            ["Eau", "Jus"],
+            ["Soda", "Limonade"],
+            ["Bière", "Cidre"],
+            ["Vin rouge", "Vin blanc"],
+            ["Champagne", "Prosecco"],
+            ["Bouteille", "Canette"],
+            ["Verre", "Tasse"],
+            ["Assiette", "Bol"],
+            ["Fourchette", "Cuillère"],
+            ["Couteau", "Spatule"],
+            ["Poêle", "Casserole"],
+            ["Four", "Micro-ondes"],
+            ["Frigo", "Congélateur"],
+            ["Cuisine", "Salle à manger"],
+            ["Salon", "Séjour"],
+            ["Salle de bain", "Toilettes"],
+            ["Douche", "Baignoire"],
+            ["Savon", "Gel douche"],
+            ["Shampoing", "Après-shampoing"],
+            ["Serviette", "Peignoir"],
+            ["Brosse", "Peigne"],
+            ["Dentifrice", "Bain de bouche"],
+            ["Parfum", "Déodorant"],
+            ["Crème", "Lotion"],
+            ["Médecin", "Infirmier"],
+            ["Hôpital", "Clinique"],
+            ["Pharmacie", "Parapharmacie"],
+            ["Maladie", "Rhume"],
+            ["Fièvre", "Toux"],
+            ["Médicament", "Pilule"],
+            ["Vaccin", "Injection"],
+            ["Sport", "Exercice"],
+            ["Yoga", "Pilates"],
+            ["Danse", "Chorégraphie"],
+            ["Musique", "Chanson"],
+            ["Paroles", "Refrain"],
+            ["Couplet", "Pont"],
+            ["Silence", "Calme"],
+            ["Bruit", "Vacarme"],
+            ["Ville", "Village"],
+            ["Quartier", "Centre-ville"],
+            ["Marché", "Supermarché"],
+            ["Boutique", "Magasin"],
+            ["Caisse", "Panier"],
+            ["Ticket", "Facture"],
+            ["Prix", "Tarif"],
+            ["Réduction", "Promotion"],
+            ["Cadeau", "Surprise"],
+            ["Noël", "Nouvel An"],
+            ["Anniversaire", "Fête"],
+            ["Mariage", "Fiançailles"],
+            ["Invité", "Hôte"],
+            ["Famille", "Cousins"],
+            ["Parents", "Enfants"],
+            ["Frère", "Sœur"],
+            ["Grand-père", "Grand-mère"],
+            ["Bébé", "Enfant"],
+            ["Ami", "Copain"],
+            ["Voisin", "Collègue"],
+            ["Patron", "Employé"],
+            ["Travail", "Bureau"],
+            ["Réunion", "Conférence"],
+            ["Projet", "Mission"],
+            ["Objectif", "But"],
+            ["Succès", "Victoire"],
+            ["Échec", "Erreur"],
+            ["Chance", "Hasard"],
+            ["Règle", "Loi"],
+            ["Justice", "Tribunal"],
+            ["Police", "Gendarmerie"],
+            ["Pompiers", "Ambulance"],
+            ["Urgence", "Secours"],
+            ["Danger", "Risque"],
+            ["Sécurité", "Protection"],
+            ["Secret", "Mystère"],
+            ["Indice", "Preuve"],
+            ["Question", "Réponse"],
+            ["Problème", "Solution"],
+            ["Idée", "Concept"],
+            ["Plan", "Stratégie"],
+            ["Début", "Fin"],
+            ["Avant", "Après"],
+            ["Toujours", "Jamais"],
+            ["Souvent", "Parfois"],
+            ["Vrai", "Faux"],
+            ["Oui", "Non"],
+            ["Raclette", "Fondue"],
+            ["Mojito", "Spritz"],
+            ["Uber", "Taxi"],
+            ["Vinted", "LeBonCoin"],
+            ["Télétravail", "Bureau"],
+            ["Climatisation", "Ventilateur"],
+            ["Barbecue", "Plancha"],
+            ["Pétanque", "Mölkky"],
+            ["Koh-Lanta", "Fort Boyard"],
+            ["Astérix", "Tintin"],
+            ["Pokémon", "Digimon"],
+            ["Zidane", "Mbappé"],
+            ["Frites", "Potatoes"],
+            ["Boxer", "Caleçon"],
+            ["Barbe", "Moustache"],
+            ["Tatouage", "Piercing"],
+            ["Camping", "Hôtel"],
+            ["Influenceur", "Vedette"],
+            ["Tacos", "Kebab"],
+            ["Sushi", "Maki"],
+            ["Vampire", "Loup-garou"],
+            ["Zombie", "Fantôme"],
+            ["TikTok", "Instagram"],
+            ["Emoji", "GIF"],
+            ["Selfie", "Portrait"],
+            ["Billard", "Baby-foot"],
+            ["Piscine", "Jacuzzi"],
+            ["Nutella", "Confiture"],
+            ["Crocs", "Tongs"],
+            ["Jul", "Ninho"],
+            ["Ascenseur", "Escalator"],
+            ["Aigle", "Faucon"],
+            ["Tigre", "Lion"],
+            ["Dauphin", "Requin"],
+            ["Panda", "Ours"],
+            ["Cheval", "Âne"],
+            ["Guêpe", "Abeille"],
+            ["Papillon", "Libellule"],
+            ["Araignée", "Scorpion"],
+            ["Mouche", "Moustique"],
+            ["Superman", "Spiderman"],
+            ["Mario", "Luigi"],
+            ["Harry Potter", "Frodon"],
+            ["Yoda", "Gandalf"],
+            ["Star Wars", "Star Trek"],
+            ["Marvel", "DC Comics"],
+            ["Naruto", "Dragon Ball"],
+            ["Zelda", "Mario"],
+            ["Pizza", "Pâtes"],
+            ["Sushi", "Ramen"],
+            ["Burger", "Hot-dog"],
+            ["Tacos", "Burrito"],
+            ["Or", "Diamant"],
+            ["Rubis", "Saphir"],
+            ["Collier", "Bracelet"],
+            ["Perle", "Bijou"],
+            ["Snapchat", "TikTok"],
+            ["Google", "Yahoo"],
+            ["Windows", "MacOS"],
+            ["Word", "Excel"],
+            ["Guitare", "Basse"],
+            ["Piano", "Orgue"],
+            ["Trompette", "Saxophone"],
+            ["Violon", "Violoncelle"],
+            ["Paris", "Marseille"],
+            ["New York", "Los Angeles"],
+            ["Londres", "Dublin"],
+            ["Tokyo", "Séoul"],
+            ["Tennis", "Ping-pong"],
+            ["Rugby", "Football Américain"],
+            ["Golf", "Hockey"],
+            ["Boxe", "Judo"],
+            ["Velo", "Moto"],
+            ["Bus", "Car"],
+            ["Scooter", "Trottinette"],
+            ["Skate", "Roller"],
+            ["Stylo", "Feutre"],
+            ["Crayon", "Porte-mine"],
+            ["Ciseaux", "Cutter"],
+            ["Règle", "Équerre"],
+            ["Chaise", "Tabouret"],
+            ["Canapé", "Fauteuil"],
+            ["Lit", "Hamac"],
+            ["Tapis", "Moquette"],
+            ["Banane", "Ananas"],
+            ["Melon", "Pastèque"],
+            ["Citron", "Orange"],
+            ["Tiime", "Pennylane"],
+            ["Ivre", "Sobre"],
+            ["Crépuscule", "Aurore"],
+            ["Trump", "Poutine"],
+            ["Gay", "Lesbienne"],
+            ["Chine", "Corée"],
+            ["Amende", "Prune"],
+            ["Disneyland", "Europa-Park"],
+            ["Pauvre", "Riche"],
+            ["Tombe", "Cercueil"],
+            ["Mariage", "Enterrement"],
+            ["Photographie", "Peinture"],
+            ["Architecte", "Ouvrier"],
+            ["Carnivore", "Herbivore"],
+            ["Musculation", "Crossfit"],
+            ["Lego", "Playmobil"],
+            ["Barbie", "Poupée"],
+            ["Interstellar", "Avatar"],
+            ["Zelda", "Link"],
+            ["Pikachu", "Salamèche"],
+            ["Sith", "Jedi"],
+            ["Hobbit", "Nain"],
+            ["Elfe", "Fée"],
+            ["Dragon", "Dinosaure"],
+            ["Viking", "Barbare"],
+            ["Samouraï", "Ninja"],
+            ["Cowboy", "Indien"],
+            ["Pirate", "Corsaire"],
+            ["Robot", "Cyborg"],
+            ["Alien", "Extraterrestre"],
+            ["Matrix", "Inception"],
+            ["Simpson", "South Park"],
+            ["Friends", "How I Met Your Mother"],
+            ["Monopoly", "La Bonne Paye"],
+            ["Uno", "Monopoly"],
+            ["Poker", "Blackjack"],
+            ["Sudoku", "Mots fléchés"],
+            ["Mots croisés", "Scrabble"],
+            ["Tetris", "Pac-Man"],
+            ["PlayStation", "Xbox"],
+            ["Discord", "Skype"],
+            ["Waze", "Google Maps"],
+            ["Spotify", "Deezer"],
+            ["Wikipedia", "Dictionnaire"],
+            ["Crêpe", "Gaufre"],
+            ["Pancake", "Blini"],
+            ["Donut", "Beignet"],
+            ["Muffin", "Cupcake"],
+            ["Baguette", "Ficelle"],
+            ["Mie", "Croûte"],
+            ["Farine", "Levure"],
+            ["Omelette", "Œuf brouillé"],
+            ["Saucisson", "Chorizo"],
+            ["Jambon", "Lardon"],
+            ["Pâté", "Rillettes"],
+            ["Foie gras", "Mousse de canard"],
+            ["Saumon", "Truite"],
+            ["Thon", "Sardine"],
+            ["Huître", "Moule"],
+            ["Crevette", "Gambas"],
+            ["Homard", "Langouste"],
+            ["Riz", "Semoule"],
+            ["Lasagnes", "Gratin"],
+            ["Pizza", "Calzone"],
+            ["Kebab", "Shawarma"],
+            ["Couscous", "Tajine"],
+            ["Nem", "Samoussa"],
+            ["Wasabi", "Moutarde"],
+            ["Cornichon", "Câpre"],
+            ["Olive verte", "Olive noire"],
+            ["Vinaigre", "Huile"],
+            ["Cacao", "Chocolat en poudre"],
+            ["Nutella", "Pâte à tartiner"],
+            ["Miel", "Sirop d'érable"],
+            ["Bougie", "Lampe"],
+            ["Ampoule", "LED"],
+            ["Allumette", "Briquet"],
+            ["Cendre", "Poussière"],
+            ["Balai", "Aspirateur"],
+            ["Serpillière", "Éponge"],
+            ["Seau", "Bassine"],
+            ["Robinet", "Tuyau"],
+            ["Vis", "Clou"],
+            ["Marteau", "Maillet"],
+            ["Tournevis", "Perceuse"],
+            ["Scie", "Hache"],
+            ["Échelle", "Escabeau"],
+            ["Toit", "Plafond"],
+            ["Sol", "Plancher"],
+            ["Tapis", "Paillasson"],
+            ["Rideau", "Volet"],
+            ["Drap", "Housse de couette"],
+            ["Matelas", "Sommier"],
+            ["Tiroir", "Placard"],
+            ["Cintre", "Portemanteau"],
+            ["Laine", "Coton"],
+            ["Soie", "Velours"],
+            ["Cuir", "Daim"],
+            ["Bouton", "Fermeture éclair"],
+            ["Aiguille", "Épingle"],
+            ["Fil", "Corde"],
+            ["Scotch", "Colle"],
+            ["Carton", "Papier"],
+            ["Enveloppe", "Timbre"],
+            ["Dent", "Molaire"],
+            ["Langue", "Palais"],
+            ["Œil", "Pupille"],
+            ["Cil", "Sourcil"],
+            ["Cheveux", "Poils"],
+            ["Main", "Poignet"],
+            ["Doigt", "Pouce"],
+            ["Ongle", "Griffe"],
+            ["Coude", "Genou"],
+            ["Cœur", "Poumon"],
+            ["Sang", "Veine"],
+            ["Os", "Squelette"],
+            ["Cerveau", "Pensée"],
+            ["Muscle", "Graisse"],
+            ["Ride", "Bouton"],
+            ["Lunettes", "Lentilles"],
+            ["Rouge à lèvres", "Gloss"],
+            ["Mascara", "Eye-liner"],
+            ["Vernis", "Dissolvant"],
+            ["Rasoir", "Épilateur"],
+            ["Savon", "Gel hydroalcoolique"],
+            ["Mouchoir", "Serviette papier"],
+            ["Pansement", "Bandage"],
+            ["Béquille", "Fauteuil roulant"],
+            ["Thermomètre", "Stéthoscope"],
+            ["Virus", "Bactérie"],
+            ["Allergie", "Intolérance"],
+            ["Sommeil", "Sieste"],
+            ["Rêve", "Cauchemar"],
+            ["Ronflement", "Apnée"],
+            ["Lave", "Magma"],
+            ["Volcan", "Cratère"],
+            ["Tremblement de terre", "Tsunami"],
+            ["Ouragan", "Tornade"],
+            ["Éclair", "Tonnerre"],
+            ["Arc-en-ciel", "Aurore boréale"],
+            ["Planète", "Astéroïde"],
+            ["Galaxie", "Univers"],
+            ["Atome", "Molécule"],
+            ["Feuille", "Pétale"],
+            ["Branche", "Tronc"],
+            ["Racine", "Graine"],
+            ["Herbe", "Pelouse"],
+            ["Cactus", "Plante grasse"],
+            ["Rose", "Tulipe"],
+            ["Chêne", "Sapin"],
+            ["Champignon", "Truffe"],
+            ["Loup", "Renard"],
+            ["Roi", "Empereur"],
+            ["Reine", "Princesse"],
+            ["Château", "Palais"],
+            ["Prison", "Cachot"],
+            ["Menottes", "Chaînes"],
+            ["Voleur", "Cambrioleur"],
+            ["Assassin", "Tueur"],
+            ["Arme", "Pistolet"],
+            ["Guerre", "Bataille"],
+            ["Paix", "Trêve"],
+            ["Drapeau", "Bannière"],
+            ["Hymne", "Chant"],
+            ["Vote", "Élection"],
+            ["Maire", "Président"],
+            ["Loi", "Décret"],
+            ["Banque", "Coffre-fort"],
+            ["Carte bleue", "Chéquier"],
+            ["Monnaie", "Billet"],
+            ["Or", "Lingot"],
+            ["Diamant", "Cristal"],
+            ["Histoire", "Géographie"],
+            ["Maths", "Physique"],
+            ["Chimie", "Biologie"],
+            ["Français", "Anglais"],
+            ["Grammaire", "Orthographe"],
+            ["Verbe", "Nom"],
+            ["Passé", "Futur"],
+            ["Hier", "Demain"],
+            ["Maintenant", "Bientôt"],
+            ["Amour", "Amitié"],
+            ["Passeport", "Visa"],
+            ["Valise", "Sac de voyage"],
+            ["Tente", "Caravane"],
+            ["Camping-car", "Mobil-home"],
+            ["Kayak", "Canoë"],
+            ["Radeau", "Barque"],
+            ["Sous-marin", "Paquebot"],
+            ["Montgolfière", "Dirigeable"],
+            ["Parachute", "Parapente"],
+            ["Fusée", "Navette spatiale"],
+            ["Tracteur", "Bulldozer"],
+            ["Grue", "Pelle mécanique"],
+            ["Ambulance", "Corbillard"],
+            ["Limousine", "Berline"],
+            ["Décapotable", "Cabriolet"],
+            ["Essence", "Diesel"],
+            ["Pneu", "Roue"],
+            ["Volant", "Guidon"],
+            ["Frein", "Accélérateur"],
+            ["Siège", "Banquette"],
+            ["Minecraft", "Roblox"],
+            ["Fortnite", "Apex Legends"],
+            ["Batman", "Iron Man"],
+            ["Shrek", "Grinch"],
+            ["Sherlock Holmes", "Hercule Poirot"],
+            ["Barbie", "Ken"],
+            ["Manga", "Comics"],
+            ["Dracula", "Frankenstein"],
+            ["Gandalf", "Dumbledore"],
+            ["Witcher", "Skyrim"],
+            ["Boulanger", "Pâtissier"],
+            ["Avocat", "Juge"],
+            ["Pilote", "Capitaine"],
+            ["Dentiste", "Orthodontiste"],
+            ["Astronaute", "Cosmonaute"],
+            ["Pêcheur", "Chasseur"],
+            ["Espion", "Détective"],
+            ["Barman", "Serveur"],
+            ["Journaliste", "Animateur"],
+            ["Magicien", "Illusionniste"],
+            ["Churros", "Beignet"],
+            ["Lasagnes", "Cannellonis"],
+            ["Couscous", "Paëlla"],
+            ["Kombucha", "Kéfir"],
+            ["Espresso", "Ristretto"],
+            ["Cappuccino", "Latte"],
+            ["Guacamole", "Houmous"],
+            ["Tiramisu", "Panna Cotta"],
+            ["Cheesecake", "Fondant"],
+            ["Nuggets", "Tenders"],
+            ["Mozzarella", "Burrata"],
+            ["Cheddar", "Gouda"],
+            ["Brie", "Camembert"],
+            ["Risotto", "Polenta"],
+            ["Pop-corn", "Barbe à papa"],
+            ["Powerbank", "Chargeur"],
+            ["Enceinte", "Barre de son"],
+            ["Clef USB", "Disque dur"],
+            ["Projecteur", "Téléviseur"],
+            ["Clavier", "Souris"],
+            ["Ring Light", "Trépied"],
+            ["Calculatrice", "Chronomètre"],
+            ["Cravate", "Nœud papillon"],
+            ["Casquette", "Béret"],
+            ["Talons", "Escarpins"],
+            ["Pyjama", "Nuisette"],
+            ["Maillot de bain", "Bikini"],
+            ["Collant", "Bas"],
+            ["Robe de mariée", "Robe de soirée"],
+            ["Bonnet", "Cagoule"],
+            ["Musée", "Galerie"],
+            ["Bowling", "Laser game"],
+            ["Parc d'attractions", "Fête foraine"],
+            ["Stade", "Gymnase"],
+            ["Bibliothèque", "Librairie"],
+            ["Aéroport", "Gare"],
+            ["Casino", "Salle d'arcade"],
+            ["Discothèque", "Bar dansant"],
+            ["Supermarché", "Épicerie"],
+            ["Gratte-ciel", "Tour"],
+            ["Éclipse", "Superlune"],
+            ["Comète", "Météorite"],
+            ["Trou noir", "Nébuleuse"],
+            ["Laser", "Faisceau"],
+            ["Microscope", "Télescope"],
+            ["Thermomètre", "Baromètre"],
+            ["ADN", "Cellule"],
+            ["Fossile", "Ambre"],
+            ["Banquise", "Iceberg"],
+            ["Geyser", "Source chaude"],
+            ["Cauchemar", "Insomnie"],
+            ["Stress", "Anxiété"],
+            ["Bonheur", "Joie"],
+            ["Jalousie", "Envie"],
+            ["Colère", "Rage"],
+            ["Hypnose", "Méditation"],
+            ["Labyrinthe", "Dédale"],
+            ["Mirage", "Illusion"],
+            ["Énigme", "Charade"],
+            ["Surnaturel", "Paranormal"],
+            ["Malédiction", "Sortilège"],
+            ["Symphonie", "Opéra"],
+            ["Salsa", "Tango"],
+            ["Théâtre", "Comédie musicale"],
+            ["Sculpture", "Statue"],
+            ["Poésie", "Roman"],
+            ["Graffiti", "Fresque"],
+            ["Horoscope", "Tarot"],
+            ["Karma", "Destin"],
+            ["Défi", "Pari"],
+            ["Escape game", "Chasse au trésor"],
+            ["Centaure", "Minotaure"],
+            ["Sirène", "Nymphe"],
+            ["Phénix", "Griffon"],
+            ["Sphinx", "Gargouille"],
+            ["Utopie", "Dystopie"],
+            ["Paradoxe", "Dilemme"],
+            ["Éthique", "Morale"],
+            ["Optimisme", "Pessimisme"],
+            ["Inflation", "Déflation"],
+            ["Action", "Obligation"],
+            ["Monopole", "Oligopole"],
+            ["Subvention", "Allocation"],
+            ["Bourse", "Crypto"],
+            ["Brainstorming", "Workshop"],
+            ["Startup", "Licorne"],
+            ["Trottoir", "Chaussée"],
+            ["Passage piéton", "Feu piéton"],
+            ["Mobilier urbain", "Éclairage public"],
+            ["Embrayage", "Boîte de vitesses"],
+            ["Bougie d'allumage", "Injecteur"],
+            ["Mixage", "Mastering"],
+            ["Gain", "Volume"],
+            ["Égaliseur", "Compresseur"],
+            ["Écho", "Réverbération"],
+            ["Endurance", "Résistance"],
+            ["Échauffement", "Récupération"],
+            ["Courbature", "Crampe"],
+            ["Calories", "Métabolisme"],
+            ["Escale", "Transit"],
+            ["Bagage en soute", "Bagage cabine"],
+            ["Hors-saison", "Haute-saison"],
+            ["Excursion", "Circuit"],
+            ["Gravure", "Sérigraphie"],
+            ["Impression", "Reproduction"],
+            ["Trame", "Pixel"],
+            ["Nuancier", "Palette"],
+            ["Acide", "Basique"],
+            ["Oxydation", "Fermentation"],
+            ["Solvant", "Diluant"],
+            ["Fusion", "Solidification"],
+            ["Plâtre", "Ciment"],
+            ["Isolation", "Étanchéité"],
+            ["Béton", "Goudron"],
+            ["Faïence", "Carrelage"],
+            ["Détergent", "Désinfectant"],
+            ["Eau de Javel", "Lessive"],
+            ["Anticalcaire", "Dégraissant"],
+            ["Lessive", "Adoucissant"],
+            ["Tissage", "Filage"],
+            ["Doublure", "Rembourrage"],
+            ["Ourlet", "Couture"],
+            ["Patron", "Modèle"],
+            ["Saveur", "Arôme"],
+            ["Odorat", "Goût"],
+            ["Texture", "Consistance"],
+            ["Luminosité", "Contraste"],
+            ["Radiographie", "Échographie"],
+            ["Scanner", "IRM"],
+            ["Anesthésie", "Sédation"],
+            ["Biopsie", "Prélèvement"],
+            ["Bénévolat", "Charité"],
+            ["Association", "ONG"],
+            ["Donation", "Mécénat"],
+            ["Subvention", "Parrainage"],
+            ["Métropole", "Mégapole"],
+            ["Émigration", "Immigration"],
+            ["Densité", "Population"],
+            ["Frontière", "Douane"],
+            ["Protège-tibia", "Genouillère"],
+            ["Chronomètre", "Sifflet"],
+            ["Pétrissage", "Levage"],
+            ["Grillade", "Rôtissage"],
+            ["Déglaçage", "Réduction"],
+            ["Millénaire", "Siècle"],
+            ["Fuseau horaire", "Méridien"],
+            ["Simultané", "Successif"],
+            ["Publicité", "Propagande"],
+            ["Sondage", "Statistiques"],
+            ["Boulon", "Écrou"],
+            ["Clé à molette", "Pince multiprise"],
+            ["Thèse", "Mémoire"],
+            ["Bulletin", "Diplôme"],
+            ["Soutenance", "Examen"],
+            ["Copropriété", "Syndic"],
+            ["Altitude", "Dénivelé"],
+            ["Échelle", "Légende"],
+            ["Entretien", "Recrutement"],
+            ["Préavis", "Période d'essai"],
+            ["Licenciement", "Démission"],
+            ["Promotion", "Mutation"],
+            ["Satellite", "Sonde"],
+            ["Rover", "Lander"],
+            ["Fusée", "Missile"],
+            ["Orbite", "Trajectoire"],
+            ["Jazz", "Blues"],
+            ["Salsa", "Bachata"],
+            ["Opéra", "Ballet"],
+            ["Partition", "Tablature"],
+            ["Baroque", "Rococo"],
+            ["Gothique", "Roman"],
+            ["Renaissance", "Classicisme"],
+            ["Cubisme", "Surréalisme"],
+            ["Disjoncteur", "Fusible"],
+            ["Siphon", "Bonde"],
+            ["Gaine", "Câble"],
+            ["Prise", "Interrupteur"],
+            ["Tirade", "Monologue"],
+            ["Réplique", "Dialogue"],
+            ["Improvisation", "Sketch"],
+            ["Coup de théâtre", "Quiproquo"],
+            ["Reliure", "Brochure"],
+            ["Typographie", "Calibrage"],
+            ["Édition", "Impression"],
+            ["Tome", "Volume"],
+            ["Obturateur", "Diaphragme"],
+            ["Focale", "Zoom"],
+            ["Trépied", "Monopode"],
+            ["Exposition", "Sensibilité"],
+            ["Châssis", "Carrosserie"],
+            ["Monospace", "SUV"],
+            ["Berline", "Citadine"],
+            ["Hybride", "Électrique"],
+            ["Ganache", "Praliné"],
+            ["Meringue", "Chantilly"],
+            ["Nappage", "Glaçage"],
+            ["Génoise", "Biscuit"],
+            ["Perforatrice", "Plastifieuse"],
+            ["Surligneur", "Correcteur"],
+            ["Classeur", "Chemise"],
+            ["Punaise", "Adhésif"],
+            ["Rayon", "Diamètre"],
+            ["Tangente", "Sécante"],
+            ["Périmètre", "Aire"],
+            ["Hypoténuse", "Diagonale"],
+            ["SEO", "SEA"],
+            ["Algorithme", "Code"],
+            ["Hébergement", "Domaine"],
+            ["Base de données", "Cloud"],
+            ["Blockchain", "Grand livre"],
+            ["Minage", "Staking"],
+            ["Wallet", "Clé privée"],
+            ["Jeton", "Crypto-monnaie"],
+            ["Word1", "Word2"],
+            ["Burnout", "Boreout"],
+            ["Tribord", "Bâbord"],
+            ["Proue", "Poupe"],
+            ["Gouvernail", "Ancre"],
+            ["Mousqueton", "Manille"],
+            ["Marée haute", "Marée basse"],
+            ["Gladiateur", "Légionnaire"],
+            ["Sultan", "Émir"],
+            ["Scribe", "Copiste"],
+            ["Sarcophage", "Mausolée"],
+            ["Donjon", "Rempart"],
+            ["Stalactite", "Stalagmite"],
+            ["Quartz", "Obsidienne"],
+            ["Améthyste", "Émeraude"],
+            ["Silex", "Granit"],
+            ["Filon", "Gisement"],
+            ["Uranium", "Plutonium"],
+            ["Infrarouge", "Ultraviolet"],
+            ["Fusion", "Fission"],
+            ["Électron", "Proton"],
+            ["Pesanteur", "Gravité"],
+            ["Métaphore", "Allégorie"],
+            ["Argot", "Jargon"],
+            ["Pastiche", "Parodie"],
+            ["Préface", "Postface"],
+            ["Pseudonyme", "Anonyme"],
+            ["Doublage", "Voix off"],
+            ["Storyboard", "Script"],
+            ["Coulisses", "Loges"],
+            ["Doublure", "Cascadeur"],
+            ["Déjà-vu", "Prémonition"],
+            ["Placebo", "Nocebo"],
+            ["Phobie", "Obsession"],
+            ["Amnésie", "Démence"],
+            ["Origami", "Calligraphie"],
+            ["Poterie", "Céramique"],
+            ["Philatélie", "Numismatique"],
+            ["Brocante", "Vide-grenier"],
+            ["Couture", "Tricot"],
+            ["Flamber", "Caraméliser"],
+            ["Émincer", "Hacher"],
+            ["Bain-marie", "Mijoteuse"],
+            ["Marinade", "Saumure"],
+            ["Mousson", "Typhon"],
+            ["Canicule", "Sécheresse"],
+            ["Blizzard", "Verglas"],
+            ["Toundra", "Taïga"],
+            ["Alibi", "Mobile"],
+            ["Flagrant délit", "Récidive"],
+            ["Perquisition", "Saisie"],
+            ["Verdict", "Sentence"],
+            ["Légitime défense", "Préméditation"],
+            ["Catapulte", "Trébuchet"],
+            ["Camouflage", "Furtivité"],
+            ["Siège", "Blocus"],
+            ["Tranchée", "Bunker"],
+            ["Façade", "Pignon"],
+            ["Poutre", "Charpente"],
+            ["Fondations", "Piliers"],
+            ["Dôme", "Coupole"],
+            ["Échafaudage", "Treuil"],
+            ["Turbulence", "Trou d'air"],
+            ["Pilote automatique", "Radar"],
+            ["Atterrissage", "Amerrissage"],
+            ["Hublot", "Cockpit"],
+            ["Solstice", "Équinoxe"],
+            ["Année-lumière", "Parsec"],
+            ["Méridien", "Équateur"],
+            ["Fuseau horaire", "Jetlag"],
+            ["Éolien", "Solaire"],
+            ["Biomasse", "Géothermie"],
+            ["Recyclage", "Compostage"],
+            ["Gala", "Cérémonie"],
+            ["Protocole", "Étiquette"],
+            ["Discours", "Éloge"],
+            ["Inauguration", "Vernissage"],
+            ["Newsletter", "Communiqué"],
+            ["Teaser", "Bande-annonce"],
+            ["Slogan", "Logo"],
+            ["Infographie", "Diagramme"],
+            ["Hormone", "Enzyme"],
+            ["Gène", "Chromosome"],
+            ["word1", "word2"],
+            ["R�duction", "Promotion"],
+            ["Ch�teau", "Palais"],
+            ["Menottes", "Cha�nes"],
+            ["D�j�-vu", "Pr�monition"],
+            ["Gaine", "C�ble"]
         ];
 
-        // --- STATE ---
-        // --- NETWORKING (MP) ---
+        // --- GLOBAL GAME STATE ---
+        let gameConfig = { total: 4, infiltres: 1, inconnus: 0, pnj: 3, mode: 'secret' };
+        let players = [];
+        let rolesDeck = [];
+        let currentStep = 0;
+        let currentPNJWord = "";
+        let currentInfiltreWord = "";
+        let pendingVictimIndex = -1;
+        let timerInterval = null;
+        let previousStarters = [];
+        const RECONNECT_TIMEOUT_MS = 60000;
+        const HOST_RECONNECT_POLL_MS = 2500;
+        const HOST_RECONNECT_MAX_MS = 60000;
+
+
+        // --- NETWORKING (PEERJS CONFIG) ---
+        const PEER_CONFIG = {
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' },
+                    { urls: 'stun:stun3.l.google.com:19302' },
+                    { urls: 'stun:stun4.l.google.com:19302' },
+                    { urls: 'stun:stun.cloudflare.com:3478' }
+                ]
+            }
+        };
+
+        // --- MULTIPLAYER ENGINE (MP) ---
         const MP = {
             peer: null,
             mode: null, // 'host' or 'client'
@@ -2388,15 +3167,27 @@
             connections: [],
             me: { id: null, name: null, avatar: null, index: null },
             memorizedCount: 0,
+            memorizedPlayers: [],
             gameState: { players: [], roles: [], words: [], currentStep: 0 },
             voted: false,
+            receivedFirstSync: false,
+            isDisconnecting: false,
+            _heartbeatTimer: null,
+            _lobbySyncTimer: null,
+            _joinRetryTimer: null,
+            _reconnectInterval: null,
+            _memorizedTimeout: null,
+            _voteTimeout: null,
+            _hostInitRetries: 0,
 
             updateStatus: function (status, type) {
                 const ind = document.getElementById('mp-status-indicator');
                 const badge = document.getElementById('mp-status-badge');
-                ind.classList.remove('d-none');
-                badge.innerText = status;
-                badge.className = 'connection-status ' + (type === 'online' ? 'status-online' : (type === 'connecting' ? 'status-connecting' : 'status-offline'));
+                if (ind) ind.classList.remove('d-none');
+                if (badge) {
+                    badge.innerText = status;
+                    badge.className = 'connection-status ' + (type === 'online' ? 'status-online' : (type === 'connecting' ? 'status-connecting' : 'status-offline'));
+                }
             },
 
             initHost: function () {
@@ -2405,14 +3196,18 @@
                 this.generateRoomId();
                 const fullId = 'toupil-' + this.roomId;
 
+                this.cleanupTimers();
+
                 if (this.peer) {
                     try { this.peer.destroy(); } catch (e) { }
                 }
 
-                this.peer = new Peer(fullId);
+                this.connections = [];
+                this.peer = new Peer(fullId, PEER_CONFIG);
                 this.updateStatus('CRÉATION...', 'connecting');
 
                 this.peer.on('open', (id) => {
+                    this._hostInitRetries = 0;
                     this.updateStatus('HÔTE : ' + this.roomId, 'online');
                     document.getElementById('displayRoomCode').innerText = this.roomId;
                     document.getElementById('host-room-code-display').innerText = this.roomId;
@@ -2432,100 +3227,207 @@
                     showView('view-mp-lobby');
                     this.addSelfToLobby();
                     this.saveSession();
+
+                    this.startHeartbeat();
+                    this.startLobbySyncTimer();
                 });
 
                 this.peer.on('connection', (conn) => {
-                    // Filtrage des connexions fermées pour éviter la désynchronisation
-                    this.connections = this.connections.filter(c => c.open);
+                    const existingIdx = this.connections.findIndex(c => c.peer === conn.peer);
+                    if (existingIdx !== -1) {
+                        try { this.connections[existingIdx].close(); } catch (e) { }
+                        this.connections.splice(existingIdx, 1);
+                    }
                     this.connections.push(conn);
 
-                    conn.on('data', (data) => this.handleData(data, conn));
+                    conn.on('open', () => {
+                        conn.lastSeen = Date.now();
+                        if (this.mode === 'host' && (!players || players.length === 0)) {
+                            this.syncLobby();
+                        }
+                    });
+
+                    conn.on('data', (data) => {
+                        conn.lastSeen = Date.now();
+                        this.handleData(data, conn);
+                    });
+
                     conn.on('close', () => {
                         this.handleConnectionClose(conn);
+                    });
+
+                    conn.on('error', (err) => {
+                        console.warn('Erreur DataConnection:', err);
                     });
                 });
 
                 this.peer.on('error', (err) => {
+                    console.error("PeerJS Host Error:", err);
                     if (!this.isDisconnecting) {
-                        // Régénération de code si déjà pris par PeerJS après un refresh rapide
                         if (err.type === 'unavailable-id') {
-                            this.initHost();
-                        } else {
-                            alert("Erreur réseau ou code introuvable.");
-                            this.disconnect();
+                            this._hostInitRetries = (this._hostInitRetries || 0) + 1;
+                            if (this._hostInitRetries < 5) {
+                                setTimeout(() => this.initHost(), 300);
+                                return;
+                            }
                         }
+                        alert("Erreur réseau PeerJS (" + (err.type || 'connexion') + "). Nouvelle tentative...");
+                        this.disconnect();
                     }
                 });
             },
 
-            initClient: function () {
-                const code = document.getElementById('inputRoomCode').value.trim().toUpperCase();
-                if (code.length !== 4) return alert("Code invalide");
+            initClient: function (codeOverride) {
+                const codeInput = document.getElementById('inputRoomCode');
+                const code = (codeOverride || (codeInput ? codeInput.value : '')).trim().toUpperCase();
+                if (code.length !== 4) return alert("Code invalide (4 caractères requis)");
+
+                this.cleanupTimers();
+                this.isDisconnecting = false;
+                this.receivedFirstSync = false;
                 this.mode = 'client';
                 this.roomId = code;
-                this.peer = new Peer();
+
+                if (this.peer) {
+                    try { this.peer.destroy(); } catch (e) { }
+                }
+
+                this.peer = new Peer(null, PEER_CONFIG);
                 this.updateStatus('CONNEXION...', 'connecting');
+                showReconnectingOverlay("Connexion à la salle " + code + "...");
 
                 this.peer.on('open', (id) => {
-                    const conn = this.peer.connect('toupil-' + this.roomId);
+                    const hostPeerId = 'toupil-' + this.roomId;
+                    const conn = this.peer.connect(hostPeerId, { reliable: true });
                     this.connections = [conn];
+
                     conn.on('open', () => {
+                        conn.lastSeen = Date.now();
                         this.updateStatus('CONNECTÉ', 'online');
+                        hideReconnectingOverlay();
                         document.getElementById('lobby-host-elements').classList.add('d-none');
                         document.getElementById('lobby-client-elements').classList.remove('d-none');
                         document.getElementById('lobby-actions-host').classList.add('d-none');
                         document.getElementById('mp-chat-container').classList.remove('d-none');
                         document.body.style.paddingBottom = "200px";
                         showView('view-mp-lobby');
+
                         this.me.name = localStorage.getItem('intrusion_last_name') || 'Inconnu';
                         this.me.avatar = localStorage.getItem('intrusion_last_avatar');
                         this.saveSession();
-                        this.sendData({ type: 'join', name: this.me.name, avatar: this.me.avatar });
+
+                        const sendJoinPacket = () => {
+                            this.sendData({ type: 'join', name: this.me.name, avatar: this.me.avatar });
+                        };
+                        sendJoinPacket();
+
+                        let joinAttempts = 0;
+                        if (this._joinRetryTimer) clearInterval(this._joinRetryTimer);
+                        this._joinRetryTimer = setInterval(() => {
+                            joinAttempts++;
+                            if (this.receivedFirstSync || joinAttempts > 6 || !conn.open) {
+                                clearInterval(this._joinRetryTimer);
+                                this._joinRetryTimer = null;
+                                return;
+                            }
+                            sendJoinPacket();
+                        }, 1200);
+
+                        this.startHeartbeat();
                     });
-                    conn.on('data', (data) => this.handleData(data));
+
+                    conn.on('data', (data) => {
+                        conn.lastSeen = Date.now();
+                        this.handleData(data, conn);
+                    });
+
                     conn.on('close', () => {
                         if (!this.isDisconnecting) {
                             this.startHostReconnectLoop();
                         }
                     });
+
+                    conn.on('error', (err) => {
+                        console.warn('Erreur DataConnection Client:', err);
+                    });
                 });
 
-                this.peer.on('error', (err) => { alert("Impossible de rejoindre la salle. Vérifie le code."); this.disconnect(); });
+                this.peer.on('error', (err) => {
+                    console.error("PeerJS Client Error:", err);
+                    hideReconnectingOverlay();
+                    if (err.type === 'peer-unavailable') {
+                        alert("Salle introuvable (" + this.roomId + "). Vérifiez que l'hôte a bien créé la salle.");
+                    } else {
+                        alert("Impossible de rejoindre la salle (" + (err.type || 'erreur réseau') + ").");
+                    }
+                    this.disconnect();
+                });
             },
 
             generateRoomId: function () {
                 this.roomId = Math.floor(1000 + Math.random() * 9000).toString();
             },
 
+            cleanupTimers: function () {
+                if (this._heartbeatTimer) { clearInterval(this._heartbeatTimer); this._heartbeatTimer = null; }
+                if (this._lobbySyncTimer) { clearInterval(this._lobbySyncTimer); this._lobbySyncTimer = null; }
+                if (this._joinRetryTimer) { clearInterval(this._joinRetryTimer); this._joinRetryTimer = null; }
+                if (this._reconnectInterval) { clearInterval(this._reconnectInterval); this._reconnectInterval = null; }
+                if (this._memorizedTimeout) { clearTimeout(this._memorizedTimeout); this._memorizedTimeout = null; }
+                if (this._voteTimeout) { clearTimeout(this._voteTimeout); this._voteTimeout = null; }
+            },
+
+            startHeartbeat: function () {
+                if (this._heartbeatTimer) clearInterval(this._heartbeatTimer);
+                this._heartbeatTimer = setInterval(() => {
+                    if (this.isDisconnecting || !this.peer || this.peer.destroyed) return;
+                    if (this.mode === 'host') {
+                        this.broadcast({ type: 'ping', t: Date.now() });
+                    } else if (this.mode === 'client') {
+                        const conn = this.connections[0];
+                        if (conn && conn.lastSeen && Date.now() - conn.lastSeen > 12000) {
+                            console.warn("Heartbeat timeout - relance connexion hôte");
+                            conn.lastSeen = Date.now();
+                            this.startHostReconnectLoop();
+                        }
+                    }
+                }, 4000);
+            },
+
+            startLobbySyncTimer: function () {
+                if (this._lobbySyncTimer) clearInterval(this._lobbySyncTimer);
+                this._lobbySyncTimer = setInterval(() => {
+                    if (this.mode === 'host' && (!players || players.length === 0) && !this.isDisconnecting) {
+                        this.syncLobby();
+                    }
+                }, 3000);
+            },
+
             disconnect: function () {
                 if (this.isDisconnecting) return;
                 this.isDisconnecting = true;
+                this.cleanupTimers();
                 this.clearSession();
 
                 if (typeof timerInterval !== 'undefined' && timerInterval) {
                     clearInterval(timerInterval);
                 }
 
-                if (this._reconnectInterval) {
-                    clearInterval(this._reconnectInterval);
-                    this._reconnectInterval = null;
-                }
-
-                // 1. Prévenir tous les joueurs que la salle ferme AVANT de couper
                 if (this.mode === 'host' && this.connections.length > 0) {
                     try { this.broadcast({ type: 'room_closed' }); } catch (e) { }
                 }
 
-                // 2. Détruire proprement la connexion
                 try { if (this.peer) this.peer.destroy(); } catch (e) { }
                 this.peer = null;
                 this.connections = [];
                 this.mode = null;
 
-                // 3. Nettoyer l'interface
-                document.getElementById('mp-status-indicator').classList.add('d-none');
-                document.getElementById('mp-chat-container').classList.add('d-none');
-                document.getElementById('host-room-code-btn').classList.add('d-none');
+                const ind = document.getElementById('mp-status-indicator');
+                if (ind) ind.classList.add('d-none');
+                const chat = document.getElementById('mp-chat-container');
+                if (chat) chat.classList.add('d-none');
+                const hostBtn = document.getElementById('host-room-code-btn');
+                if (hostBtn) hostBtn.classList.add('d-none');
                 document.body.style.paddingBottom = "0px";
 
                 const placeholder = document.getElementById('setup-role-settings-placeholder');
@@ -2534,7 +3436,6 @@
 
                 try { updateConfigFromSlider(); } catch (e) { }
 
-                // 4. CORRECTION PAGE BLANCHE : On n'affiche le menu que si on n'y est pas déjà
                 const setupView = document.getElementById('view-setup');
                 if (setupView && setupView.classList.contains('d-none')) {
                     showView('view-setup');
@@ -2542,7 +3443,7 @@
 
                 setTimeout(() => {
                     this.isDisconnecting = false;
-                }, 500);
+                }, 400);
             },
 
             addSelfToLobby: function () {
@@ -2552,12 +3453,27 @@
             },
 
             handleData: function (data, conn) {
+                if (!data || !data.type) return;
+
                 switch (data.type) {
+                    case 'ping':
+                        if (this.mode === 'client') {
+                            this.sendData({ type: 'pong', t: data.t });
+                        }
+                        break;
+
+                    case 'pong':
+                        if (conn) conn.lastSeen = Date.now();
+                        break;
+
                     case 'room_closed':
                         alert("L'hôte a fermé la salle.");
                         this.disconnect();
                         break;
+
                     case 'reconnect_game':
+                        this.receivedFirstSync = true;
+                        if (this._joinRetryTimer) { clearInterval(this._joinRetryTimer); this._joinRetryTimer = null; }
                         players = data.players;
                         gameConfig = data.config;
                         currentPNJWord = data.words[0];
@@ -2611,6 +3527,7 @@
                         }
                         checkWinCondition();
                         break;
+
                     case 'force_lobby':
                         if (typeof timerInterval !== 'undefined' && timerInterval) {
                             clearInterval(timerInterval);
@@ -2625,11 +3542,12 @@
                             this.syncLobby();
                         }
                         break;
+
                     case 'join': {
                         const cleanName = (data.name || '').trim();
+                        if (!conn) break;
 
-                        // 1. Fermeture des anciennes connexions mortes pour ce pseudo
-                        const existingConnIndex = this.connections.findIndex(c => c.peerName && c.peerName.trim().toLowerCase() === cleanName.toLowerCase() && c.peer !== conn.peer);
+                        const existingConnIndex = this.connections.findIndex(c => c !== conn && c.peerName && c.peerName.trim().toLowerCase() === cleanName.toLowerCase());
                         if (existingConnIndex !== -1) {
                             const existingConn = this.connections[existingConnIndex];
                             if (existingConn._graceTimeout) clearTimeout(existingConn._graceTimeout);
@@ -2637,32 +3555,29 @@
                             this.connections.splice(existingConnIndex, 1);
                         }
 
-                        // 2. Empêcher d'utiliser le pseudo de l'hôte
                         if (this.me.name.trim().toLowerCase() === cleanName.toLowerCase()) {
-                            conn.send({ type: 'error', message: 'Ce pseudo est déjà utilisé par l\'hôte.' });
+                            try { conn.send({ type: 'error', message: "Ce pseudo est déjà utilisé par l'hôte." }); } catch(e) {}
                             return;
                         }
 
                         conn.peerName = cleanName;
                         conn.peerAvatar = data.avatar;
+                        conn.lastSeen = Date.now();
 
-                        if (players.length > 0) {
-                            // Partie en cours : recherche par nom
+                        if (players && players.length > 0) {
                             let playerIdx = players.findIndex(p => p.name.trim().toLowerCase() === cleanName.toLowerCase());
 
-                            // REPLI INTELLIGENT : S'il n'y a qu'un seul joueur déconnecté dans la partie, on lui attribue cette connexion
                             if (playerIdx === -1) {
                                 const disconnectedIndices = players.map((p, i) => ({ player: p, index: i }))
                                     .filter(item => item.index !== 0 && !this.isPlayerConnected(item.index));
 
                                 if (disconnectedIndices.length === 1) {
                                     playerIdx = disconnectedIndices[0].index;
-                                    conn.peerName = players[playerIdx].name; // Recalage du nom
+                                    conn.peerName = players[playerIdx].name;
                                 }
                             }
 
                             if (playerIdx !== -1) {
-                                // Joueur identifié et réintégré
                                 players[playerIdx].peerId = conn.peer;
 
                                 const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -2693,54 +3608,64 @@
                                 } else if (targetView === 'view-debate') {
                                     progressData.debateTimeLeft = MP.debateTimeLeft || 60;
                                 }
-                                conn.send(progressData);
+                                try { conn.send(progressData); } catch (e) { }
                                 this.unblockPendingPhases();
                             } else {
-                                // Partie en cours et impossible d'identifier le joueur : envoi d'un message d'erreur clair
                                 const activeNames = players.map(p => p.name).join(', ');
-                                conn.send({
-                                    type: 'error',
-                                    message: `Partie en cours. Pseudonyme "${cleanName}" inconnu. Joueurs dans la partie : ${activeNames}`
-                                });
+                                try {
+                                    conn.send({
+                                        type: 'error',
+                                        message: `Partie en cours. Pseudonyme "${cleanName}" inconnu. Joueurs dans la partie : ${activeNames}`
+                                    });
+                                } catch (e) { }
                             }
                         } else {
-                            // En dehors d'une partie (dans le salon/lobby)
                             this.syncLobby();
                         }
                         break;
                     }
+
                     case 'error':
                         hideReconnectingOverlay();
                         alert(data.message);
                         this.disconnect();
                         break;
+
                     case 'sync_lobby':
+                        this.receivedFirstSync = true;
+                        if (this._joinRetryTimer) { clearInterval(this._joinRetryTimer); this._joinRetryTimer = null; }
                         hideReconnectingOverlay();
                         if (!players || players.length === 0) {
                             showView('view-mp-lobby');
                         }
+                        if (data.config) {
+                            gameConfig = data.config;
+                        }
                         this.renderLobby(data.players);
                         break;
+
                     case 'start_game':
+                        this.receivedFirstSync = true;
+                        if (this._joinRetryTimer) { clearInterval(this._joinRetryTimer); this._joinRetryTimer = null; }
                         players = data.players;
                         gameConfig = data.config;
                         currentPNJWord = data.words[0];
                         currentInfiltreWord = data.words[1];
                         this.startClientFlow(data.myIndex);
                         break;
+
                     case 'memorized':
                         if (this.mode === 'host') {
                             this.memorizedPlayers = this.memorizedPlayers || [];
                             if (!this.memorizedPlayers.includes(data.index)) {
                                 this.memorizedPlayers.push(data.index);
-                                this.memorizedCount++;
+                                this.memorizedCount = this.memorizedPlayers.length;
                             }
 
-                            // Si l'hôte est déjà dans une phase ultérieure, on synchronise immédiatement le joueur qui vient de mémoriser
                             const hostView = getCurrentViewId();
                             if (hostView !== 'view-pass' && hostView !== 'view-reveal') {
-                                const playerConn = this.connections.find(c => c.peerName === players[data.index].name);
-                                if (playerConn) {
+                                const playerConn = this.connections.find(c => players[data.index] && c.peerName === players[data.index].name);
+                                if (playerConn && playerConn.open) {
                                     const progressData = {
                                         type: 'reconnect_game',
                                         players: players,
@@ -2756,15 +3681,11 @@
                                         const aliveCount = players.filter(p => p.alive).length;
                                         const votesCount = this.votes ? Object.keys(this.votes).length : 0;
                                         const voterIndices = this.votes ? Object.keys(this.votes).map(Number) : [];
-                                        progressData.voteProgress = {
-                                            count: votesCount,
-                                            total: aliveCount,
-                                            voterIndices: voterIndices
-                                        };
+                                        progressData.voteProgress = { count: votesCount, total: aliveCount, voterIndices: voterIndices };
                                     } else if (hostView === 'view-debate') {
                                         progressData.debateTimeLeft = MP.debateTimeLeft || 60;
                                     }
-                                    playerConn.send(progressData);
+                                    try { playerConn.send(progressData); } catch (e) { }
                                 }
                                 break;
                             }
@@ -2789,21 +3710,27 @@
                             }
                         }
                         break;
+
                     case 'sync_memorized_status':
                         this.renderMemorizedStatus(data.memorized);
                         break;
+
                     case 'vote':
                         if (this.mode === 'host') this.handleIncomingVote(data.from, data.to);
                         break;
+
                     case 'sync_tie_break':
                         startTieBreaker(data.tiedIndices, data.victimIndex, this.mode === 'host');
                         break;
+
                     case 'sync_elimination':
                         finalizeElimination(data.index, true);
                         break;
+
                     case 'sync_vote_progress':
                         renderVoteTracker(data.voterIndices || [], data.count, data.total);
                         break;
+
                     case 'sync_guess_phase':
                         pendingVictimIndex = data.index;
                         if (MP.me.index === data.index) {
@@ -2818,6 +3745,7 @@
                             </div>`;
                         }
                         break;
+
                     case 'guess_submit':
                         if (this.mode === 'host') {
                             const guessRaw = data.guess;
@@ -2828,6 +3756,7 @@
                             this.handleData({ type: 'sync_guess_result', correct: isCorrect, index: pendingVictimIndex });
                         }
                         break;
+
                     case 'sync_guess_result':
                         pendingVictimIndex = data.index;
                         players[pendingVictimIndex].alive = false;
@@ -2848,28 +3777,32 @@
                             SFX.error(); finalizeElimination(pendingVictimIndex, true);
                         }
                         break;
+
                     case 'sync_next_round':
                         setupNextRound(data.starter, true);
                         break;
+
                     case 'start_debate':
                         document.getElementById('firstPlayerName').innerText = data.starter;
                         preparePreDebateView();
                         showView('view-pre-debate');
                         break;
+
                     case 'start_timer':
                         startDebate(data.seconds, true);
                         break;
-                    case 'sync_next_player':
-                        // Non utilisé car on révèle direct, mais utile pour sync d'autres états
-                        break;
+
                     case 'chat':
                         this.displayChat(data.name, data.message, data.time, false);
                         if (this.mode === 'host') {
                             this.connections.forEach(c => {
-                                if (c !== conn) c.send(data);
+                                if (c !== conn && c.open) {
+                                    try { c.send(data); } catch (e) { }
+                                }
                             });
                         }
                         break;
+
                     case 'vote_stop_timer':
                         if (this.mode === 'host') {
                             this.stopTimerVotes = (this.stopTimerVotes || 0) + 1;
@@ -2882,7 +3815,6 @@
                                 this.stopTimerVotes = 0;
                             } else {
                                 this.broadcast({ type: 'sync_stop_timer_votes', votes: this.stopTimerVotes, threshold: threshold });
-                                // host local update
                                 const btn = document.getElementById('btn-force-vote');
                                 if (btn && !btn.classList.contains('disabled')) {
                                     btn.innerHTML = `<i class="bi bi-stop-circle"></i> ARRÊTER & VOTER (${this.stopTimerVotes}/${threshold})`;
@@ -2890,12 +3822,14 @@
                             }
                         }
                         break;
+
                     case 'sync_stop_timer_votes':
                         const btn = document.getElementById('btn-force-vote');
                         if (btn && !btn.classList.contains('disabled')) {
                             btn.innerHTML = `<i class="bi bi-stop-circle"></i> ARRÊTER & VOTER (${data.votes}/${data.threshold})`;
                         }
                         break;
+
                     case 'force_vote':
                         forceVote();
                         break;
@@ -2921,6 +3855,7 @@
 
             displayChat: function (name, msg, time, isMe) {
                 const container = document.getElementById('mp-chat-messages');
+                if (!container) return;
                 const div = document.createElement('div');
                 div.className = "p-2 rounded mb-1 shadow-sm " + (isMe ? "bg-primary text-end align-self-end" : "bg-dark border border-secondary text-start align-self-start");
                 div.style.maxWidth = "85%";
@@ -2929,13 +3864,13 @@
                 container.scrollTop = container.scrollHeight;
 
                 if (!isMe && this.isChatMinimized) {
-                    this.unreadChatCount++;
+                    this.unreadChatCount = (this.unreadChatCount || 0) + 1;
                     const bubble = document.getElementById('mp-chat-unread-bubble');
                     if (bubble) {
                         bubble.innerText = this.unreadChatCount + (this.unreadChatCount > 1 ? " Nouveaux" : " Nouveau");
                         bubble.classList.remove('d-none');
                         setTimeout(() => {
-                            bubble.classList.add('d-none');
+                            if (bubble) bubble.classList.add('d-none');
                         }, 2000);
                     }
                 }
@@ -2947,11 +3882,11 @@
                 const toggleBtn = document.getElementById('mp-chat-toggle');
 
                 if (this.isChatMinimized) {
-                    content.classList.add('d-none');
-                    toggleBtn.innerHTML = '<i class="bi bi-chevron-up"></i>';
+                    if (content) content.classList.add('d-none');
+                    if (toggleBtn) toggleBtn.innerHTML = '<i class="bi bi-chevron-up"></i>';
                 } else {
-                    content.classList.remove('d-none');
-                    toggleBtn.innerHTML = '<i class="bi bi-chevron-down"></i>';
+                    if (content) content.classList.remove('d-none');
+                    if (toggleBtn) toggleBtn.innerHTML = '<i class="bi bi-chevron-down"></i>';
                     this.unreadChatCount = 0;
                     const bubble = document.getElementById('mp-chat-unread-bubble');
                     if (bubble) bubble.classList.add('d-none');
@@ -2963,15 +3898,11 @@
             syncLobby: function () {
                 if (this.mode !== 'host') return;
 
-                // Nettoyage des connexions fermées ou mortes (WebRTC)
                 this.connections = this.connections.filter(c => {
-                    if (!c.open) return false;
                     if (c.peerConnection) {
                         const state = c.peerConnection.connectionState;
                         const iceState = c.peerConnection.iceConnectionState;
-                        if (state === 'disconnected' || state === 'failed' || state === 'closed' ||
-                            iceState === 'disconnected' || iceState === 'failed' || iceState === 'closed') {
-                            try { c.close(); } catch (e) { }
+                        if (state === 'closed' || iceState === 'closed') {
                             return false;
                         }
                     }
@@ -2979,20 +3910,28 @@
                 });
 
                 const lobbyPlayers = [{ name: this.me.name, avatar: this.me.avatar, isHost: true }];
+                const addedNames = new Set([this.me.name.trim().toLowerCase()]);
+
                 this.connections.forEach(c => {
                     if (c.peerName) {
-                        lobbyPlayers.push({ name: c.peerName, avatar: c.peerAvatar });
+                        const lower = c.peerName.trim().toLowerCase();
+                        if (!addedNames.has(lower)) {
+                            addedNames.add(lower);
+                            lobbyPlayers.push({ name: c.peerName, avatar: c.peerAvatar });
+                        }
                     }
                 });
+
                 this.renderLobby(lobbyPlayers);
-                this.broadcast({ type: 'sync_lobby', players: lobbyPlayers });
+                this.broadcast({ type: 'sync_lobby', players: lobbyPlayers, config: gameConfig });
                 updateConfigFromSlider(lobbyPlayers.length, false);
             },
 
             renderLobby: function (list) {
                 const container = document.getElementById('lobby-players-list');
                 const count = document.getElementById('lobby-count');
-                count.innerText = list.length;
+                if (count) count.innerText = list.length;
+                if (!container) return;
                 container.innerHTML = '';
                 list.forEach(p => {
                     const div = document.createElement('div');
@@ -3003,19 +3942,26 @@
                     container.appendChild(div);
                 });
 
-                // Host only can start if > 2 players
                 if (this.mode === 'host') {
                     const btn = document.getElementById('btn-start-mp');
-                    if (list.length < 3) btn.classList.add('disabled'); else btn.classList.remove('disabled');
+                    if (btn) {
+                        if (list.length < 3) btn.classList.add('disabled'); else btn.classList.remove('disabled');
+                    }
                 }
             },
 
             broadcast: function (data) {
-                this.connections.forEach(c => c.send(data));
+                this.connections.forEach(c => {
+                    if (c && c.open) {
+                        try { c.send(data); } catch (e) { console.warn('Erreur broadcast:', e); }
+                    }
+                });
             },
 
             sendData: function (data) {
-                if (this.connections[0]) this.connections[0].send(data);
+                if (this.connections && this.connections[0] && this.connections[0].open) {
+                    try { this.connections[0].send(data); } catch (e) { console.warn('Erreur sendData:', e); }
+                }
             },
 
             renderMemorizedStatus: function (memorizedList) {
@@ -3038,34 +3984,39 @@
             },
 
             startGame: function () {
+                const activeClients = this.connections.filter(c => c && c.open && c.peerName);
+                if (activeClients.length + 1 < 3) {
+                    return alert("Il faut au moins 3 joueurs connectés pour lancer la partie.");
+                }
+
                 this.memorizedCount = 0;
                 this.stopTimerVotes = 0;
                 this.memorizedPlayers = [];
 
-                // Effacer la session hôte : l'état de jeu en mémoire ne survit pas à un refresh
-                // Seul le lobby peut être repris après un refresh
                 sessionStorage.removeItem('intrusion_host_session');
 
-                // Setup roles locally
-                initGame(true); // true means networking mode
+                initGame(true);
 
-                // Prepare players array with roles
                 const allPlayers = [{ name: this.me.name, avatar: this.me.avatar, role: rolesDeck[0].role, word: rolesDeck[0].word, alive: true }];
-                this.connections.forEach((c, i) => {
+                activeClients.forEach((c, i) => {
                     const roleData = rolesDeck[i + 1];
                     allPlayers.push({ name: c.peerName, avatar: c.peerAvatar, role: roleData.role, word: roleData.word, alive: true, peerId: c.peer });
                 });
 
                 players = allPlayers;
 
-                this.connections.forEach((c, i) => {
-                    c.send({
-                        type: 'start_game',
-                        players: allPlayers,
-                        config: gameConfig,
-                        words: [currentPNJWord, currentInfiltreWord],
-                        myIndex: i + 1
-                    });
+                activeClients.forEach((c, i) => {
+                    try {
+                        c.send({
+                            type: 'start_game',
+                            players: allPlayers,
+                            config: gameConfig,
+                            words: [currentPNJWord, currentInfiltreWord],
+                            myIndex: i + 1
+                        });
+                    } catch (e) {
+                        console.error("Échec d'envoi start_game à", c.peerName, e);
+                    }
                 });
 
                 this.startLocalReveal();
@@ -3088,10 +4039,6 @@
             },
 
             handleIncomingVote: function (fromIdx, toIdx) {
-                // In MP mode, voting might be simultaneous or handled by host
-                // For now, let's keep it simple: Host sees votes as they happen or waits?
-                // User asked "On peut tous voter en même temps".
-                // Let's implement a "Waiting for votes" view.
                 this.votes = this.votes || {};
                 this.votes[fromIdx] = toIdx;
                 this.syncVoteStatus();
@@ -3100,28 +4047,28 @@
             isPlayerConnected: function (playerIdx) {
                 const p = players[playerIdx];
                 if (!p) return false;
-                if (playerIdx === 0) return true; // L'hôte est toujours connecté à lui-même
-                return this.connections.some(c => c.peerName === p.name && c.open);
+                if (playerIdx === 0) return true;
+                return this.connections.some(c => c.peerName && c.peerName.trim().toLowerCase() === p.name.trim().toLowerCase() && c.open);
             },
 
             handleConnectionClose: function (conn) {
                 this.connections = this.connections.filter(c => c !== conn);
                 this.syncLobby();
                 if (typeof players !== 'undefined' && players.length > 0) {
-                    const playerIndex = players.findIndex(p => p.peerId === conn.peer || p.name === conn.peerName);
+                    const playerIndex = players.findIndex(p => (conn.peer && p.peerId === conn.peer) || (conn.peerName && p.name.trim().toLowerCase() === conn.peerName.trim().toLowerCase()));
                     if (playerIndex !== -1 && players[playerIndex].alive) {
                         const pName = players[playerIndex].name;
                         const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                        this.displayChat('Système', `⏳ ${pName} s'est déconnecté. Reconnexion possible pendant 1 min...`, timeStr, true);
-                        this.broadcast({ type: 'chat', name: 'Système', message: `⏳ ${pName} s'est déconnecté. Reconnexion possible pendant 1 min...`, time: timeStr, system: true });
+                        this.displayChat('Système', `⏳ ${pName} s'est déconnecté. Reconnexion possible...`, timeStr, true);
+                        this.broadcast({ type: 'chat', name: 'Système', message: `⏳ ${pName} s'est déconnecté. Reconnexion possible...`, time: timeStr, system: true });
 
-                        // Timer de grâce : 1 min avant élimination
+                        if (conn._graceTimeout) clearTimeout(conn._graceTimeout);
                         conn._graceTimeout = setTimeout(() => {
-                            const isBack = this.connections.some(c => c.peerName === pName && c.open);
+                            const isBack = this.connections.some(c => c.peerName && c.peerName.trim().toLowerCase() === pName.trim().toLowerCase() && c.open);
                             if (!isBack && players[playerIndex] && players[playerIndex].alive) {
                                 const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                                this.displayChat('Système', `❌ ${pName} absent 1 min — éliminé automatiquement.`, t, true);
-                                this.broadcast({ type: 'chat', name: 'Système', message: `❌ ${pName} absent 1 min — éliminé automatiquement.`, time: t, system: true });
+                                this.displayChat('Système', `❌ ${pName} absent — éliminé automatiquement.`, t, true);
+                                this.broadcast({ type: 'chat', name: 'Système', message: `❌ ${pName} absent — éliminé automatiquement.`, time: t, system: true });
                                 finalizeElimination(playerIndex, false);
                                 setTimeout(() => this.unblockPendingPhases(), 200);
                             }
@@ -3129,7 +4076,6 @@
                     }
                 }
 
-                // Appel immédiat pour voir si les autres joueurs connectés ont tous validé / voté
                 const currentView = getCurrentViewId();
                 if (currentView === 'view-vote') {
                     this.syncVoteStatus();
@@ -3154,9 +4100,10 @@
                     if (this.peer.disconnected) {
                         this.peer.reconnect();
                     }
-                    const tryConn = this.peer.connect('toupil-' + this.roomId);
+                    const tryConn = this.peer.connect('toupil-' + this.roomId, { reliable: true });
                     this.connections = [tryConn];
                     tryConn.on('open', () => {
+                        tryConn.lastSeen = Date.now();
                         this.updateStatus('CONNECTÉ', 'online');
                         hideReconnectingOverlay();
                         document.getElementById('lobby-host-elements').classList.add('d-none');
@@ -3169,7 +4116,10 @@
                         this.saveSession();
                         this.sendData({ type: 'join', name: this.me.name, avatar: this.me.avatar });
                     });
-                    tryConn.on('data', (data) => this.handleData(data));
+                    tryConn.on('data', (data) => {
+                        tryConn.lastSeen = Date.now();
+                        this.handleData(data, tryConn);
+                    });
                     tryConn.on('close', () => {
                         if (!this.isDisconnecting) {
                             this.startHostReconnectLoop();
@@ -3206,7 +4156,6 @@
                 }
 
                 if (tiedCandidates.length > 1) {
-                    // ÉGALITÉ : Déclenchement de l'animation 3D synchronisée (Pièce 3D ou Prisme 3D)
                     const victimIdx = tiedCandidates[Math.floor(Math.random() * tiedCandidates.length)];
                     this.broadcast({ type: 'sync_tie_break', tiedIndices: tiedCandidates, victimIndex: victimIdx });
                     this.handleData({ type: 'sync_tie_break', tiedIndices: tiedCandidates, victimIndex: victimIdx });
@@ -3231,12 +4180,12 @@
                     const idx = players.indexOf(p);
                     return this.isPlayerConnected(idx);
                 });
-                const votesCount = Object.keys(this.votes).length;
+                const votesCount = this.votes ? Object.keys(this.votes).length : 0;
 
                 if (votesCount >= connectedAlivePlayers.length && connectedAlivePlayers.length > 0) {
                     this.resolveVotes(this.votes);
                 } else {
-                    const voterIndices = Object.keys(this.votes).map(Number);
+                    const voterIndices = this.votes ? Object.keys(this.votes).map(Number) : [];
                     const totalExpected = connectedAlivePlayers.length;
                     this.broadcast({ type: 'sync_vote_progress', count: votesCount, total: totalExpected, voterIndices: voterIndices });
                     this.handleData({ type: 'sync_vote_progress', count: votesCount, total: totalExpected, voterIndices: voterIndices });
@@ -3271,19 +4220,23 @@
                         if (this.peer.disconnected) {
                             this.peer.reconnect();
                         }
-                        const tryConn = this.peer.connect('toupil-' + this.roomId);
+                        const tryConn = this.peer.connect('toupil-' + this.roomId, { reliable: true });
                         tryConn.on('open', () => {
                             clearInterval(this._reconnectInterval);
                             this._reconnectInterval = null;
+                            tryConn.lastSeen = Date.now();
                             this.connections = [tryConn];
-                            tryConn.on('data', (d) => this.handleData(d));
+                            tryConn.on('data', (d) => {
+                                tryConn.lastSeen = Date.now();
+                                this.handleData(d, tryConn);
+                            });
                             tryConn.on('close', () => {
                                 if (!this.isDisconnecting) this.startHostReconnectLoop();
                             });
                             hideReconnectingOverlay();
                             this.sendData({ type: 'join', name: this.me.name, avatar: this.me.avatar });
                         });
-                    } catch (e) { /* réessai prochain tick */ }
+                    } catch (e) { }
                 }, HOST_RECONNECT_POLL_MS);
             },
 
@@ -3291,7 +4244,6 @@
                 const alivePlayers = players.filter(p => p.alive);
                 const currentView = getCurrentViewId();
 
-                // 1. Débloquer phase mémorisé
                 if (this.memorizedPlayers && (currentView === 'view-pass' || currentView === 'view-reveal')) {
                     const connectedAlivePlayers = alivePlayers.filter(p => {
                         const idx = players.indexOf(p);
@@ -3312,7 +4264,6 @@
                     }
                 }
 
-                // 2. Débloquer phase vote
                 if (this.votes && Object.keys(this.votes).length > 0 && currentView === 'view-vote') {
                     const connectedAlivePlayers = alivePlayers.filter(p => {
                         const idx = players.indexOf(p);
@@ -3326,7 +4277,6 @@
                 }
             },
 
-            // --- SESSION HÔTE / CLIENT : sauvegarde/restauration via localStorage ---
             saveSession: function () {
                 if (this.mode === 'host') {
                     sessionStorage.setItem('intrusion_host_session', JSON.stringify({
@@ -3354,6 +4304,7 @@
                 const hostRaw = sessionStorage.getItem('intrusion_host_session');
                 const clientRaw = sessionStorage.getItem('intrusion_client_session');
 
+                this.cleanupTimers();
                 try { if (this.peer) this.peer.destroy(); } catch (e) { }
                 this.peer = null;
                 this.connections = [];
@@ -3364,7 +4315,7 @@
                     this.roomId = state.roomId;
                     this.me.name = state.meName;
                     this.me.avatar = state.meAvatar;
-                    this.peer = new Peer('toupil-' + this.roomId);
+                    this.peer = new Peer('toupil-' + this.roomId, PEER_CONFIG);
                     this.updateStatus('RECONNEXION...', 'connecting');
                     const banner = document.getElementById('resume-session-banner');
                     if (banner) banner.classList.add('d-none');
@@ -3378,7 +4329,7 @@
                         document.getElementById('mp-chat-container').classList.remove('d-none');
                         document.body.style.paddingBottom = '200px';
 
-                        if (players.length > 0) {
+                        if (players && players.length > 0) {
                             this.displayChat('Système', '🔄 Session de jeu restaurée. En attente des joueurs.', '', true);
                         } else {
                             document.getElementById('lobby-host-elements').classList.remove('d-none');
@@ -3392,11 +4343,22 @@
                             this.addSelfToLobby();
                         }
                         this.saveSession();
+                        this.startHeartbeat();
+                        this.startLobbySyncTimer();
                     });
 
                     this.peer.on('connection', (conn) => {
                         this.connections.push(conn);
-                        conn.on('data', (data) => this.handleData(data, conn));
+                        conn.on('open', () => {
+                            conn.lastSeen = Date.now();
+                            if (this.mode === 'host' && (!players || players.length === 0)) {
+                                this.syncLobby();
+                            }
+                        });
+                        conn.on('data', (data) => {
+                            conn.lastSeen = Date.now();
+                            this.handleData(data, conn);
+                        });
                         conn.on('close', () => {
                             this.handleConnectionClose(conn);
                         });
@@ -3412,17 +4374,19 @@
                     this.roomId = state.roomId;
                     this.me.name = state.meName || localStorage.getItem('intrusion_last_name') || 'Inconnu';
                     this.me.avatar = state.meAvatar || localStorage.getItem('intrusion_last_avatar');
-                    this.peer = new Peer();
+                    this.peer = new Peer(null, PEER_CONFIG);
                     this.updateStatus('CONNEXION...', 'connecting');
                     showReconnectingOverlay("Reconnexion à la salle...");
                     const banner = document.getElementById('resume-session-banner');
                     if (banner) banner.classList.add('d-none');
 
                     this.peer.on('open', (id) => {
-                        const conn = this.peer.connect('toupil-' + this.roomId);
+                        const conn = this.peer.connect('toupil-' + this.roomId, { reliable: true });
                         this.connections = [conn];
                         conn.on('open', () => {
+                            conn.lastSeen = Date.now();
                             this.updateStatus('CONNECTÉ', 'online');
+                            hideReconnectingOverlay();
                             document.getElementById('lobby-host-elements').classList.add('d-none');
                             document.getElementById('lobby-client-elements').classList.remove('d-none');
                             document.getElementById('lobby-actions-host').classList.add('d-none');
@@ -3430,8 +4394,12 @@
                             document.body.style.paddingBottom = "200px";
                             this.saveSession();
                             this.sendData({ type: 'join', name: this.me.name, avatar: this.me.avatar });
+                            this.startHeartbeat();
                         });
-                        conn.on('data', (data) => this.handleData(data));
+                        conn.on('data', (data) => {
+                            conn.lastSeen = Date.now();
+                            this.handleData(data, conn);
+                        });
                         conn.on('close', () => {
                             if (!this.isDisconnecting) {
                                 this.startHostReconnectLoop();
@@ -3450,38 +4418,14 @@
             resyncAllPlayers: function () {
                 if (this.mode !== 'host') return;
 
-                // Nettoyage des connexions fermées ou mortes (WebRTC)
-                this.connections = this.connections.filter(c => {
-                    if (!c.open) return false;
-                    if (c.peerConnection) {
-                        const state = c.peerConnection.connectionState;
-                        const iceState = c.peerConnection.iceConnectionState;
-                        if (state === 'disconnected' || state === 'failed' || state === 'closed' ||
-                            iceState === 'disconnected' || iceState === 'failed' || iceState === 'closed') {
-                            try { c.close(); } catch (e) { }
-                            return false;
-                        }
-                    }
-                    return true;
-                });
+                this.connections = this.connections.filter(c => c && c.open);
 
-                // Supprimer les connexions qui n'ont jamais envoyé de pseudo ('join')
-                this.connections = this.connections.filter(c => c.peerName);
-
-                // Si la partie n'a pas encore commencé (dans le salon/lobby)
                 if (!players || players.length === 0) {
-                    const lobbyPlayers = [{ name: this.me.name, avatar: this.me.avatar, isHost: true }];
-                    this.connections.forEach(c => {
-                        lobbyPlayers.push({ name: c.peerName, avatar: c.peerAvatar });
-                    });
-                    this.renderLobby(lobbyPlayers);
-                    this.broadcast({ type: 'sync_lobby', players: lobbyPlayers });
-                    updateConfigFromSlider(lobbyPlayers.length, false);
-                    alert(`Salon resynchronisé. ${this.connections.length} joueur(s) connecté(s).`);
+                    this.syncLobby();
+                    alert(`Salon resynchronisé. ${this.connections.filter(c => c.peerName).length} joueur(s) connecté(s).`);
                     return;
                 }
 
-                // Si la partie est en cours
                 let sentCount = 0;
                 const disconnectedIndices = players.map((p, i) => ({ player: p, index: i }))
                     .filter(item => item.index !== 0 && !this.isPlayerConnected(item.index));
@@ -3493,7 +4437,6 @@
                             playerIdx = players.findIndex(p => p.name.trim().toLowerCase() === conn.peerName.trim().toLowerCase());
                         }
 
-                        // Si non trouvé par nom mais qu'il y a un joueur déconnecté unique dans la partie
                         if (playerIdx === -1 && disconnectedIndices.length === 1) {
                             playerIdx = disconnectedIndices[0].index;
                             conn.peerName = players[playerIdx].name;
@@ -3537,6 +4480,7 @@
                 alert(`Signal de resynchronisation envoyé à ${sentCount} joueur(s) en jeu.`);
             }
         };
+
 
         // --- GESTION DE L'HISTORIQUE DES MOTS ---
         function getPlayedWords() {
@@ -4260,7 +5204,7 @@
             currentPNJWord = pair[0]; currentInfiltreWord = pair[1];
 
             // Match player count to connected players if MP
-            if (isMP) gameConfig.total = MP.connections.length + 1;
+            if (isMP) { const activeCount = MP.connections.filter(c => c && c.open && c.peerName).length + 1; gameConfig.total = activeCount; }
 
             buildRolesDeck(pair);
 
@@ -4662,6 +5606,28 @@
             resultBanner.classList.add('opacity-0');
             victimNameElem.innerText = "---";
 
+            // Rendu des cases des joueurs en égalité (mêmes cartes que le vote)
+            const candidatesGrid = document.getElementById('tie-break-candidates-grid');
+            if (candidatesGrid) {
+                let gridHtml = '';
+                tiedIndices.forEach(idx => {
+                    const p = players[idx] || { name: `Agent ${idx + 1}`, avatar: null };
+                    const avatarHtml = p.avatar
+                        ? `<img src="${p.avatar}" class="vote-avatar" alt="${p.name}">`
+                        : `<div class="vote-avatar-placeholder"><i class="bi bi-person-fill"></i></div>`;
+
+                    gridHtml += `
+                    <div class="vote-tracker-card tie-candidate-card" id="tie-card-${idx}" style="border-color: #f43f5e; background: rgba(244, 63, 94, 0.14); box-shadow: 0 0 10px rgba(244, 63, 94, 0.25); min-width: 74px; max-width: 95px; padding: 6px 5px; transition: all 0.35s ease;">
+                        <div class="vote-avatar-wrapper">
+                            ${avatarHtml}
+                            <span class="vote-status-badge" style="background: #f43f5e; color: #fff; font-size: 0.6rem; box-shadow: 0 0 6px rgba(244, 63, 94, 0.8);"><i class="bi bi-exclamation-lg"></i></span>
+                        </div>
+                        <span class="vote-player-name" style="color: #fda4af; font-weight: 700;">${p.name}</span>
+                    </div>`;
+                });
+                candidatesGrid.innerHTML = gridHtml;
+            }
+
             const tiedCount = tiedIndices.length;
             const targetSlot = tiedIndices.indexOf(victimIndex);
 
@@ -4901,6 +5867,29 @@
                     if (targetFace) {
                         targetFace.classList.add('tie-target-highlight');
                     }
+
+                    // Mettre en valeur la carte de la victime et estomper les autres
+                    const victimCard = document.getElementById(`tie-card-${victimIndex}`);
+                    if (victimCard) {
+                        victimCard.style.transform = 'scale(1.15)';
+                        victimCard.style.borderColor = '#ef4444';
+                        victimCard.style.background = 'rgba(239, 68, 68, 0.38)';
+                        victimCard.style.boxShadow = '0 0 20px rgba(239, 68, 68, 0.85)';
+                        const badge = victimCard.querySelector('.vote-status-badge');
+                        if (badge) {
+                            badge.innerHTML = '<i class="bi bi-x-lg"></i>';
+                            badge.style.background = '#dc2626';
+                        }
+                    }
+                    tiedIndices.forEach(idx => {
+                        if (idx !== victimIndex) {
+                            const otherCard = document.getElementById(`tie-card-${idx}`);
+                            if (otherCard) {
+                                otherCard.style.opacity = '0.45';
+                                otherCard.style.filter = 'grayscale(60%)';
+                            }
+                        }
+                    });
 
                     // Laisser le résultat visible 2.3s puis enchaîner
                     setTimeout(() => {
