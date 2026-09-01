@@ -62,7 +62,7 @@
 
         body {
             background-color: #0b0f19;
-            background-image: 
+            background-image:
                 radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.35) 0%, transparent 45%),
                 radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.38) 0%, transparent 50%),
                 radial-gradient(circle at 25% 85%, rgba(244, 63, 94, 0.30) 0%, transparent 45%),
@@ -81,7 +81,7 @@
 
         body.light-mode {
             background-color: #f8fafc;
-            background-image: 
+            background-image:
                 radial-gradient(circle at 15% 15%, rgba(2, 132, 199, 0.16) 0%, transparent 45%),
                 radial-gradient(circle at 85% 30%, rgba(147, 51, 234, 0.16) 0%, transparent 50%),
                 radial-gradient(circle at 25% 85%, rgba(225, 29, 72, 0.14) 0%, transparent 45%),
@@ -94,16 +94,22 @@
             0% {
                 background-position: 0% 0%, 100% 0%, 0% 100%, 100% 100%, 0% 50%;
             }
+
             50% {
                 background-position: 100% 100%, 0% 100%, 100% 0%, 0% 0%, 100% 50%;
             }
+
             100% {
                 background-position: 50% 0%, 50% 100%, 100% 50%, 0% 50%, 0% 50%;
             }
         }
 
         /* --- TYPOGRAPHY & BRANDING --- */
-        h1, h2, h3, h4, .brand-font {
+        h1,
+        h2,
+        h3,
+        h4,
+        .brand-font {
             font-family: 'Orbitron', sans-serif;
             letter-spacing: 2px;
             color: var(--text-main);
@@ -116,6 +122,7 @@
             filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.45));
             letter-spacing: 4px;
         }
+
         body.light-mode .brand-title-glow {
             background: linear-gradient(135deg, #0284c7 0%, #7e22ce 50%, #e11d48 100%);
             -webkit-background-clip: text;
@@ -132,7 +139,8 @@
             color: #0f172a !important;
         }
 
-        label, .form-label {
+        label,
+        .form-label {
             color: var(--text-main) !important;
             font-weight: 600;
             opacity: 1 !important;
@@ -266,12 +274,14 @@
             transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease;
         }
 
-        .form-range::-webkit-slider-thumb:hover, .form-range:active::-webkit-slider-thumb {
+        .form-range::-webkit-slider-thumb:hover,
+        .form-range:active::-webkit-slider-thumb {
             transform: scale(1.25);
             box-shadow: 0 0 18px rgba(56, 189, 248, 1), 0 0 25px #ffffff;
         }
 
-        .form-range::-moz-range-thumb:hover, .form-range:active::-moz-range-thumb {
+        .form-range::-moz-range-thumb:hover,
+        .form-range:active::-moz-range-thumb {
             transform: scale(1.25);
             box-shadow: 0 0 18px rgba(56, 189, 248, 1), 0 0 25px #ffffff;
         }
@@ -296,7 +306,10 @@
         .stat-box::before {
             content: '';
             position: absolute;
-            top: 0; left: 0; right: 0; height: 3px;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
             background: transparent;
             transition: background 0.3s;
         }
@@ -314,25 +327,55 @@
             border-color: rgba(244, 63, 94, 0.4);
             background: rgba(244, 63, 94, 0.06);
         }
-        .box-infiltre::before { background: var(--danger-neon); }
-        .box-infiltre .role-name { color: var(--danger-neon); }
-        .box-infiltre:hover { border-color: var(--danger-neon); box-shadow: 0 0 20px var(--danger-glow); }
+
+        .box-infiltre::before {
+            background: var(--danger-neon);
+        }
+
+        .box-infiltre .role-name {
+            color: var(--danger-neon);
+        }
+
+        .box-infiltre:hover {
+            border-color: var(--danger-neon);
+            box-shadow: 0 0 20px var(--danger-glow);
+        }
 
         .box-inconnu {
             border-color: rgba(192, 132, 252, 0.4);
             background: rgba(192, 132, 252, 0.06);
         }
-        .box-inconnu::before { background: var(--purple-neon); }
-        .box-inconnu .role-name { color: var(--purple-neon); }
-        .box-inconnu:hover { border-color: var(--purple-neon); box-shadow: 0 0 20px rgba(192, 132, 252, 0.35); }
+
+        .box-inconnu::before {
+            background: var(--purple-neon);
+        }
+
+        .box-inconnu .role-name {
+            color: var(--purple-neon);
+        }
+
+        .box-inconnu:hover {
+            border-color: var(--purple-neon);
+            box-shadow: 0 0 20px rgba(192, 132, 252, 0.35);
+        }
 
         .box-pnj {
             border-color: rgba(56, 189, 248, 0.4);
             background: rgba(56, 189, 248, 0.06);
         }
-        .box-pnj::before { background: var(--primary-neon); }
-        .box-pnj .role-name { color: var(--primary-neon); }
-        .box-pnj:hover { border-color: var(--primary-neon); box-shadow: 0 0 20px var(--primary-glow); }
+
+        .box-pnj::before {
+            background: var(--primary-neon);
+        }
+
+        .box-pnj .role-name {
+            color: var(--primary-neon);
+        }
+
+        .box-pnj:hover {
+            border-color: var(--primary-neon);
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
 
         .role-name {
             font-family: 'Orbitron', sans-serif;
@@ -372,6 +415,7 @@
             color: var(--danger-neon);
             background: rgba(244, 63, 94, 0.1);
         }
+
         .ctrl-minus:hover {
             background: var(--danger-neon);
             color: #ffffff;
@@ -383,6 +427,7 @@
             color: var(--primary-neon);
             background: rgba(56, 189, 248, 0.1);
         }
+
         .ctrl-plus:hover {
             background: var(--primary-neon);
             color: #ffffff;
@@ -493,7 +538,8 @@
             transition: all 0.25s ease;
         }
 
-        .btn-history:hover, .btn-history:active {
+        .btn-history:hover,
+        .btn-history:active {
             background: var(--primary-neon);
             color: white;
             box-shadow: 0 0 25px var(--primary-neon);
@@ -574,7 +620,8 @@
             box-shadow: 0 0 15px rgba(244, 63, 94, 0.25);
         }
 
-        .btn-quit:hover, .btn-quit:active {
+        .btn-quit:hover,
+        .btn-quit:active {
             background: var(--danger-neon);
             color: white;
             transform: scale(1.08);
@@ -646,33 +693,59 @@
 
         #timerBar {
             background-size: 28px 28px;
-            background-image: linear-gradient(
-                135deg,
-                rgba(255, 255, 255, 0.25) 25%,
-                transparent 25%,
-                transparent 50%,
-                rgba(255, 255, 255, 0.25) 50%,
-                rgba(255, 255, 255, 0.25) 75%,
-                transparent 75%,
-                transparent
-            );
+            background-image: linear-gradient(135deg,
+                    rgba(255, 255, 255, 0.25) 25%,
+                    transparent 25%,
+                    transparent 50%,
+                    rgba(255, 255, 255, 0.25) 50%,
+                    rgba(255, 255, 255, 0.25) 75%,
+                    transparent 75%,
+                    transparent);
             animation: moveStripes 1.2s linear infinite;
             box-shadow: 0 0 15px currentColor;
             transition: width 1s linear, background-color 0.3s ease;
         }
 
         @keyframes moveStripes {
-            0% { background-position: 0 0; }
-            100% { background-position: 28px 0; }
+            0% {
+                background-position: 0 0;
+            }
+
+            100% {
+                background-position: 28px 0;
+            }
         }
 
         @keyframes heartbeat {
-            0% { transform: scale(1); filter: drop-shadow(0 0 10px var(--danger-neon)); }
-            15% { transform: scale(1.08); filter: drop-shadow(0 0 30px var(--danger-neon)); }
-            30% { transform: scale(1); filter: drop-shadow(0 0 10px var(--danger-neon)); }
-            45% { transform: scale(1.08); filter: drop-shadow(0 0 30px var(--danger-neon)); }
-            60% { transform: scale(1); filter: drop-shadow(0 0 10px var(--danger-neon)); }
-            100% { transform: scale(1); filter: drop-shadow(0 0 10px var(--danger-neon)); }
+            0% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 10px var(--danger-neon));
+            }
+
+            15% {
+                transform: scale(1.08);
+                filter: drop-shadow(0 0 30px var(--danger-neon));
+            }
+
+            30% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 10px var(--danger-neon));
+            }
+
+            45% {
+                transform: scale(1.08);
+                filter: drop-shadow(0 0 30px var(--danger-neon));
+            }
+
+            60% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 10px var(--danger-neon));
+            }
+
+            100% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 10px var(--danger-neon));
+            }
         }
 
         .timer-urgent {
@@ -690,6 +763,7 @@
                 opacity: 0;
                 transform: scale(0.96) translateY(12px);
             }
+
             to {
                 opacity: 1;
                 transform: scale(1) translateY(0);
@@ -705,6 +779,7 @@
                 opacity: 1;
                 transform: scale(1);
             }
+
             to {
                 opacity: 0;
                 transform: scale(0.96);
@@ -712,12 +787,35 @@
         }
 
         @keyframes shockwave {
-            0% { box-shadow: inset 0 0 0 red; background: rgba(255, 0, 0, 0); transform: translate(0, 0); }
-            10% { box-shadow: inset 0 0 120px red; background: rgba(255, 0, 0, 0.25); transform: translate(-6px, 6px); }
-            20% { transform: translate(6px, -6px); }
-            30% { transform: translate(-6px, 6px); }
-            40% { transform: translate(6px, -6px); }
-            100% { box-shadow: inset 0 0 0 red; background: transparent; transform: translate(0, 0); }
+            0% {
+                box-shadow: inset 0 0 0 red;
+                background: rgba(255, 0, 0, 0);
+                transform: translate(0, 0);
+            }
+
+            10% {
+                box-shadow: inset 0 0 120px red;
+                background: rgba(255, 0, 0, 0.25);
+                transform: translate(-6px, 6px);
+            }
+
+            20% {
+                transform: translate(6px, -6px);
+            }
+
+            30% {
+                transform: translate(-6px, 6px);
+            }
+
+            40% {
+                transform: translate(6px, -6px);
+            }
+
+            100% {
+                box-shadow: inset 0 0 0 red;
+                background: transparent;
+                transform: translate(0, 0);
+            }
         }
 
         .elimination-shock {
@@ -752,6 +850,7 @@
                 text-shadow: 0 0 15px rgba(251, 191, 36, 0.4), 0 0 30px rgba(251, 191, 36, 0.2);
                 transform: scale(1);
             }
+
             100% {
                 text-shadow: 0 0 25px rgba(251, 191, 36, 0.8), 0 0 50px rgba(251, 191, 36, 0.45);
                 transform: scale(1.02);
@@ -829,7 +928,143 @@
             letter-spacing: 0.5px;
         }
 
-        /* --- VOTE TRACKER --- */
+        /* --- VOTE TRACKER (DAMIER) --- */
+        .vote-tracker {
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        .vote-tracker-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .vote-tracker-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+            gap: 8px;
+            justify-content: center;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .vote-tracker-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 4px 6px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1.5px solid var(--border-color);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            min-width: 0;
+        }
+
+        .vote-tracker-card.has-voted {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.15);
+            box-shadow: 0 0 12px rgba(34, 197, 94, 0.3);
+            transform: scale(1.02);
+        }
+
+        .vote-tracker-card.waiting {
+            border-color: rgba(255, 255, 255, 0.08);
+            opacity: 0.55;
+        }
+
+        .vote-tracker-card .vote-avatar-wrapper {
+            position: relative;
+            width: 36px;
+            height: 36px;
+            margin-bottom: 4px;
+        }
+
+        .vote-tracker-card .vote-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1.5px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .vote-tracker-card.has-voted .vote-avatar {
+            border-color: #22c55e;
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+        }
+
+        .vote-tracker-card .vote-avatar-placeholder {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: #94a3b8;
+            border: 1.5px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .vote-tracker-card.has-voted .vote-avatar-placeholder {
+            background: rgba(34, 197, 94, 0.25);
+            color: #4ade80;
+            border-color: #22c55e;
+        }
+
+        .vote-tracker-card .vote-status-badge {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+        }
+
+        .vote-tracker-card.has-voted .vote-status-badge {
+            background: #22c55e;
+            color: #000;
+            font-weight: 900;
+            box-shadow: 0 0 6px rgba(34, 197, 94, 0.8);
+        }
+
+        .vote-tracker-card.waiting .vote-status-badge {
+            background: rgba(15, 23, 42, 0.9);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.6);
+        }
+
+        .vote-tracker-card .vote-player-name {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-main);
+            text-align: center;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            line-height: 1.2;
+            padding: 0 2px;
+        }
+
+        .vote-tracker-card.has-voted .vote-player-name {
+            color: #4ade80;
+            font-weight: 700;
+        }
+
+        /* Fallback legacy pill */
         .vote-tracker-pill {
             display: flex;
             align-items: center;
@@ -852,6 +1087,299 @@
         .vote-tracker-pill.waiting {
             border-color: var(--border-color);
             opacity: 0.65;
+        }
+
+        /* --- 3D TIE BREAKER MODAL & AIRBORNE 3D ENGINE --- */
+        #modal-tie-break {
+            perspective: 1400px;
+        }
+
+        .tie-3d-scene {
+            perspective: 1400px;
+            width: 280px;
+            height: 270px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* DYNAMIC 3D FLOOR SHADOW */
+        .tie-3d-shadow {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            width: 140px;
+            height: 24px;
+            margin-left: -70px;
+            border-radius: 50%;
+            background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.95) 0%, rgba(251, 191, 36, 0.18) 45%, rgba(0, 0, 0, 0) 75%);
+            filter: blur(4px);
+            transform-origin: center center;
+            transition: all 0.2s ease;
+        }
+
+        .tie-3d-shadow.airborne {
+            animation: shadowPulseRealistic 3.6s cubic-bezier(0.2, 0.85, 0.25, 1) forwards;
+        }
+
+        /* 3D TOSS RIG (AIRBORNE PARABOLIC JUMP & REALISTIC MULTI-STAGE BOUNCES) */
+        .tie-toss-rig {
+            position: relative;
+            transform-style: preserve-3d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tie-toss-rig.airborne {
+            animation: tossAirborneRealistic 3.6s cubic-bezier(0.2, 0.85, 0.25, 1) forwards;
+        }
+
+        @keyframes tossAirborneRealistic {
+            0% {
+                transform: translateY(30px) scale(0.85);
+            }
+            15% {
+                transform: translateY(-160px) scale(1.42);
+            }
+            32% {
+                transform: translateY(-190px) scale(1.48);
+            }
+            58% {
+                transform: translateY(22px) scale(1.0); /* 1er impact franc au sol */
+            }
+            68% {
+                transform: translateY(-44px) scale(1.10); /* 1er rebond en l'air */
+            }
+            78% {
+                transform: translateY(22px) scale(1.0); /* 2ème impact */
+            }
+            85% {
+                transform: translateY(-14px) scale(1.03); /* 2ème rebond */
+            }
+            91% {
+                transform: translateY(22px) scale(1.0); /* 3ème retombée */
+            }
+            95% {
+                transform: translateY(20px) scale(1.0); /* oscillations d'atténuation */
+            }
+            100% {
+                transform: translateY(22px) scale(1.0); /* immobilisé à plat/debout */
+            }
+        }
+
+        @keyframes shadowPulseRealistic {
+            0% {
+                transform: scale(0.85);
+                opacity: 0.9;
+                filter: blur(4px);
+            }
+            15% {
+                transform: scale(0.35);
+                opacity: 0.18;
+                filter: blur(10px);
+            }
+            32% {
+                transform: scale(0.28);
+                opacity: 0.12;
+                filter: blur(12px);
+            }
+            58% {
+                transform: scale(1.3);
+                opacity: 1;
+                filter: blur(3px);
+            }
+            68% {
+                transform: scale(0.65);
+                opacity: 0.45;
+                filter: blur(7px);
+            }
+            78% {
+                transform: scale(1.18);
+                opacity: 0.95;
+                filter: blur(3px);
+            }
+            85% {
+                transform: scale(0.88);
+                opacity: 0.7;
+                filter: blur(5px);
+            }
+            91% {
+                transform: scale(1.05);
+                opacity: 0.92;
+                filter: blur(3px);
+            }
+            95% {
+                transform: scale(0.98);
+                opacity: 0.9;
+                filter: blur(3px);
+            }
+            100% {
+                transform: scale(1.0);
+                opacity: 0.9;
+                filter: blur(4px);
+            }
+        }
+
+        /* 3D COIN (2 Players) */
+        .coin-3d {
+            width: 140px;
+            height: 140px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 3.8s cubic-bezier(0.12, 0.8, 0.15, 1);
+        }
+
+        .coin-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 4px solid var(--accent-neon);
+            background: radial-gradient(circle, #1e293b 0%, #090d16 100%);
+            box-shadow: inset 0 0 25px rgba(251, 191, 36, 0.45), 0 0 30px rgba(251, 191, 36, 0.35);
+            padding: 8px;
+        }
+
+        .coin-face.front {
+            transform: rotateY(0deg) translateZ(4px);
+        }
+
+        .coin-face.back {
+            transform: rotateY(180deg) translateZ(4px);
+            border-color: var(--primary-neon);
+            box-shadow: inset 0 0 25px rgba(56, 189, 248, 0.45), 0 0 30px rgba(56, 189, 248, 0.35);
+        }
+
+        .coin-edge {
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 8px solid rgba(251, 191, 36, 0.4);
+            transform: translateZ(0px);
+            pointer-events: none;
+        }
+
+        .coin-face img,
+        .coin-face .tie-avatar-placeholder {
+            width: 62px;
+            height: 62px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2.5px solid rgba(255, 255, 255, 0.35);
+            margin-bottom: 6px;
+        }
+
+        .coin-face .tie-avatar-placeholder {
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: #94a3b8;
+        }
+
+        .coin-face .tie-player-name {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #fff;
+            max-width: 110px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 3D POLYHEDRON & PRISM (3, 4, 5, 6 Players) */
+        .prism-3d {
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 3.8s cubic-bezier(0.12, 0.8, 0.15, 1);
+        }
+
+        .prism-face {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            border-radius: 14px;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--primary-neon);
+            background: radial-gradient(circle, rgba(15, 23, 42, 0.97) 0%, rgba(3, 7, 18, 0.99) 100%);
+            box-shadow: inset 0 0 20px rgba(56, 189, 248, 0.35), 0 0 22px rgba(56, 189, 248, 0.25);
+            padding: 8px;
+        }
+
+        .prism-face img,
+        .prism-face .tie-avatar-placeholder {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            margin-bottom: 6px;
+        }
+
+        .prism-face .tie-avatar-placeholder {
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #94a3b8;
+        }
+
+        .prism-face .tie-player-name {
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: #fff;
+            max-width: 85px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 3D Caps (Top & Bottom of 3D die/prism) */
+        .prism-cap {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, rgba(15, 23, 42, 0.8) 100%);
+            border: 2px solid rgba(56, 189, 248, 0.4);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+            pointer-events: none;
+        }
+
+        .prism-cap.top {
+            transform: rotateX(90deg) translateZ(70px);
+        }
+
+        .prism-cap.bottom {
+            transform: rotateX(-90deg) translateZ(70px);
+        }
+
+        .tie-target-highlight {
+            border-color: #f43f5e !important;
+            box-shadow: 0 0 35px rgba(244, 63, 94, 0.9), inset 0 0 25px rgba(244, 63, 94, 0.6) !important;
+            animation: tiePulse 0.7s ease-in-out infinite alternate;
+        }
+
+        @keyframes tiePulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.06); }
         }
 
         /* --- CHAT TOGGLE BUTTON --- */
@@ -887,6 +1415,7 @@
         .text-muted {
             color: rgba(255, 255, 255, 0.6) !important;
         }
+
         body.light-mode .text-muted {
             color: #475569 !important;
         }
@@ -894,6 +1423,7 @@
         .text-light {
             color: rgba(255, 255, 255, 0.9) !important;
         }
+
         body.light-mode .text-light {
             color: #1e293b !important;
         }
@@ -904,6 +1434,7 @@
             color: var(--text-main) !important;
             border-radius: 16px;
         }
+
         body.light-mode .alert-dark {
             background: rgba(0, 0, 0, 0.05) !important;
             border-color: rgba(0, 0, 0, 0.12) !important;
@@ -926,7 +1457,7 @@
             color: #ffffff;
         }
 
-        .btn-check:checked + .btn-outline-custom {
+        .btn-check:checked+.btn-outline-custom {
             background: linear-gradient(135deg, var(--primary-neon), #2563eb) !important;
             color: #ffffff !important;
             border-color: var(--primary-neon) !important;
@@ -936,13 +1467,13 @@
             z-index: 2;
         }
 
-        .btn-check:not(:checked) + .btn-outline-custom {
+        .btn-check:not(:checked)+.btn-outline-custom {
             background: rgba(255, 255, 255, 0.04) !important;
             color: var(--text-muted) !important;
             border-color: var(--border-color) !important;
         }
 
-        body.light-mode .btn-check:not(:checked) + .btn-outline-custom {
+        body.light-mode .btn-check:not(:checked)+.btn-outline-custom {
             background: rgba(0, 0, 0, 0.04) !important;
             color: #64748b !important;
         }
@@ -953,6 +1484,7 @@
             border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
             color: #f8fafc !important;
         }
+
         .btn-secondary:hover {
             background: rgba(255, 255, 255, 0.16) !important;
             border-color: rgba(255, 255, 255, 0.3) !important;
@@ -1001,11 +1533,13 @@
         div[id^="modal-"] .glass-card {
             animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
+
         @keyframes modalPop {
             from {
                 transform: scale(0.92) translateY(20px);
                 opacity: 0;
             }
+
             to {
                 transform: scale(1) translateY(0);
                 opacity: 1;
@@ -1016,7 +1550,8 @@
 
 <body class="">
 
-    <video id="noSleepVideo" playsinline loop muted style="position: absolute; width: 1px; height: 1px; opacity: 0.01; pointer-events: none; top: 0; left: 0; z-index: -1000;">
+    <video id="noSleepVideo" playsinline loop muted
+        style="position: absolute; width: 1px; height: 1px; opacity: 0.01; pointer-events: none; top: 0; left: 0; z-index: -1000;">
         <source
             src="data:video/mp4;base64,AAAAHGZ0eXBpc29tAAACAGlzb21pc28ybXA0MQAAAAhmcmVlAAAAG21kYXQAAAGzABAHAAABthADAQBAAAACAAAABGdmoQAAABBjbXJhdAAAAAMAAQAAAAAAIHN0Y28AAAAAAAAAAQAAAC50cmFrAAAAXHRraGQAAAADAAAAAQAAAAAAAgAAAAAAWQAAAAEAAAAAAAAAAQAAAAAAAAAAAABmdGlhAAAAAAAUAAAEAQAAAAAAAAABAAAAACRtaW5mAAAAEHNtYWQAAAAAAAAAAAAAAAhkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAAFBzdGJsAAAAZHN0c2QAAAAAAAAAAQAAAFRhdmMxAAAAAQAAAAEAAAAAAAEAAAAAAAEAAQAAAAAAAAAAAAAABAEAAAAAAAgAAAAAEWh2Y0MBAAAAAgAAAAMAAAACc3R0cwAAAAAAAAABAAAAAgAAABBzdHN6AAAAAAAAAAEAAAACAAAAKHN0c2MAAAAAAAAAAQAAAAEAAAACAAAAAQAAABBzdGNvAAAAAAAAAAEAAAAsAAAAYdRyYXQAAAAA"
             type="video/mp4">
@@ -1500,6 +2035,31 @@
         </div>
     </div>
 
+    <!-- MODAL ÉGALITÉ / TIE BREAK 3D -->
+    <div id="modal-tie-break"
+        class="d-none position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-95 d-flex justify-content-center align-items-center"
+        style="z-index: 3500; backdrop-filter: blur(12px);">
+        <div class="glass-card p-4 text-center d-flex flex-column align-items-center justify-content-center"
+            style="width: 92%; max-width: 440px; border: 1.5px solid var(--accent-neon); box-shadow: 0 0 35px rgba(251, 191, 36, 0.35);">
+            
+            <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
+                <i class="bi bi-exclamation-diamond-fill text-warning fs-5"></i>
+                <h4 class="brand-font text-warning mb-0" style="letter-spacing: 1.5px;">ÉGALITÉ PARFAITE !</h4>
+                <i class="bi bi-exclamation-diamond-fill text-warning fs-5"></i>
+            </div>
+            
+            <p id="tie-break-subtitle" class="text-muted small mb-3">Le destin cybernétique tranche l'égalité...</p>
+            
+            <!-- 3D SCENE CONTAINER -->
+            <div id="tie-break-scene" class="tie-3d-scene my-2"></div>
+            
+            <div id="tie-break-result-banner" class="mt-3 opacity-0" style="transition: opacity 0.4s ease;">
+                <div class="small text-muted text-uppercase fw-bold letter-spacing mb-1">CIBLE DÉSIGNÉE</div>
+                <div id="tie-break-victim-name" class="fs-4 fw-bold text-danger">---</div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // --- SOUND ENGINE (SFX) ---
         const SFX = {
@@ -1522,7 +2082,40 @@
             error: function () { this.playTone(150, 'sawtooth', 0.3, 0.1); },
             success: function () { this.playTone(440, 'sine', 0.1, 0.1); setTimeout(() => this.playTone(880, 'sine', 0.2, 0.1), 100); },
             reveal: function () { this.playTone(300, 'square', 0.1, 0.05); setTimeout(() => this.playTone(600, 'square', 0.2, 0.05), 100); },
-            alarm: function () { if (!this.ctx) this.init(); this.playTone(880, 'sine', 0.2, 0.2); setTimeout(() => this.playTone(880, 'sine', 0.2, 0.2), 300); setTimeout(() => this.playTone(440, 'triangle', 0.6, 0.3), 600); }
+            alarm: function () { if (!this.ctx) this.init(); this.playTone(880, 'sine', 0.2, 0.2); setTimeout(() => this.playTone(880, 'sine', 0.2, 0.2), 300); setTimeout(() => this.playTone(440, 'triangle', 0.6, 0.3), 600); },
+            coinToss: function () {
+                this.init();
+                this.playTone(987.77, 'sine', 0.3, 0.12);
+                setTimeout(() => this.playTone(1318.51, 'triangle', 0.4, 0.1), 60);
+            },
+            spinTick: function (pitch = 750) {
+                this.playTone(pitch, 'sine', 0.035, 0.05);
+            },
+            clatter: function (stage = 1) {
+                this.init();
+                if (stage === 1) {
+                    this.playTone(1300, 'triangle', 0.07, 0.18);
+                    this.playTone(380, 'sawtooth', 0.12, 0.22);
+                } else if (stage === 2) {
+                    this.playTone(950, 'triangle', 0.05, 0.14);
+                    this.playTone(480, 'sine', 0.08, 0.16);
+                } else {
+                    this.playTone(800, 'sine', 0.04, 0.09);
+                }
+            },
+            wobbleChatter: function () {
+                this.init();
+                [0, 35, 70, 115].forEach((delay, idx) => {
+                    setTimeout(() => {
+                        this.playTone(920 + idx * 70, 'sine', 0.025, 0.045);
+                    }, delay);
+                });
+            },
+            impact: function () {
+                this.init();
+                this.playTone(130, 'sawtooth', 0.5, 0.2);
+                setTimeout(() => this.playTone(65, 'sine', 0.6, 0.25), 40);
+            }
         };
         document.body.addEventListener('click', () => { SFX.init(); }, { once: true });
         document.getElementById('inputPseudo').addEventListener('keypress', function (e) { if (e.key === 'Enter') revealIdentity(); });
@@ -2022,6 +2615,8 @@
                         if (typeof timerInterval !== 'undefined' && timerInterval) {
                             clearInterval(timerInterval);
                         }
+                        const tbModal = document.getElementById('modal-tie-break');
+                        if (tbModal) tbModal.classList.add('d-none');
                         players = [];
                         currentStep = 0;
                         document.getElementById('voteButtonsContainer').innerHTML = "";
@@ -2200,6 +2795,9 @@
                     case 'vote':
                         if (this.mode === 'host') this.handleIncomingVote(data.from, data.to);
                         break;
+                    case 'sync_tie_break':
+                        startTieBreaker(data.tiedIndices, data.victimIndex, this.mode === 'host');
+                        break;
                     case 'sync_elimination':
                         finalizeElimination(data.index, true);
                         break;
@@ -2364,7 +2962,7 @@
 
             syncLobby: function () {
                 if (this.mode !== 'host') return;
-                
+
                 // Nettoyage des connexions fermées ou mortes (WebRTC)
                 this.connections = this.connections.filter(c => {
                     if (!c.open) return false;
@@ -2373,7 +2971,7 @@
                         const iceState = c.peerConnection.iceConnectionState;
                         if (state === 'disconnected' || state === 'failed' || state === 'closed' ||
                             iceState === 'disconnected' || iceState === 'failed' || iceState === 'closed') {
-                            try { c.close(); } catch(e){}
+                            try { c.close(); } catch (e) { }
                             return false;
                         }
                     }
@@ -2582,6 +3180,51 @@
                 }
             },
 
+            resolveVotes: function (votesObj) {
+                if (this._voteTimeout) { clearTimeout(this._voteTimeout); this._voteTimeout = null; }
+                const currentVotes = votesObj || this.votes || {};
+                const tallies = {};
+                Object.values(currentVotes).forEach(v => tallies[v] = (tallies[v] || 0) + 1);
+
+                let maxVotes = 0;
+                for (let idx in tallies) {
+                    if (tallies[idx] > maxVotes) maxVotes = tallies[idx];
+                }
+
+                const tiedCandidates = [];
+                for (let idx in tallies) {
+                    if (tallies[idx] === maxVotes && maxVotes > 0) {
+                        tiedCandidates.push(parseInt(idx));
+                    }
+                }
+
+                if (tiedCandidates.length === 0) {
+                    const connectedAlive = players.map((p, i) => ({ p, i })).filter(item => item.p.alive && this.isPlayerConnected(item.i));
+                    if (connectedAlive.length > 0) {
+                        tiedCandidates.push(connectedAlive[0].i);
+                    }
+                }
+
+                if (tiedCandidates.length > 1) {
+                    // ÉGALITÉ : Déclenchement de l'animation 3D synchronisée (Pièce 3D ou Prisme 3D)
+                    const victimIdx = tiedCandidates[Math.floor(Math.random() * tiedCandidates.length)];
+                    this.broadcast({ type: 'sync_tie_break', tiedIndices: tiedCandidates, victimIndex: victimIdx });
+                    this.handleData({ type: 'sync_tie_break', tiedIndices: tiedCandidates, victimIndex: victimIdx });
+                } else if (tiedCandidates.length === 1) {
+                    const victimIdx = tiedCandidates[0];
+                    if (players[victimIdx]) {
+                        if (players[victimIdx].role === 'Inconnu') {
+                            this.broadcast({ type: 'sync_guess_phase', index: victimIdx });
+                            this.handleData({ type: 'sync_guess_phase', index: victimIdx });
+                        } else {
+                            this.broadcast({ type: 'sync_elimination', index: victimIdx });
+                            finalizeElimination(victimIdx);
+                        }
+                    }
+                }
+                this.votes = {};
+            },
+
             syncVoteStatus: function () {
                 const alivePlayers = players.filter(p => p.alive);
                 const connectedAlivePlayers = alivePlayers.filter(p => {
@@ -2591,26 +3234,7 @@
                 const votesCount = Object.keys(this.votes).length;
 
                 if (votesCount >= connectedAlivePlayers.length && connectedAlivePlayers.length > 0) {
-                    if (this._voteTimeout) { clearTimeout(this._voteTimeout); this._voteTimeout = null; }
-                    const tallies = {};
-                    Object.values(this.votes).forEach(v => tallies[v] = (tallies[v] || 0) + 1);
-                    let victimIdx = -1; let maxVotes = 0;
-                    for (let idx in tallies) { if (tallies[idx] > maxVotes) { maxVotes = tallies[idx]; victimIdx = parseInt(idx); } }
-
-                    if (victimIdx !== -1 && players[victimIdx]) {
-                        if (players[victimIdx].role === 'Inconnu') {
-                            this.broadcast({ type: 'sync_guess_phase', index: victimIdx });
-                            this.handleData({ type: 'sync_guess_phase', index: victimIdx });
-                        } else {
-                            this.broadcast({ type: 'sync_elimination', index: victimIdx });
-                            finalizeElimination(victimIdx);
-                        }
-                    } else if (connectedAlivePlayers.length > 0) {
-                        const fallbackIdx = players.indexOf(connectedAlivePlayers[0]);
-                        this.broadcast({ type: 'sync_elimination', index: fallbackIdx });
-                        finalizeElimination(fallbackIdx);
-                    }
-                    this.votes = {};
+                    this.resolveVotes(this.votes);
                 } else {
                     const voterIndices = Object.keys(this.votes).map(Number);
                     const totalExpected = connectedAlivePlayers.length;
@@ -2697,21 +3321,7 @@
                     const votesCount = Object.keys(this.votes).length;
 
                     if (votesCount >= connectedAlivePlayers.length || !this._voteTimeout) {
-                        if (this._voteTimeout) { clearTimeout(this._voteTimeout); this._voteTimeout = null; }
-                        const tallies = {};
-                        Object.values(this.votes).forEach(v => tallies[v] = (tallies[v] || 0) + 1);
-                        let victimIdx = -1; let maxVotes = 0;
-                        for (let idx in tallies) { if (tallies[idx] > maxVotes) { maxVotes = tallies[idx]; victimIdx = parseInt(idx); } }
-                        if (victimIdx !== -1 && players[victimIdx]) {
-                            if (players[victimIdx].role === 'Inconnu') {
-                                this.broadcast({ type: 'sync_guess_phase', index: victimIdx });
-                                this.handleData({ type: 'sync_guess_phase', index: victimIdx });
-                            } else {
-                                this.broadcast({ type: 'sync_elimination', index: victimIdx });
-                                finalizeElimination(victimIdx);
-                            }
-                            this.votes = {};
-                        }
+                        this.resolveVotes(this.votes);
                     }
                 }
             },
@@ -2848,7 +3458,7 @@
                         const iceState = c.peerConnection.iceConnectionState;
                         if (state === 'disconnected' || state === 'failed' || state === 'closed' ||
                             iceState === 'disconnected' || iceState === 'failed' || iceState === 'closed') {
-                            try { c.close(); } catch(e){}
+                            try { c.close(); } catch (e) { }
                             return false;
                         }
                     }
@@ -2914,7 +3524,7 @@
                             } else if (targetView === 'view-debate') {
                                 progressData.debateTimeLeft = MP.debateTimeLeft || 60;
                             }
-                            
+
                             try {
                                 conn.send(progressData);
                                 sentCount++;
@@ -3075,7 +3685,7 @@
         // Avant de fermer/rafraîchir la page, avertir les clients si on est hôte en jeu
         window.addEventListener('beforeunload', () => {
             if (MP.mode === 'host' && players && players.length > 0) {
-                try { MP.broadcast({ type: 'room_closed' }); } catch(e){}
+                try { MP.broadcast({ type: 'room_closed' }); } catch (e) { }
             }
         });
 
@@ -3412,24 +4022,7 @@
             }
             if (confirm("Voulez-vous vraiment clôturer le vote avec les voix actuelles ?")) {
                 toggleHostOptionsModal();
-                if (MP._voteTimeout) { clearTimeout(MP._voteTimeout); MP._voteTimeout = null; }
-
-                // Déterminer la victime avec les votes reçus
-                const tallies = {};
-                Object.values(MP.votes).forEach(v => tallies[v] = (tallies[v] || 0) + 1);
-                let victimIdx = -1; let maxVotes = 0;
-                for (let idx in tallies) { if (tallies[idx] > maxVotes) { maxVotes = tallies[idx]; victimIdx = parseInt(idx); } }
-
-                if (victimIdx !== -1 && players[victimIdx]) {
-                    if (players[victimIdx].role === 'Inconnu') {
-                        MP.broadcast({ type: 'sync_guess_phase', index: victimIdx });
-                        MP.handleData({ type: 'sync_guess_phase', index: victimIdx });
-                    } else {
-                        MP.broadcast({ type: 'sync_elimination', index: victimIdx });
-                        finalizeElimination(victimIdx);
-                    }
-                    MP.votes = {};
-                }
+                MP.resolveVotes(MP.votes);
             }
         }
 
@@ -4024,26 +4617,306 @@
             const voterSet = new Set(voterIndices);
 
             let html = `<div class="vote-tracker">`;
-            html += `<div class="vote-tracker-title">${count} / ${total} votes enregistrés</div>`;
+            html += `<div class="vote-tracker-title"><i class="bi bi-person-check-fill text-success me-1"></i> ${count} / ${total} votes enregistrés</div>`;
             html += `<div class="vote-tracker-grid">`;
 
             alivePlayers.forEach(p => {
                 const hasVoted = voterSet.has(p.index);
-                const pillClass = hasVoted ? 'has-voted' : 'waiting';
-                const icon = hasVoted ? '<i class="bi bi-check-circle-fill vote-status-icon"></i>' : '<i class="bi bi-hourglass-split vote-status-icon"></i>';
+                const cardClass = hasVoted ? 'has-voted' : 'waiting';
+                const statusBadge = hasVoted
+                    ? `<span class="vote-status-badge"><i class="bi bi-check-lg"></i></span>`
+                    : `<span class="vote-status-badge"><i class="bi bi-hourglass-split"></i></span>`;
                 const avatarHtml = p.avatar
                     ? `<img src="${p.avatar}" class="vote-avatar" alt="${p.name}">`
                     : `<div class="vote-avatar-placeholder"><i class="bi bi-person-fill"></i></div>`;
 
-                html += `<div class="vote-tracker-pill ${pillClass}">
-                    ${avatarHtml}
+                html += `<div class="vote-tracker-card ${cardClass}" title="${p.name} (${hasVoted ? 'A voté' : 'En attente'})">
+                    <div class="vote-avatar-wrapper">
+                        ${avatarHtml}
+                        ${statusBadge}
+                    </div>
                     <span class="vote-player-name">${p.name}</span>
-                    ${icon}
                 </div>`;
             });
 
             html += `</div></div>`;
             container.innerHTML = html;
+        }
+
+        // --- 3D TIE BREAKER ENGINE (Lancer en l'air 3D avec physique de rebonds réalistes) ---
+        function startTieBreaker(tiedIndices, victimIndex, isHost) {
+            const modal = document.getElementById('modal-tie-break');
+            const scene = document.getElementById('tie-break-scene');
+            const resultBanner = document.getElementById('tie-break-result-banner');
+            const victimNameElem = document.getElementById('tie-break-victim-name');
+            const subtitle = document.getElementById('tie-break-subtitle');
+
+            if (!modal || !scene) return;
+
+            // Nettoyer d'anciens styles dynamiques
+            const oldStyle = document.getElementById('dynamic-tie-spin-style');
+            if (oldStyle) oldStyle.remove();
+
+            // Reset affichage & bannières
+            resultBanner.classList.remove('opacity-100');
+            resultBanner.classList.add('opacity-0');
+            victimNameElem.innerText = "---";
+
+            const tiedCount = tiedIndices.length;
+            const targetSlot = tiedIndices.indexOf(victimIndex);
+
+            let rigHtml = "";
+            let spinAction = () => {};
+
+            SFX.alarm();
+
+            if (tiedCount === 2) {
+                // --- 2 JOUEURS : LANCER DE PIÈCE 3D EN L'AIR (PILE OU FACE AVEC REBONDS) ---
+                subtitle.innerText = "Lancer de pièce 3D en l'air (Pile ou Face)...";
+                const p1 = players[tiedIndices[0]] || { name: 'Agent 1', avatar: null };
+                const p2 = players[tiedIndices[1]] || { name: 'Agent 2', avatar: null };
+
+                const av1 = p1.avatar ? `<img src="${p1.avatar}" alt="${p1.name}">` : `<div class="tie-avatar-placeholder"><i class="bi bi-person-fill"></i></div>`;
+                const av2 = p2.avatar ? `<img src="${p2.avatar}" alt="${p2.name}">` : `<div class="tie-avatar-placeholder"><i class="bi bi-person-fill"></i></div>`;
+
+                rigHtml = `
+                <div class="tie-3d-shadow" id="tie-shadow"></div>
+                <div class="tie-toss-rig" id="tie-rig">
+                    <div id="tie-coin" class="coin-3d">
+                        <div class="coin-edge"></div>
+                        <div class="coin-face front tie-face-${tiedIndices[0]}">
+                            ${av1}
+                            <span class="tie-player-name">${p1.name}</span>
+                        </div>
+                        <div class="coin-face back tie-face-${tiedIndices[1]}">
+                            ${av2}
+                            <span class="tie-player-name">${p2.name}</span>
+                        </div>
+                    </div>
+                </div>`;
+
+                scene.innerHTML = rigHtml;
+
+                const fullTurns = 7;
+                const endDegY = targetSlot === 1 ? (fullTurns * 360 + 180) : (fullTurns * 360);
+
+                // Création d'une animation physique fluide pour la pièce
+                const dynamicCss = `
+                @keyframes coinPhysicsRealistic {
+                    0% {
+                        transform: rotateY(0deg) rotateX(0deg) rotateZ(0deg);
+                    }
+                    58% {
+                        transform: rotateY(${endDegY - 26}deg) rotateX(2160deg) rotateZ(20deg);
+                    }
+                    68% {
+                        transform: rotateY(${endDegY - 10}deg) rotateX(2178deg) rotateZ(-12deg);
+                    }
+                    78% {
+                        transform: rotateY(${endDegY - 3}deg) rotateX(2160deg) rotateZ(6deg);
+                    }
+                    85% {
+                        transform: rotateY(${endDegY - 1}deg) rotateX(2166deg) rotateZ(-3deg);
+                    }
+                    91% {
+                        transform: rotateY(${endDegY}deg) rotateX(2160deg) rotateZ(1.5deg);
+                    }
+                    95% {
+                        transform: rotateY(${endDegY}deg) rotateX(2162deg) rotateZ(-0.5deg);
+                    }
+                    100% {
+                        transform: rotateY(${endDegY}deg) rotateX(2160deg) rotateZ(0deg);
+                    }
+                }`;
+
+                const styleTag = document.createElement('style');
+                styleTag.id = 'dynamic-tie-spin-style';
+                styleTag.innerHTML = dynamicCss;
+                document.head.appendChild(styleTag);
+
+                spinAction = () => {
+                    const rig = document.getElementById('tie-rig');
+                    const shadow = document.getElementById('tie-shadow');
+                    const coin = document.getElementById('tie-coin');
+                    if (rig) rig.classList.add('airborne');
+                    if (shadow) shadow.classList.add('airborne');
+                    if (!coin) return;
+
+                    SFX.coinToss();
+                    coin.style.animation = 'coinPhysicsRealistic 3.6s cubic-bezier(0.15, 0.85, 0.2, 1) forwards';
+                };
+
+            } else {
+                // --- 3 À 6+ JOUEURS : DÉ / PRISME POLYÈDRE 3D LANCÉ EN L'AIR AVEC REBONDS ---
+                let labelType = "Prisme triangulaire 3D";
+                if (tiedCount === 4) labelType = "Dé cybernétique 3D (4 faces)";
+                else if (tiedCount === 5) labelType = "Prisme pentagonal 3D (5 faces)";
+                else if (tiedCount === 6) labelType = "Dé hexagonal 3D (6 faces)";
+                else if (tiedCount > 6) labelType = `Polyèdre 3D (${tiedCount} faces)`;
+
+                subtitle.innerText = `${labelType} lancé en l'air...`;
+
+                let faceWidth = 98;
+                if (tiedCount === 3) faceWidth = 105;
+                else if (tiedCount === 4) faceWidth = 95;
+                else if (tiedCount === 5) faceWidth = 86;
+                else if (tiedCount >= 6) faceWidth = 78;
+
+                const faceHeight = 140;
+                const step = 360 / tiedCount;
+                const radius = Math.round(faceWidth / (2 * Math.tan(Math.PI / tiedCount)));
+                const capSize = radius * 2 + 10;
+
+                let facesHtml = "";
+                tiedIndices.forEach((pIdx, i) => {
+                    const p = players[pIdx] || { name: `Agent ${i + 1}`, avatar: null };
+                    const av = p.avatar ? `<img src="${p.avatar}" alt="${p.name}">` : `<div class="tie-avatar-placeholder"><i class="bi bi-person-fill"></i></div>`;
+                    const angle = i * step;
+                    facesHtml += `
+                    <div class="prism-face tie-face-${pIdx}" style="width: ${faceWidth}px; height: ${faceHeight}px; margin-left: -${faceWidth / 2}px; margin-top: -${faceHeight / 2}px; transform: rotateY(${angle}deg) translateZ(${radius}px);">
+                        ${av}
+                        <span class="tie-player-name">${p.name}</span>
+                    </div>`;
+                });
+
+                // Couvercles 3D lumineux
+                const capsHtml = `
+                <div class="prism-cap top" style="width: ${capSize}px; height: ${capSize}px; margin-left: -${capSize/2}px; margin-top: -${capSize/2}px;"></div>
+                <div class="prism-cap bottom" style="width: ${capSize}px; height: ${capSize}px; margin-left: -${capSize/2}px; margin-top: -${capSize/2}px;"></div>`;
+
+                rigHtml = `
+                <div class="tie-3d-shadow" id="tie-shadow"></div>
+                <div class="tie-toss-rig" id="tie-rig">
+                    <div id="tie-prism" class="prism-3d" style="width: ${faceWidth}px; height: ${faceHeight}px;">
+                        ${capsHtml}
+                        ${facesHtml}
+                    </div>
+                </div>`;
+
+                scene.innerHTML = rigHtml;
+
+                const fullTurns = 6;
+                const endDegY = -(fullTurns * 360 + targetSlot * step);
+
+                const dynamicCss = `
+                @keyframes prismPhysicsRealistic {
+                    0% {
+                        transform: rotateY(0deg) rotateX(0deg) rotateZ(0deg);
+                    }
+                    58% {
+                        transform: rotateY(${endDegY - 18}deg) rotateX(720deg) rotateZ(16deg);
+                    }
+                    68% {
+                        transform: rotateY(${endDegY - 7}deg) rotateX(730deg) rotateZ(-9deg);
+                    }
+                    78% {
+                        transform: rotateY(${endDegY - 2}deg) rotateX(720deg) rotateZ(4.5deg);
+                    }
+                    85% {
+                        transform: rotateY(${endDegY - 0.5}deg) rotateX(724deg) rotateZ(-2deg);
+                    }
+                    91% {
+                        transform: rotateY(${endDegY}deg) rotateX(720deg) rotateZ(1deg);
+                    }
+                    95% {
+                        transform: rotateY(${endDegY}deg) rotateX(721deg) rotateZ(-0.3deg);
+                    }
+                    100% {
+                        transform: rotateY(${endDegY}deg) rotateX(720deg) rotateZ(0deg);
+                    }
+                }`;
+
+                const styleTag = document.createElement('style');
+                styleTag.id = 'dynamic-tie-spin-style';
+                styleTag.innerHTML = dynamicCss;
+                document.head.appendChild(styleTag);
+
+                spinAction = () => {
+                    const rig = document.getElementById('tie-rig');
+                    const shadow = document.getElementById('tie-shadow');
+                    const prism = document.getElementById('tie-prism');
+                    if (rig) rig.classList.add('airborne');
+                    if (shadow) shadow.classList.add('airborne');
+                    if (!prism) return;
+
+                    SFX.coinToss();
+                    prism.style.animation = 'prismPhysicsRealistic 3.6s cubic-bezier(0.15, 0.85, 0.2, 1) forwards';
+                };
+            }
+
+            modal.classList.remove('d-none');
+
+            // Déclenchement du lancer en l'air 3D
+            setTimeout(() => {
+                spinAction();
+
+                // Ticker sonore décéléré pendant le vol
+                let elapsed = 0;
+                let tickInterval = 60;
+                const totalFlight = 2000;
+                function runFlightTicker() {
+                    if (elapsed >= totalFlight) return;
+                    SFX.spinTick(580 + Math.random() * 220);
+                    elapsed += tickInterval;
+                    tickInterval = 60 + Math.pow(elapsed / totalFlight, 2.2) * 260;
+                    setTimeout(runFlightTicker, tickInterval);
+                }
+                runFlightTicker();
+
+                // 1er Impact au sol (58% de 3.6s = ~2080ms)
+                setTimeout(() => {
+                    SFX.clatter(1);
+                    if (navigator.vibrate) navigator.vibrate(60);
+                }, 2080);
+
+                // 2ème Impact rebond (78% de 3.6s = ~2800ms)
+                setTimeout(() => {
+                    SFX.clatter(2);
+                    if (navigator.vibrate) navigator.vibrate(30);
+                }, 2800);
+
+                // 3ème Impact / retombée (91% de 3.6s = ~3280ms)
+                setTimeout(() => {
+                    SFX.clatter(3);
+                }, 3280);
+
+                // Micro-wobble oscillation d'atténuation (95% de 3.6s = ~3420ms)
+                setTimeout(() => {
+                    SFX.wobbleChatter();
+                }, 3420);
+
+                // Arrêt définitif & révélation de la victime (100% = 3600ms)
+                setTimeout(() => {
+                    SFX.impact();
+                    if (navigator.vibrate) navigator.vibrate([150, 50, 200]);
+
+                    const victim = players[victimIndex];
+                    if (victim) {
+                        victimNameElem.innerText = victim.name;
+                    }
+                    resultBanner.classList.remove('opacity-0');
+                    resultBanner.classList.add('opacity-100');
+
+                    const targetFace = document.querySelector(`.tie-face-${victimIndex}`);
+                    if (targetFace) {
+                        targetFace.classList.add('tie-target-highlight');
+                    }
+
+                    // Laisser le résultat visible 2.3s puis enchaîner
+                    setTimeout(() => {
+                        modal.classList.add('d-none');
+                        if (isHost) {
+                            if (victim && victim.role === 'Inconnu') {
+                                MP.broadcast({ type: 'sync_guess_phase', index: victimIndex });
+                                MP.handleData({ type: 'sync_guess_phase', index: victimIndex });
+                            } else {
+                                MP.broadcast({ type: 'sync_elimination', index: victimIndex });
+                                finalizeElimination(victimIndex);
+                            }
+                        }
+                    }, 2300);
+                }, 3650);
+            }, 100);
         }
 
         // --- ALGO ---
