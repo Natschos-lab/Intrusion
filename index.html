@@ -1864,9 +1864,9 @@
             <h5 class="brand-font text-info"><i class="bi bi-arrow-clockwise"></i> SESSION INTERROMPUE</h5>
             <p class="small text-muted mb-3" id="resume-session-msg">Une partie en cours a été détectée.</p>
             <div class="d-flex gap-2 justify-content-center">
-                <button onclick="MP.resumeSession(); SFX.success()" class="btn btn-sm btn-neon">REPRENDRE</button>
-                <button onclick="MP.clearSession(); SFX.click()"
-                    class="btn btn-sm btn-outline-secondary">IGNORER</button>
+                <button onclick="MP.resumeSession(); SFX.success()" class="btn btn-sm btn-neon">OUI, REVENIR</button>
+                <button onclick="MP.leaveSavedSession(); SFX.click()"
+                    class="btn btn-sm btn-outline-secondary">NON, QUITTER</button>
             </div>
         </div>
 
@@ -1991,7 +1991,7 @@
                         <button onclick="showNameInput('host'); SFX.click()" class="btn btn-neon py-3">
                             <i class="bi bi-plus-circle-fill me-2"></i> CRÉER UNE SALLE
                         </button>
-                        <button onclick="showView('view-mp-join'); SFX.click()" class="btn btn-outline-custom py-3"
+                        <button onclick="cancelSavedSessionResume(); showView('view-mp-join'); SFX.click()" class="btn btn-outline-custom py-3"
                             style="border: 1px solid var(--primary-neon); color: var(--primary-neon);">
                             <i class="bi bi-box-arrow-in-right me-2"></i> REJOINDRE UNE SALLE
                         </button>
@@ -3628,6 +3628,7 @@
         let pendingVictimIndex = -1;
         let timerInterval = null;
         let previousStarters = [];
+        let savedSessionResumeTimer = null;
         const RECONNECT_TIMEOUT_MS = 60000;
         const HOST_RECONNECT_POLL_MS = 2500;
         const HOST_RECONNECT_MAX_MS = 60000;
@@ -3778,6 +3779,7 @@
 
             // --- CRÉATION DU SALON PAR L'HÔTE ---
             initHost: async function () {
+                cancelSavedSessionResume();
                 try {
                     await this.ensureAuth();
                 } catch (error) {
@@ -3862,6 +3864,7 @@
 
             // --- REJOINDRE UN SALON (CLIENT) ---
             initClient: async function (codeOverride) {
+                cancelSavedSessionResume();
                 const codeInput = document.getElementById('inputRoomCode');
                 const code = (codeOverride || (codeInput ? codeInput.value : '')).trim().toUpperCase();
                 if (code.length !== 4) return alert("Code invalide (4 caractères requis)");
@@ -3917,8 +3920,8 @@
 
                     // Rejoindre la liste des joueurs
                     const myPlayerData = {
-                        name: this.me.name,
-                        avatar: this.me.avatar,
+                        name: this.me.name || 'Joueur',
+                        avatar: this.me.avatar || null,
                         isHost: false,
                         online: true,
                         joinedAt: firebase.database.ServerValue.TIMESTAMP
@@ -4128,7 +4131,7 @@
                         if (allAliveValidated) {
                             const starterName = pickSmartStarter(true);
                             this.roomRef.update({
-                                status: 'debate',
+                                status: 'pre-debate',
                                 starter: starterName,
                                 debateSeconds: 60,
                                 debateStartedAt: Date.now(),
@@ -4142,7 +4145,16 @@
                     }
                 }
 
-                // 2. Débat
+                // 2. Présentation du premier intervenant avant le chrono
+                else if (status === 'pre-debate') {
+                    if (roomData.starter) {
+                        document.getElementById('firstPlayerName').innerText = roomData.starter;
+                    }
+                    preparePreDebateView();
+                    if (getCurrentViewId() !== 'view-pre-debate') showView('view-pre-debate');
+                }
+
+                // 3. Débat
                 else if (status === 'debate') {
                     if (roomData.starter) {
                         document.getElementById('firstPlayerName').innerText = roomData.starter;
@@ -4175,7 +4187,7 @@
                     }
                 }
 
-                // 3. Phase de Vote
+                // 4. Phase de Vote
                 else if (status === 'vote') {
                     const currentView = getCurrentViewId();
                     if (currentView !== 'view-vote') {
@@ -4914,13 +4926,25 @@
             },
 
             clearSession: function () {
+                cancelSavedSessionResume();
                 sessionStorage.removeItem('intrusion_firebase_session');
                 localStorage.removeItem('intrusion_firebase_session');
                 const banner = document.getElementById('resume-session-banner');
                 if (banner) banner.classList.add('d-none');
             },
 
+            leaveSavedSession: function () {
+                this.clearSession();
+                players = [];
+                currentStep = 0;
+                this.mode = null;
+                this.roomId = null;
+                this.playerId = null;
+                showView('view-setup');
+            },
+
             resumeSession: async function () {
+                cancelSavedSessionResume();
                 const raw = sessionStorage.getItem('intrusion_firebase_session') || localStorage.getItem('intrusion_firebase_session');
                 if (!raw) return;
                 try {
@@ -6615,7 +6639,7 @@
             const btn = document.getElementById('mp-secret-word-btn');
             if (!btn) return;
             // Visible dès que le jeu commence (memorizing, debate, vote, tiebreak, etc.)
-            const inGameStatuses = ['memorizing', 'debate', 'vote', 'tiebreak', 'guess', 'transition'];
+            const inGameStatuses = ['memorizing', 'pre-debate', 'debate', 'vote', 'tiebreak', 'guess', 'transition'];
             if (MP.mode && status && inGameStatuses.includes(status) && players && players.length > 0) {
                 btn.classList.remove('d-none');
             } else {
@@ -6672,6 +6696,15 @@
             if (overlay) { overlay.classList.add('d-none'); }
         }
 
+        function cancelSavedSessionResume() {
+            if (savedSessionResumeTimer) {
+                clearTimeout(savedSessionResumeTimer);
+                savedSessionResumeTimer = null;
+            }
+            const banner = document.getElementById('resume-session-banner');
+            if (banner) banner.classList.add('d-none');
+        }
+
         // Reconnexion automatique Firebase au chargement de la page si une partie était en cours
         (function checkSavedSession() {
             try {
@@ -6687,10 +6720,6 @@
                             }
                             banner.classList.remove('d-none');
                         }
-                        // Reconnexion automatique fluide
-                        setTimeout(() => {
-                            MP.resumeSession();
-                        }, 500);
                     }
                 }
             } catch (e) {
