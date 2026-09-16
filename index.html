@@ -4419,8 +4419,8 @@
                     const hostPid = this.playerId;
                     pList.push({
                         id: hostPid,
-                        name: this.me.name,
-                        avatar: this.me.avatar,
+                        name: this.me.name || 'Hôte',
+                        avatar: this.me.avatar || null,
                         role: rolesDeck[0].role,
                         word: rolesDeck[0].word,
                         alive: true,
@@ -4434,8 +4434,8 @@
                             const p = playersObj[pid];
                             pList.push({
                                 id: pid,
-                                name: p.name,
-                                avatar: p.avatar,
+                                name: p.name || 'Joueur',
+                                avatar: p.avatar || null,
                                 role: rolesDeck[slot].role,
                                 word: rolesDeck[slot].word,
                                     alive: true,
