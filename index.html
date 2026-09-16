@@ -3631,6 +3631,7 @@
         const RECONNECT_TIMEOUT_MS = 60000;
         const HOST_RECONNECT_POLL_MS = 2500;
         const HOST_RECONNECT_MAX_MS = 60000;
+        const ROOM_INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
 
 
         // --- NETWORKING (FIREBASE CONFIG & INITIALIZATION) ---
@@ -3664,6 +3665,7 @@
             stopTimerVotes: 0,
             resolvingVote: false,
             resolvingGuess: false,
+            roomInactivityTimer: null,
             isDisconnecting: false,
             isChatMinimized: false,
             unreadChatCount: 0,
@@ -3715,6 +3717,33 @@
             addListener: function (ref, event, fn) {
                 ref.on(event, fn);
                 this._listeners.push({ ref, event, fn });
+            },
+
+            scheduleRoomClosureIfInactive: function (roomData) {
+                if (this.roomInactivityTimer) {
+                    clearTimeout(this.roomInactivityTimer);
+                    this.roomInactivityTimer = null;
+                }
+                const roomPlayers = roomData.players || {};
+                const hasOnlinePlayer = Object.values(roomPlayers).some(player => player && player.online !== false);
+                if (hasOnlinePlayer || !this.roomRef) return;
+
+                const lastActivityAt = Number(roomData.lastActivityAt || roomData.createdAt || Date.now());
+                const remaining = Math.max(0, ROOM_INACTIVITY_TIMEOUT_MS - (Date.now() - lastActivityAt));
+                this.roomInactivityTimer = setTimeout(() => {
+                    this.roomRef.once('value').then(snapshot => {
+                        const latestRoom = snapshot.val();
+                        if (!latestRoom) return;
+                        const latestPlayers = latestRoom.players || {};
+                        const stillInactive = !Object.values(latestPlayers).some(player => player && player.online !== false);
+                        const latestActivityAt = Number(latestRoom.lastActivityAt || latestRoom.createdAt || 0);
+                        if (stillInactive && latestActivityAt <= Date.now() - ROOM_INACTIVITY_TIMEOUT_MS) {
+                            return this.roomRef.remove();
+                        }
+                        this.scheduleRoomClosureIfInactive(latestRoom);
+                    }).catch(error => console.error("Erreur fermeture room inactive:", error));
+                    this.roomInactivityTimer = null;
+                }, remaining);
             },
 
             tryClaimHost: function (roomData, playerList) {
@@ -3782,6 +3811,7 @@
                     round: 0,
                     guessPhase: null,
                     stopTimerVotes: 0,
+                    lastActivityAt: Date.now(),
                     players: {
                         [this.playerId]: {
                             name: this.me.name,
@@ -3922,7 +3952,9 @@
                 if (!this.playersRef || !this.playerId) return;
                 const myPlayerRef = this.playersRef.child(this.playerId);
                 myPlayerRef.child('online').onDisconnect().set(false);
+                this.roomRef.child('lastActivityAt').onDisconnect().set(firebase.database.ServerValue.TIMESTAMP);
                 myPlayerRef.child('online').set(true);
+                this.roomRef.child('lastActivityAt').set(firebase.database.ServerValue.TIMESTAMP);
             },
 
             // --- ÉCOUTE DES DONNÉES EN TEMPS RÉEL SUR LA ROOM ---
@@ -3954,6 +3986,7 @@
                         return;
                     }
                     const data = snapshot.val();
+                    this.scheduleRoomClosureIfInactive(data);
                     this.handleRoomUpdate(data);
                 });
 
@@ -4353,13 +4386,18 @@
                     if (roomData.config) gameConfig = roomData.config;
                     const playersObj = roomData.players || {};
                     const activePids = Object.keys(playersObj).filter(id => playersObj[id].online !== false);
-                    const configuredTotal = Number(gameConfig.total);
-                    const configuredIntruders = Number(gameConfig.infiltres) + Number(gameConfig.inconnus);
 
                     if (activePids.length < 3) {
                         return alert("Il faut au moins 3 joueurs connectés pour lancer la partie.");
                     }
-                    if (activePids.length !== configuredTotal || configuredIntruders >= activePids.length) {
+                    if (activePids.length > 20) {
+                        return alert("Une partie est limitée à 20 joueurs.");
+                    }
+
+                    // Le nombre réel de joueurs connectés est la source de vérité du lancement.
+                    updateConfigFromSlider(activePids.length, false);
+                    const configuredIntruders = Number(gameConfig.infiltres) + Number(gameConfig.inconnus);
+                    if (configuredIntruders >= activePids.length || gameConfig.pnj < 1) {
                         await this.roomRef.update({
                             status: 'lobby',
                             gamePlayers: null,
@@ -4370,7 +4408,6 @@
                             guessCorrect: null,
                             pendingVictimIndex: -1
                         });
-                        updateConfigFromSlider(activePids.length, false);
                         showView('view-mp-lobby');
                         return alert("La composition de la salle ne correspond plus aux paramètres. La partie a été annulée.");
                     }
@@ -4427,7 +4464,13 @@
                         guessCorrect: null
                     }).then(() => {
                         revealIdentity(true);
+                    }).catch(error => {
+                        console.error("Erreur lancement partie Firebase:", error);
+                        alert("Impossible de lancer la partie : " + (error.message || error.code || "erreur Firebase"));
                     });
+                }).catch(error => {
+                    console.error("Erreur lecture avant lancement:", error);
+                    alert("Impossible de lancer la partie : " + (error.message || error.code || "erreur Firebase"));
                 });
             },
 
@@ -4825,6 +4868,10 @@
                 this.playersRef = null;
                 this.chatRef = null;
                 this.mode = null;
+                if (this.roomInactivityTimer) {
+                    clearTimeout(this.roomInactivityTimer);
+                    this.roomInactivityTimer = null;
+                }
 
                 const ind = document.getElementById('mp-status-indicator');
                 if (ind) ind.classList.add('d-none');
