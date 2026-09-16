@@ -3824,7 +3824,7 @@
                     this.saveSession();
                 }).catch(err => {
                     console.error("Erreur création room Firebase:", err);
-                    alert("Erreur lors de la création de la salle Firebase.");
+                    alert("Erreur lors de la création de la salle Firebase : " + (err.message || err.code || "Erreur inconnue"));
                     this.disconnect();
                 });
             },
@@ -4002,6 +4002,10 @@
 
                     if (this.mode === 'host') {
                         updateConfigFromSlider(playerList.length, false);
+                        const syncedConfig = { ...gameConfig };
+                        if (JSON.stringify(roomData.config || {}) !== JSON.stringify(syncedConfig)) {
+                            this.roomRef.update({ config: syncedConfig });
+                        }
                     }
                     return;
                 }
