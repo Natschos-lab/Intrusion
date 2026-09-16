@@ -3663,6 +3663,7 @@
             votes: {},
             stopTimerVotes: 0,
             resolvingVote: false,
+            resolvingGuess: false,
             isDisconnecting: false,
             isChatMinimized: false,
             unreadChatCount: 0,
@@ -3872,6 +3873,15 @@
                         return;
                     }
 
+                    const roomPlayers = roomData.players || {};
+                    const connectedPlayerIds = Object.keys(roomPlayers).filter(id => roomPlayers[id].online !== false);
+                    if (!roomPlayers[this.playerId] && connectedPlayerIds.length >= 20) {
+                        hideReconnectingOverlay();
+                        alert("Cette salle est complète (maximum 20 joueurs).");
+                        this.disconnect();
+                        return;
+                    }
+
                     this.me.name = localStorage.getItem('intrusion_last_name') || 'Joueur';
                     this.me.avatar = localStorage.getItem('intrusion_last_avatar') || null;
 
@@ -4039,6 +4049,7 @@
                 const status = roomData.status;
                 if (status !== this._lastRoomStatus) {
                     this.resolvingVote = false;
+                    this.resolvingGuess = false;
                     this._lastRoomStatus = status;
                 }
 
@@ -4193,6 +4204,11 @@
                 // 5. Phase devinette (Inconnu)
                 else if (status === 'guess') {
                     pendingVictimIndex = roomData.pendingVictimIndex;
+                    const guesser = players[pendingVictimIndex];
+                    const guessData = guesser && roomData.guesses ? roomData.guesses[guesser.id] : null;
+                    if (this.mode === 'host' && guessData) {
+                        this.resolveFirebaseGuess(guessData);
+                    }
                     if (this.me.index === pendingVictimIndex) {
                         document.getElementById('inputGuessWord').value = "";
                         showView('view-guess');
@@ -4310,6 +4326,23 @@
                         }
                     }
                 }
+            },
+
+            resolveFirebaseGuess: function (guessData) {
+                if (this.resolvingGuess || !guessData || pendingVictimIndex < 0) return;
+                if (guessData.round !== this.currentRound) return;
+                this.resolvingGuess = true;
+                const guess = cleanString(guessData.guess || '');
+                const correct = cleanString(currentPNJWord);
+                const isCorrect = guess === correct || levenshtein(guess, correct) <= 1;
+                if (players[pendingVictimIndex]) players[pendingVictimIndex].alive = false;
+                this.roomRef.update({
+                    status: 'result',
+                    pendingVictimIndex,
+                    guessCorrect: isCorrect,
+                    gamePlayers: players,
+                    guesses: {}
+                });
             },
 
             // --- MÉTHODES MULTIJOUEUR UTILISÉES PAR LE JEU ---
@@ -4716,36 +4749,39 @@
             sendData: function (data) {
                 if (!this.roomRef) return;
                 if (data.type === 'memorized') {
-                    const updates = {};
-                    updates['memorized/' + this.playerId] = true;
-                    if (this.me.index !== null && this.me.index !== undefined) {
-                        updates['gamePlayers/' + this.me.index + '/validated'] = true;
-                        updates['gamePlayers/' + this.me.index + '/eligible'] = true;
-                    }
-                    this.roomRef.update(updates);
+                    this.roomRef.child('memorized/' + this.playerId).set(true).catch(error => {
+                        console.error("Erreur validation du mot:", error);
+                        const btn = document.getElementById('btn-pass-ready');
+                        if (btn) btn.classList.remove('d-none');
+                        alert("La validation du mot n'a pas été enregistrée. Vérifiez la connexion puis réessayez.");
+                    });
                 } else if (data.type === 'vote') {
                     const voter = players[this.me.index];
                     if (!voter || !voter.alive || voter.eligible === false) return;
                     this.roomRef.child('votes/' + this.playerId).set({
                         target: data.to,
                         round: this.currentRound || 0
+                    }).catch(error => {
+                        console.error("Erreur enregistrement du vote:", error);
+                        alert("Le vote n'a pas été enregistré. Vérifiez la connexion puis réessayez.");
                     });
                 } else if (data.type === 'vote_stop_timer') {
                     const voter = players[this.me.index];
                     if (!voter || !voter.alive || voter.eligible === false) return;
-                    this.roomRef.child('stopTimerVotes').transaction(curr => (curr || 0) + 1);
+                    this.roomRef.child('stopTimerVotes').transaction(curr => (curr || 0) + 1).catch(error => {
+                        console.error("Erreur arrêt du chrono:", error);
+                        alert("Votre demande d'arrêt du chrono n'a pas été enregistrée.");
+                    });
                 } else if (data.type === 'guess_submit') {
-                    const guessRaw = data.guess;
-                    const guess = cleanString(guessRaw);
-                    const correct = cleanString(currentPNJWord);
-                    let isCorrect = (guess === correct) || (levenshtein(guess, correct) <= 1);
-                    if (players[pendingVictimIndex]) players[pendingVictimIndex].alive = false;
-
-                    if (isCorrect) {
-                        this.roomRef.update({ status: 'result', pendingVictimIndex: pendingVictimIndex, guessCorrect: true, gamePlayers: players });
-                    } else {
-                        this.roomRef.update({ status: 'result', pendingVictimIndex: pendingVictimIndex, guessCorrect: false, gamePlayers: players });
-                    }
+                    const guesser = players[this.me.index];
+                    if (!guesser || this.me.index !== pendingVictimIndex || !guesser.alive || guesser.eligible === false) return;
+                    this.roomRef.child('guesses/' + this.playerId).set({
+                        guess: String(data.guess || '').slice(0, 100),
+                        round: this.currentRound || 0
+                    }).catch(error => {
+                        console.error("Erreur enregistrement de la devinette:", error);
+                        alert("La devinette n'a pas été enregistrée. Vérifiez la connexion puis réessayez.");
+                    });
                 }
             },
 
