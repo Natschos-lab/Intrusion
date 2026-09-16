@@ -4046,6 +4046,22 @@
                     this.tryClaimHost(roomData, playerList);
                     if (getCurrentViewId() !== 'view-mp-lobby') showView('view-mp-lobby');
 
+                    const hostElements = document.getElementById('lobby-host-elements');
+                    const clientElements = document.getElementById('lobby-client-elements');
+                    const hostActions = document.getElementById('lobby-actions-host');
+                    const rolePlaceholder = document.getElementById('mp-role-settings-placeholder');
+                    const roleBlock = document.getElementById('role-settings-block');
+                    if (this.mode === 'host') {
+                        if (hostElements) hostElements.classList.remove('d-none');
+                        if (clientElements) clientElements.classList.add('d-none');
+                        if (hostActions) hostActions.classList.remove('d-none');
+                        if (rolePlaceholder && roleBlock && roleBlock.parentElement !== rolePlaceholder) rolePlaceholder.appendChild(roleBlock);
+                    } else {
+                        if (hostElements) hostElements.classList.add('d-none');
+                        if (clientElements) clientElements.classList.remove('d-none');
+                        if (hostActions) hostActions.classList.add('d-none');
+                    }
+
                     if (this.mode === 'host') {
                         updateConfigFromSlider(playerList.length, false);
                         const syncedConfig = { ...gameConfig };
@@ -4075,6 +4091,20 @@
 
                 if (roomData.pendingVictimIndex !== undefined) {
                     pendingVictimIndex = roomData.pendingVictimIndex;
+                }
+
+                if (this.mode === 'host' && ['pre-debate', 'debate', 'vote'].includes(roomData.status)) {
+                    const winner = getWinnerForRoom(roomData);
+                    if (winner) {
+                        this.roomRef.update({
+                            status: 'result',
+                            gameOver: true,
+                            winner,
+                            pendingVictimIndex: -1,
+                            gamePlayers: players
+                        });
+                        return;
+                    }
                 }
 
                 // Gérer les phases de jeu selon le status Firebase
@@ -4270,7 +4300,13 @@
 
                 // 6. Résultat d'élimination ou Victoire
                 else if (status === 'result') {
-                    if (roomData.pendingVictimIndex !== undefined && players[roomData.pendingVictimIndex]) {
+                    if (roomData.gameOver) {
+                        showView('view-result');
+                        const nameDisplay = document.getElementById('eliminatedNameDisplay');
+                        const roleDisplay = document.getElementById('eliminatedRoleDisplay');
+                        if (nameDisplay) nameDisplay.innerText = 'Partie terminée';
+                        if (roleDisplay) roleDisplay.innerText = '';
+                    } else if (roomData.pendingVictimIndex !== undefined && players[roomData.pendingVictimIndex]) {
                         pendingVictimIndex = roomData.pendingVictimIndex;
                         const victim = players[pendingVictimIndex];
                         showView('view-result');
@@ -4797,7 +4833,7 @@
                 } else if (data.type === 'sync_guess_phase') {
                     this.roomRef.update({ status: 'guess', pendingVictimIndex: data.index });
                 } else if (data.type === 'force_lobby') {
-                    this.roomRef.update({ status: 'lobby', gamePlayers: null, votes: {}, memorized: {}, stopTimerVotes: 0, tieBreak: null, guessCorrect: null });
+                    this.roomRef.update({ status: 'lobby', gamePlayers: null, votes: {}, memorized: {}, guesses: {}, stopTimerVotes: 0, tieBreak: null, guessCorrect: null, gameOver: null, winner: null, pendingVictimIndex: -1 });
                 }
             },
 
@@ -6503,8 +6539,30 @@
             }
         }
 
+        function getWinnerForRoom(roomData = null) {
+            const activePlayers = players.filter(p => {
+                if (!p.alive || p.eligible === false) return false;
+                if (!roomData || !roomData.players || !p.id) return true;
+                return roomData.players[p.id] && roomData.players[p.id].online !== false;
+            });
+            const pnjAlive = activePlayers.filter(p => p.role === 'PNJ').length;
+            const infiltresAlive = activePlayers.filter(p => p.role === 'Infiltré').length;
+            const inconnuAlive = activePlayers.filter(p => p.role === 'Inconnu').length;
+            const totalBadGuys = infiltresAlive + inconnuAlive;
+            const totalOthers = pnjAlive + infiltresAlive;
+
+            if (inconnuAlive > 0 && totalOthers <= 1) return 'INCONNU_SOLO';
+            if (totalBadGuys === 0) return 'CIVILS';
+            if (infiltresAlive >= pnjAlive) return 'BAD';
+            return null;
+        }
+
         function checkWinCondition(resultData = null) {
-            const activePlayers = players.filter(p => p.alive && p.eligible !== false);
+            const activePlayers = players.filter(p => {
+                if (!p.alive || p.eligible === false) return false;
+                if (!resultData || !resultData.players || !p.id) return true;
+                return resultData.players[p.id] && resultData.players[p.id].online !== false;
+            });
             const pnjAlive = activePlayers.filter(p => p.role === 'PNJ').length;
             const infiltresAlive = activePlayers.filter(p => p.role === 'Infiltré').length;
             const inconnuAlive = activePlayers.filter(p => p.role === 'Inconnu').length;
@@ -6530,6 +6588,8 @@
                 }
             }
 
+            const winner = resultData && resultData.winner ? resultData.winner : getWinnerForRoom(resultData);
+
             if (resultData && resultData.guessCorrect === true) {
                 SFX.success();
                 continueDiv.classList.add('d-none');
@@ -6540,7 +6600,14 @@
                 return;
             }
 
-            if (totalBadGuys === 0) {
+            if (winner === 'INCONNU_SOLO') {
+                SFX.success(); continueDiv.classList.add('d-none'); winDiv.classList.remove('d-none');
+                winMsg.innerText = "VICTOIRE DE L'INCONNU !"; winMsg.className = "brand-font mb-4 victory-text text-white-force";
+                updateWinStats(['INCONNU_SOLO']);
+                return;
+            }
+
+            if (winner === 'CIVILS' || totalBadGuys === 0) {
                 SFX.success(); continueDiv.classList.add('d-none'); winDiv.classList.remove('d-none');
                 winMsg.innerText = "VICTOIRE DES CIVILS !"; winMsg.className = "brand-font mb-4 victory-text text-info";
                 updateWinStats(['CIVILS']);
