@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <!-- FIREBASE REALTIME DATABASE SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
 
     <style>
@@ -119,6 +120,7 @@
 
         .brand-title-glow {
             background: linear-gradient(135deg, #38bdf8 0%, #c084fc 50%, #f43f5e 100%);
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.45));
@@ -127,6 +129,7 @@
 
         body.light-mode .brand-title-glow {
             background: linear-gradient(135deg, #0284c7 0%, #7e22ce 50%, #e11d48 100%);
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             filter: drop-shadow(0 2px 8px rgba(2, 132, 199, 0.25));
@@ -3659,14 +3662,25 @@
             memorizedPlayers: [],
             votes: {},
             stopTimerVotes: 0,
+            resolvingVote: false,
             isDisconnecting: false,
             isChatMinimized: false,
             unreadChatCount: 0,
             _listeners: [],
 
+            ensureAuth: function () {
+                if (!firebase.auth) return Promise.reject(new Error('Firebase Authentication indisponible.'));
+                if (firebase.auth().currentUser) return Promise.resolve(firebase.auth().currentUser);
+                return firebase.auth().signInAnonymously().then(result => result.user);
+            },
+
             // Génère ou récupère un ID unique de joueur
             getOrCreatePlayerId: function () {
+                const authenticatedUid = firebase.auth && firebase.auth().currentUser
+                    ? firebase.auth().currentUser.uid
+                    : null;
                 let pid = localStorage.getItem('intrusion_player_uid');
+                if (authenticatedUid) pid = authenticatedUid;
                 if (!pid) {
                     pid = 'usr_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now().toString(36);
                     localStorage.setItem('intrusion_player_uid', pid);
@@ -3702,8 +3716,45 @@
                 this._listeners.push({ ref, event, fn });
             },
 
+            tryClaimHost: function (roomData, playerList) {
+                if (this.mode !== 'client' || !this.roomRef || !roomData.hostId) return;
+                const host = roomData.players && roomData.players[roomData.hostId];
+                if (host && host.online !== false) return;
+
+                const candidates = playerList
+                    .filter(player => player.online !== false)
+                    .sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0));
+                if (!candidates.length || candidates[0].id !== this.playerId) return;
+
+                this.roomRef.child('hostId').transaction(currentHostId => {
+                    return currentHostId === roomData.hostId ? this.playerId : currentHostId;
+                }).then(result => {
+                    if (!result.committed || result.snapshot.val() !== this.playerId) return;
+                    const updates = {};
+                    updates['players/' + this.playerId + '/isHost'] = true;
+                    updates['players/' + roomData.hostId + '/isHost'] = false;
+                    return this.roomRef.update(updates).then(() => {
+                        this.mode = 'host';
+                        this.me.index = players.findIndex(player => player.id === this.playerId);
+                        this.updateStatus('HÔTE : ' + this.roomId, 'online');
+                        document.getElementById('lobby-host-elements').classList.remove('d-none');
+                        document.getElementById('lobby-client-elements').classList.add('d-none');
+                        document.getElementById('lobby-actions-host').classList.remove('d-none');
+                        document.getElementById('host-room-code-btn').classList.remove('d-none');
+                        this.saveSession();
+                    });
+                }).catch(error => console.error("Erreur reprise hôte:", error));
+            },
+
             // --- CRÉATION DU SALON PAR L'HÔTE ---
-            initHost: function () {
+            initHost: async function () {
+                try {
+                    await this.ensureAuth();
+                } catch (error) {
+                    console.error('Erreur authentification Firebase:', error);
+                    alert('Impossible de sécuriser la connexion Firebase.');
+                    return;
+                }
                 this.isDisconnecting = false;
                 this.mode = 'host';
                 this.generateRoomId();
@@ -3720,13 +3771,14 @@
                 this.me.index = 0;
 
                 const hostData = {
-                    createdAt: firebase.database.ServerValue.TIMESTAMP,
+                    createdAt: Date.now(),
                     hostId: this.playerId,
                     status: 'lobby',
                     config: gameConfig,
                     words: ['', ''],
                     starter: '',
                     tieBreak: null,
+                    round: 0,
                     guessPhase: null,
                     stopTimerVotes: 0,
                     players: {
@@ -3735,12 +3787,17 @@
                             avatar: this.me.avatar,
                             isHost: true,
                             online: true,
-                            joinedAt: firebase.database.ServerValue.TIMESTAMP
+                            joinedAt: Date.now()
                         }
                     }
                 };
 
-                this.roomRef.set(hostData).then(() => {
+                this.roomRef.transaction(currentRoom => currentRoom === null ? hostData : currentRoom).then(result => {
+                    if (!result.committed) {
+                        this.generateRoomId();
+                        this.initHost();
+                        return;
+                    }
                     this.updateStatus('HÔTE : ' + this.roomId, 'online');
                     document.getElementById('displayRoomCode').innerText = this.roomId;
                     document.getElementById('host-room-code-display').innerText = this.roomId;
@@ -3773,10 +3830,18 @@
             },
 
             // --- REJOINDRE UN SALON (CLIENT) ---
-            initClient: function (codeOverride) {
+            initClient: async function (codeOverride) {
                 const codeInput = document.getElementById('inputRoomCode');
                 const code = (codeOverride || (codeInput ? codeInput.value : '')).trim().toUpperCase();
                 if (code.length !== 4) return alert("Code invalide (4 caractères requis)");
+
+                try {
+                    await this.ensureAuth();
+                } catch (error) {
+                    console.error('Erreur authentification Firebase:', error);
+                    alert('Impossible de sécuriser la connexion Firebase.');
+                    return;
+                }
 
                 this.isDisconnecting = false;
                 this.mode = 'client';
@@ -3894,6 +3959,7 @@
             // Traitement des données synchronisées du salon
             handleRoomUpdate: function (roomData) {
                 if (!roomData) return;
+                this.currentRound = roomData.round || 0;
 
                 // Sync de la configuration si modifiée
                 if (roomData.config && this.mode === 'client') {
@@ -3916,8 +3982,23 @@
 
                 // En lobby : tri par date d'arrivée
                 if (roomData.status === 'lobby') {
+                    if (timerInterval) {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                    }
+                    players = [];
+                    currentStep = 0;
+                    pendingVictimIndex = -1;
+                    this.me.index = this.mode === 'host' ? 0 : null;
+                    this.resolvingVote = false;
+                    const tieBreakModal = document.getElementById('modal-tie-break');
+                    if (tieBreakModal) tieBreakModal.classList.add('d-none');
+                    const secretModal = document.getElementById('modal-secret-word-reminder');
+                    if (secretModal) secretModal.classList.add('d-none');
                     playerList.sort((a, b) => (a.isHost ? -1 : b.isHost ? 1 : (a.joinedAt || 0) - (b.joinedAt || 0)));
                     this.renderLobby(playerList);
+                    this.tryClaimHost(roomData, playerList);
+                    if (getCurrentViewId() !== 'view-mp-lobby') showView('view-mp-lobby');
 
                     if (this.mode === 'host') {
                         updateConfigFromSlider(playerList.length, false);
@@ -3935,6 +4016,8 @@
                     }
                 }
 
+                this.tryClaimHost(roomData, playerList);
+
                 if (roomData.words) {
                     currentPNJWord = roomData.words[0] || '';
                     currentInfiltreWord = roomData.words[1] || '';
@@ -3950,15 +4033,28 @@
 
             syncGameFlow: function (roomData) {
                 const status = roomData.status;
+                if (status !== this._lastRoomStatus) {
+                    this.resolvingVote = false;
+                    this._lastRoomStatus = status;
+                }
 
                 // Mettre à jour la visibilité du bouton discret de rappel de mot
                 if (typeof updateSecretWordBtnVisibility === 'function') {
                     updateSecretWordBtnVisibility(status);
                 }
 
+                const myPlayer = players[this.me.index];
+                const isEliminated = !!myPlayer && !myPlayer.alive;
+
                 // 1. Démarrage de la mémorisation
                 if (status === 'memorizing') {
-                    const myPlayer = players[this.me.index];
+                    if (isEliminated) {
+                        document.getElementById('pass-dynamic-content').innerHTML = `<h3 class="text-danger">VOUS ÊTES ÉLIMINÉ</h3><p class="text-muted mb-1">Vous assisterez au reste de la partie.</p>`;
+                        const btn = document.getElementById('btn-pass-ready');
+                        if (btn) btn.classList.add('d-none');
+                        showView('view-pass');
+                        return;
+                    }
                     const hasMemorized = roomData.memorized && roomData.memorized[this.playerId];
 
                     if (hasMemorized) {
@@ -3980,14 +4076,19 @@
                     // Si l'hôte constate que tout le monde a mémorisé, lancer le débat
                     if (this.mode === 'host' && roomData.memorized) {
                         const alivePlayers = players.filter(p => p.alive);
-                        const memCount = Object.keys(roomData.memorized).length;
-                        if (memCount >= alivePlayers.length && alivePlayers.length > 0) {
+                        const allAliveValidated = alivePlayers.length > 0 && alivePlayers.every(p => roomData.memorized[p.id]);
+                        if (allAliveValidated) {
                             const starterName = pickSmartStarter(true);
                             this.roomRef.update({
                                 status: 'debate',
                                 starter: starterName,
                                 debateSeconds: 60,
-                                debateStartedAt: Date.now()
+                                debateStartedAt: Date.now(),
+                                gamePlayers: players.map(p => ({
+                                    ...p,
+                                    validated: !!roomData.memorized[p.id],
+                                    eligible: !!roomData.memorized[p.id]
+                                }))
                             });
                         }
                     }
@@ -4001,13 +4102,18 @@
                     const currentView = getCurrentViewId();
                     if (currentView !== 'view-debate') {
                         preparePreDebateView();
-                        startDebate(roomData.debateSeconds || 60, true);
+                        const debateSeconds = roomData.debateSeconds || 60;
+                        const elapsedSeconds = roomData.debateStartedAt
+                            ? Math.floor((Date.now() - roomData.debateStartedAt) / 1000)
+                            : 0;
+                        const remainingSeconds = Math.max(0, debateSeconds - elapsedSeconds);
+                        startDebate(debateSeconds, true, remainingSeconds);
                     }
 
                     // Arrêt prématuré du chrono (votes stop par majorité)
                     const votesStop = roomData.stopTimerVotes || 0;
-                    const activeAliveCount = players.filter(p => p.alive && roomData.players && roomData.players[p.id] && roomData.players[p.id].online !== false).length;
-                    const aliveCount = activeAliveCount || players.filter(p => p.alive).length;
+                    const activeAliveCount = players.filter(p => p.alive && p.eligible !== false && roomData.players && roomData.players[p.id] && roomData.players[p.id].online !== false).length;
+                    const aliveCount = activeAliveCount || players.filter(p => p.alive && p.eligible !== false).length;
                     const threshold = Math.floor(aliveCount / 2) + 1;
                     const btn = document.getElementById('btn-force-vote');
                     if (btn && !btn.classList.contains('disabled')) {
@@ -4017,7 +4123,7 @@
                     }
 
                     if (this.mode === 'host' && votesStop >= threshold && aliveCount > 0) {
-                        this.roomRef.update({ status: 'vote' });
+                        this.roomRef.update({ status: 'vote', votes: {}, tieBreak: null });
                     }
                 }
 
@@ -4031,9 +4137,18 @@
                     }
 
                     const votesMap = roomData.votes || {};
-                    const voterPids = Object.keys(votesMap);
-                    const activeAliveCount = players.filter(p => p.alive && roomData.players && roomData.players[p.id] && roomData.players[p.id].online !== false).length;
-                    const aliveCount = activeAliveCount || players.filter(p => p.alive).length;
+                    const aliveVoterPids = players.filter(p => p.alive && p.eligible !== false).map(p => p.id);
+                    const validVotes = {};
+                    Object.keys(votesMap).forEach(pid => {
+                        const vote = votesMap[pid];
+                        const targetIdx = Number(vote && typeof vote === 'object' ? vote.target : vote);
+                        const voteRound = vote && typeof vote === 'object' ? vote.round : this.currentRound;
+                        if (aliveVoterPids.includes(pid) && voteRound === this.currentRound && Number.isInteger(targetIdx) && players[targetIdx] && players[targetIdx].alive && players[targetIdx].eligible !== false) {
+                            validVotes[pid] = targetIdx;
+                        }
+                    });
+                    const voterPids = Object.keys(validVotes);
+                    const aliveCount = players.filter(p => p.alive && p.eligible !== false).length;
 
                     // Convertir les IDs de votants en indices de tableau
                     const voterIndices = voterPids.map(pid => {
@@ -4043,7 +4158,7 @@
                     renderVoteTracker(voterIndices, voterPids.length, aliveCount);
 
                     // Si le joueur actuel a déjà voté, afficher l'écran d'attente
-                    if (votesMap[this.playerId] !== undefined) {
+                    if (validVotes[this.playerId] !== undefined) {
                         const container = document.getElementById('voteButtonsContainer');
                         if (container && !container.querySelector('.vote-wait-screen')) {
                             container.innerHTML = `
@@ -4059,7 +4174,7 @@
 
                     // Si l'hôte voit que tous les survivants ont voté, il calcule le résultat
                     if (this.mode === 'host' && voterPids.length >= aliveCount && aliveCount > 0) {
-                        this.resolveFirebaseVotes(votesMap);
+                        this.resolveFirebaseVotes(validVotes);
                     }
                 }
 
@@ -4103,7 +4218,7 @@
                         else roleDisplay.style.color = '#94a3b8';
                         updateEliminatedImage();
                     }
-                    checkWinCondition();
+                    checkWinCondition(roomData);
                 }
 
                 // 7. Transition Tour Suivant
@@ -4136,9 +4251,18 @@
 
             // Calcul du résultat des votes par l'hôte
             resolveFirebaseVotes: function (votesMap) {
+                if (this.resolvingVote) return;
+                this.resolvingVote = true;
                 const tallies = {};
-                Object.values(votesMap).forEach(targetIdx => {
-                    tallies[targetIdx] = (tallies[targetIdx] || 0) + 1;
+                Object.values(votesMap).forEach(vote => {
+                    const targetIdx = Number(vote && typeof vote === 'object' ? vote.target : vote);
+                    const voteRound = vote && typeof vote === 'object' && vote.round !== undefined
+                        ? vote.round
+                        : this.currentRound;
+                    if (voteRound !== this.currentRound) return;
+                    if (players[targetIdx] && players[targetIdx].alive && players[targetIdx].eligible !== false) {
+                        tallies[targetIdx] = (tallies[targetIdx] || 0) + 1;
+                    }
                 });
 
                 let maxVotes = 0;
@@ -4154,7 +4278,7 @@
                 }
 
                 if (tiedCandidates.length === 0) {
-                    const alive = players.map((p, i) => ({ p, i })).filter(item => item.p.alive);
+                    const alive = players.map((p, i) => ({ p, i })).filter(item => item.p.alive && item.p.eligible !== false);
                     if (alive.length > 0) tiedCandidates.push(alive[0].i);
                 }
 
@@ -4187,13 +4311,31 @@
             // --- MÉTHODES MULTIJOUEUR UTILISÉES PAR LE JEU ---
             startGame: function () {
                 if (this.mode !== 'host') return;
-                this.roomRef.once('value').then(snapshot => {
+                this.roomRef.once('value').then(async snapshot => {
                     const roomData = snapshot.val();
+                    if (roomData.config) gameConfig = roomData.config;
                     const playersObj = roomData.players || {};
                     const activePids = Object.keys(playersObj).filter(id => playersObj[id].online !== false);
+                    const configuredTotal = Number(gameConfig.total);
+                    const configuredIntruders = Number(gameConfig.infiltres) + Number(gameConfig.inconnus);
 
                     if (activePids.length < 3) {
                         return alert("Il faut au moins 3 joueurs connectés pour lancer la partie.");
+                    }
+                    if (activePids.length !== configuredTotal || configuredIntruders >= activePids.length) {
+                        await this.roomRef.update({
+                            status: 'lobby',
+                            gamePlayers: null,
+                            votes: {},
+                            memorized: {},
+                            stopTimerVotes: 0,
+                            tieBreak: null,
+                            guessCorrect: null,
+                            pendingVictimIndex: -1
+                        });
+                        updateConfigFromSlider(activePids.length, false);
+                        showView('view-mp-lobby');
+                        return alert("La composition de la salle ne correspond plus aux paramètres. La partie a été annulée.");
                     }
 
                     initGame(true);
@@ -4207,7 +4349,9 @@
                         avatar: this.me.avatar,
                         role: rolesDeck[0].role,
                         word: rolesDeck[0].word,
-                        alive: true
+                        alive: true,
+                        validated: false,
+                        eligible: false
                     });
 
                     let slot = 1;
@@ -4220,7 +4364,9 @@
                                 avatar: p.avatar,
                                 role: rolesDeck[slot].role,
                                 word: rolesDeck[slot].word,
-                                alive: true
+                                    alive: true,
+                                    validated: false,
+                                    eligible: false
                             });
                             slot++;
                         }
@@ -4235,11 +4381,13 @@
                         gamePlayers: pList,
                         words: [currentPNJWord, currentInfiltreWord],
                         config: gameConfig,
+                        round: 1,
                         memorized: {},
                         votes: {},
                         stopTimerVotes: 0,
                         pendingVictimIndex: -1,
-                        tieBreak: null
+                        tieBreak: null,
+                        guessCorrect: null
                     }).then(() => {
                         revealIdentity(true);
                     });
@@ -4534,7 +4682,20 @@
                         status: 'debate',
                         debateSeconds: data.seconds,
                         stopTimerVotes: 0,
-                        debateStartedAt: Date.now()
+                        debateStartedAt: Date.now(),
+                        memorized: {},
+                        votes: {},
+                        tieBreak: null,
+                        pendingVictimIndex: -1,
+                        round: firebase.database.ServerValue.increment(1)
+                    });
+                } else if (data.type === 'start_debate') {
+                    this.roomRef.update({
+                        status: 'debate',
+                        starter: data.starter,
+                        debateSeconds: 60,
+                        debateStartedAt: Date.now(),
+                        gamePlayers: players
                     });
                 } else if (data.type === 'sync_next_round') {
                     this.roomRef.update({ status: 'transition', starter: data.starter });
@@ -4544,17 +4705,30 @@
                 } else if (data.type === 'sync_guess_phase') {
                     this.roomRef.update({ status: 'guess', pendingVictimIndex: data.index });
                 } else if (data.type === 'force_lobby') {
-                    this.roomRef.update({ status: 'lobby', gamePlayers: null, votes: {}, memorized: {}, stopTimerVotes: 0, tieBreak: null });
+                    this.roomRef.update({ status: 'lobby', gamePlayers: null, votes: {}, memorized: {}, stopTimerVotes: 0, tieBreak: null, guessCorrect: null });
                 }
             },
 
             sendData: function (data) {
                 if (!this.roomRef) return;
                 if (data.type === 'memorized') {
-                    this.roomRef.child('memorized/' + this.playerId).set(true);
+                    const updates = {};
+                    updates['memorized/' + this.playerId] = true;
+                    if (this.me.index !== null && this.me.index !== undefined) {
+                        updates['gamePlayers/' + this.me.index + '/validated'] = true;
+                        updates['gamePlayers/' + this.me.index + '/eligible'] = true;
+                    }
+                    this.roomRef.update(updates);
                 } else if (data.type === 'vote') {
-                    this.roomRef.child('votes/' + this.playerId).set(data.to);
+                    const voter = players[this.me.index];
+                    if (!voter || !voter.alive || voter.eligible === false) return;
+                    this.roomRef.child('votes/' + this.playerId).set({
+                        target: data.to,
+                        round: this.currentRound || 0
+                    });
                 } else if (data.type === 'vote_stop_timer') {
+                    const voter = players[this.me.index];
+                    if (!voter || !voter.alive || voter.eligible === false) return;
                     this.roomRef.child('stopTimerVotes').transaction(curr => (curr || 0) + 1);
                 } else if (data.type === 'guess_submit') {
                     const guessRaw = data.guess;
@@ -4572,15 +4746,16 @@
             },
 
             handleIncomingVote: function (fromIdx, toIdx) {
-                if (this.roomRef) {
-                    this.roomRef.child('votes/' + this.playerId).set(toIdx);
+                const voter = players[this.me.index];
+                if (this.roomRef && voter && voter.alive && voter.eligible !== false) {
+                    this.roomRef.child('votes/' + this.playerId).set({ target: toIdx, round: this.currentRound || 0 });
                 }
             },
 
             handleData: function (data) {
                 if (!data) return;
                 if (data.type === 'memorized') {
-                    this.roomRef.child('memorized/' + this.playerId).set(true);
+                    this.sendData(data);
                 } else if (data.type === 'guess_submit') {
                     this.sendData(data);
                 } else if (data.type === 'force_lobby') {
@@ -4658,15 +4833,16 @@
                 if (banner) banner.classList.add('d-none');
             },
 
-            resumeSession: function () {
+            resumeSession: async function () {
                 const raw = sessionStorage.getItem('intrusion_firebase_session') || localStorage.getItem('intrusion_firebase_session');
                 if (!raw) return;
                 try {
                     const sess = JSON.parse(raw);
+                    await this.ensureAuth();
+                    this.getOrCreatePlayerId();
                     if (sess.mode === 'host') {
                         this.mode = 'host';
                         this.roomId = sess.roomId;
-                        this.playerId = sess.playerId;
                         this.me.name = sess.meName;
                         this.me.avatar = sess.meAvatar;
                         this.roomRef = db.ref('rooms/' + this.roomId);
@@ -4690,14 +4866,18 @@
             },
 
             resyncAllPlayers: function () {
-                if (this.roomRef) {
-                    this.roomRef.once('value').then(snap => {
-                        if (snap.exists()) {
-                            this.handleRoomUpdate(snap.val());
-                            alert("Données synchronisées avec la base de données Firebase.");
-                        }
+                if (this.mode !== 'host' || !this.roomRef) return;
+                this.roomRef.once('value').then(snapshot => {
+                    if (!snapshot.exists()) return;
+                    return this.roomRef.update({
+                        syncToken: firebase.database.ServerValue.TIMESTAMP
+                    }).then(() => {
+                        alert("La synchronisation a été rediffusée à tous les joueurs.");
                     });
-                }
+                }).catch(error => {
+                    console.error("Erreur resynchronisation joueurs:", error);
+                    alert("Impossible de resynchroniser les joueurs pour le moment.");
+                });
             }
         };
 
@@ -5074,12 +5254,12 @@
             else modal.classList.add('d-none');
         }
         function confirmQuit() {
-            MP.isDisconnecting = true;
-
             // Purge de la session locale
             MP.clearSession();
 
-            // Déconnexion réseau propre
+            if (MP.roomRef) MP.disconnect();
+
+            // Nettoyage des connexions éventuelles
             if (MP.peer) {
                 try { MP.peer.destroy(); } catch (e) { }
                 MP.peer = null;
@@ -5112,7 +5292,7 @@
                 if (forceSection && forceButtons && players.length > 0 && isGameRunning) {
                     forceButtons.innerHTML = '';
                     players.forEach((p, idx) => {
-                        if (p.alive) {
+                        if (p.alive && p.eligible !== false) {
                             const btn = document.createElement('button');
                             btn.className = 'btn btn-outline-danger btn-sm fw-bold';
                             btn.innerHTML = `<i class="bi bi-x-circle-fill me-2"></i>${p.name}`;
@@ -5122,7 +5302,6 @@
                                     MP.votes = {};
                                     if (MP._voteTimeout) { clearTimeout(MP._voteTimeout); MP._voteTimeout = null; }
                                     finalizeElimination(idx, false);
-                                    MP.broadcast({ type: 'sync_elimination', index: idx });
                                 }
                             };
                             forceButtons.appendChild(btn);
@@ -5158,14 +5337,25 @@
         }
 
         function hostForceResolveVote() {
-            if (!MP.votes || Object.keys(MP.votes).length === 0) {
-                alert("Aucun vote n'a encore été enregistré.");
-                return;
-            }
-            if (confirm("Voulez-vous vraiment clôturer le vote avec les voix actuelles ?")) {
+            if (MP.mode !== 'host' || !MP.roomRef) return;
+            MP.roomRef.once('value').then(snapshot => {
+                const roomData = snapshot.val();
+                if (!roomData || roomData.status !== 'vote') {
+                    alert("Le vote n'est plus actif.");
+                    return;
+                }
+                const votes = roomData.votes || {};
+                if (Object.keys(votes).length === 0) {
+                    alert("Aucun vote n'a encore été enregistré.");
+                    return;
+                }
+                if (!confirm("Voulez-vous vraiment clôturer le vote avec les voix actuelles ?")) return;
                 toggleHostOptionsModal();
-                MP.resolveVotes(MP.votes);
-            }
+                MP.resolveFirebaseVotes(votes);
+            }).catch(error => {
+                console.error("Erreur clôture manuelle du vote:", error);
+                alert("Impossible de clôturer le vote pour le moment.");
+            });
         }
 
         function hostForceStartDebate() {
@@ -5430,6 +5620,8 @@
                 for (let i = 0; i < players.length; i++) {
                     players[i].role = rolesDeck[i].role;
                     players[i].word = rolesDeck[i].word;
+                    players[i].validated = false;
+                    players[i].eligible = false;
                 }
                 MP.roomRef.update({
                     words: [currentPNJWord, currentInfiltreWord],
@@ -5635,12 +5827,12 @@
         }
 
         // --- GAME LOOP ---
-        function startDebate(seconds, fromSync = false) {
+        function startDebate(seconds, fromSync = false, initialTimeLeft = null) {
             if (MP.mode === 'host' && !fromSync) {
                 MP.broadcast({ type: 'start_timer', seconds: seconds });
             }
             showView('view-debate');
-            let timeLeft = seconds;
+            let timeLeft = initialTimeLeft === null ? seconds : Math.min(seconds, Math.max(0, initialTimeLeft));
             const display = document.getElementById('timerDisplay');
             const bar = document.getElementById('timerBar');
             const status = document.getElementById('timerStatus');
@@ -5649,7 +5841,7 @@
 
             const btn = document.getElementById('btn-force-vote');
             if (btn) {
-                if (MP.mode && MP.me.index !== null && players[MP.me.index] && !players[MP.me.index].alive) {
+                if (MP.mode && MP.me.index !== null && players[MP.me.index] && (!players[MP.me.index].alive || players[MP.me.index].eligible === false)) {
                     btn.classList.add('d-none');
                 } else {
                     btn.classList.remove('d-none');
@@ -5675,14 +5867,14 @@
             clearInterval(timerInterval);
             SFX.alarm();
             if (MP.mode === 'host') {
-                MP.roomRef.update({ status: 'vote' });
+                MP.roomRef.update({ status: 'vote', votes: {}, tieBreak: null, stopTimerVotes: 0 });
             } else if (!MP.mode) {
                 setupVoteScreen();
             }
         }
 
         function handleForceVoteClick() {
-            if (MP.mode && MP.me.index !== null && !players[MP.me.index].alive) {
+            if (MP.mode && MP.me.index !== null && players[MP.me.index] && (!players[MP.me.index].alive || players[MP.me.index].eligible === false)) {
                 alert("Vous êtes éliminé, vous ne pouvez pas stopper le chrono.");
                 return;
             }
@@ -5707,12 +5899,12 @@
             showView('view-vote');
             const container = document.getElementById('voteButtonsContainer');
 
-            if (MP.mode && MP.me.index !== null && !players[MP.me.index].alive) {
+            if (MP.mode && MP.me.index !== null && players[MP.me.index] && (!players[MP.me.index].alive || players[MP.me.index].eligible === false)) {
                 container.innerHTML = `
                 <div class="vote-wait-screen text-center pt-4">
                     <div class="spinner-border text-danger mb-3"></div>
-                    <h5 class="text-danger">VOUS ÊTES ÉLIMINÉ</h5>
-                    <p class="text-muted small">Attente du vote des survivants...</p>
+                    <h5 class="text-danger">MODE SPECTATEUR</h5>
+                    <p class="text-muted small">Vous ne participez plus à cette partie.</p>
                     <div id="vote-tracker-container"></div>
                 </div>`;
                 return;
@@ -5720,7 +5912,7 @@
 
             container.innerHTML = "";
             players.forEach((p, index) => {
-                if (p.alive) {
+                if (p.alive && p.eligible !== false) {
                     const btn = document.createElement('div');
                     btn.className = "btn-vote p-2 mb-3 d-flex align-items-center gap-3 border border-secondary rounded bg-dark bg-opacity-25";
                     btn.style.cursor = "pointer";
@@ -5735,6 +5927,8 @@
 
         function handleVoteClick(index) {
             const victim = players[index];
+            if (!victim || !victim.alive) return;
+            if (MP.mode && (MP.me.index === null || !players[MP.me.index] || !players[MP.me.index].alive || players[MP.me.index].eligible === false)) return;
             pendingVictimIndex = index;
 
             if (MP.mode) {
@@ -5760,7 +5954,7 @@
             const container = document.getElementById('vote-tracker-container');
             if (!container) return;
 
-            const alivePlayers = players.map((p, i) => ({ ...p, index: i })).filter(p => p.alive);
+            const alivePlayers = players.map((p, i) => ({ ...p, index: i })).filter(p => p.alive && p.eligible !== false);
             const voterSet = new Set(voterIndices);
 
             let html = `<div class="vote-tracker">`;
@@ -6102,7 +6296,6 @@
                                 MP.broadcast({ type: 'sync_guess_phase', index: victimIndex });
                                 MP.handleData({ type: 'sync_guess_phase', index: victimIndex });
                             } else {
-                                MP.broadcast({ type: 'sync_elimination', index: victimIndex });
                                 finalizeElimination(victimIndex);
                             }
                         }
@@ -6128,6 +6321,8 @@
             const guessRaw = document.getElementById('inputGuessWord').value;
 
             if (MP.mode) {
+                const guesser = players[MP.me.index];
+                if (!guesser || !guesser.alive || guesser.eligible === false) return;
                 if (MP.mode === 'client') MP.sendData({ type: 'guess_submit', guess: guessRaw });
                 else MP.handleData({ type: 'guess_submit', guess: guessRaw });
 
@@ -6197,10 +6392,11 @@
             }
         }
 
-        function checkWinCondition() {
-            const pnjAlive = players.filter(p => p.alive && p.role === 'PNJ').length;
-            const infiltresAlive = players.filter(p => p.alive && p.role === 'Infiltré').length;
-            const inconnuAlive = players.filter(p => p.alive && p.role === 'Inconnu').length;
+        function checkWinCondition(resultData = null) {
+            const activePlayers = players.filter(p => p.alive && p.eligible !== false);
+            const pnjAlive = activePlayers.filter(p => p.role === 'PNJ').length;
+            const infiltresAlive = activePlayers.filter(p => p.role === 'Infiltré').length;
+            const inconnuAlive = activePlayers.filter(p => p.role === 'Inconnu').length;
             const totalBadGuys = infiltresAlive + inconnuAlive; const totalOthers = pnjAlive + infiltresAlive;
             const continueDiv = document.getElementById('gameContinueAction');
             const winDiv = document.getElementById('gameWinAction');
@@ -6221,6 +6417,16 @@
                     nextRoundBtn.title = '';
                     nextRoundBtn.innerHTML = `<i class="bi bi-arrow-clockwise"></i> PRÉPARER TOUR SUIVANT`;
                 }
+            }
+
+            if (resultData && resultData.guessCorrect === true) {
+                SFX.success();
+                continueDiv.classList.add('d-none');
+                winDiv.classList.remove('d-none');
+                winMsg.innerText = "VICTOIRE DE L'INCONNU !";
+                winMsg.className = "brand-font mb-4 victory-text text-white-force";
+                updateWinStats(['INCONNU_SOLO']);
+                return;
             }
 
             if (totalBadGuys === 0) {
@@ -6407,7 +6613,7 @@
     </script>
 
     <!-- BOUTON DISCRET RAPPEL DU MOT SECRET (EN LIGNE) -->
-    <div id="mp-secret-word-btn" class="position-fixed d-none" style="top: 15px; left: 15px; z-index: 2000;">
+    <div id="mp-secret-word-btn" class="position-fixed d-none" style="top: 15px; left: 72px; z-index: 2000;">
         <button class="btn btn-sm btn-outline-warning bg-dark fw-bold shadow d-flex align-items-center gap-1 py-1 px-2"
             style="border-color: rgba(251, 191, 36, 0.4); backdrop-filter: blur(8px); opacity: 0.85; transition: all 0.2s ease;"
             onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.85'"
