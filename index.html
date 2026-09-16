@@ -11,7 +11,9 @@
         rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <!-- FIREBASE REALTIME DATABASE SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
 
     <style>
         :root {
@@ -161,6 +163,241 @@
 
         body.light-mode .glass-card {
             box-shadow: 0 12px 36px 0 rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
+        }
+
+        /* --- TOAST & NOTIFICATION SYSTEM --- */
+        #custom-toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+            width: 90%;
+            max-width: 380px;
+        }
+
+        .toast-pill {
+            background: rgba(15, 23, 42, 0.94);
+            border: 1px solid var(--primary-neon);
+            color: #ffffff;
+            padding: 12px 18px;
+            border-radius: 50px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), 0 0 15px var(--primary-glow);
+            backdrop-filter: blur(12px);
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            pointer-events: auto;
+            animation: toastIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-20px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .toast-success {
+            border-color: #10b981;
+            box-shadow: 0 8px 30px rgba(16, 185, 129, 0.3);
+            color: #ecfdf5;
+        }
+
+        .toast-warning {
+            border-color: #f59e0b;
+            box-shadow: 0 8px 30px rgba(245, 158, 11, 0.3);
+            color: #fffbeb;
+        }
+
+        .toast-fade-out {
+            opacity: 0;
+            transform: translateY(-15px) scale(0.95);
+            transition: all 0.35s ease;
+        }
+
+        /* --- MOBILE OPTIMIZATION --- */
+        @media (max-width: 576px) {
+            .glass-card {
+                padding: 1.25rem !important;
+                border-radius: 18px !important;
+            }
+            .brand-title-glow {
+                font-size: 1.8rem !important;
+                letter-spacing: 2px !important;
+            }
+            .btn {
+                padding-top: 10px !important;
+                padding-bottom: 10px !important;
+            }
+            .stat-box {
+                min-height: 90px !important;
+                padding: 8px 4px !important;
+            }
+        }
+
+        /* --- MODERN CYBER BACKGROUND: AURORA MESH & TACTICAL LASERS --- */
+        .cyber-bg-stage {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        /* 1. Nébuleuses / Auras Vivantes (Mesh Glow organique) */
+        .cyber-aurora-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(85px);
+            opacity: 0.65;
+            will-change: transform, opacity;
+            pointer-events: none;
+        }
+
+        .aurora-1 {
+            top: -10%;
+            left: 15%;
+            width: 550px;
+            height: 550px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.5) 0%, rgba(14, 165, 233, 0.2) 60%, transparent 80%);
+            animation: auroraFloat1 18s ease-in-out infinite alternate;
+        }
+
+        .aurora-2 {
+            bottom: 5%;
+            right: 10%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.45) 0%, rgba(147, 51, 234, 0.18) 60%, transparent 80%);
+            animation: auroraFloat2 22s ease-in-out infinite alternate;
+        }
+
+        .aurora-3 {
+            top: 40%;
+            left: -5%;
+            width: 480px;
+            height: 480px;
+            background: radial-gradient(circle, rgba(244, 63, 94, 0.38) 0%, rgba(225, 29, 72, 0.15) 60%, transparent 80%);
+            animation: auroraFloat3 20s ease-in-out infinite alternate;
+        }
+
+        .aurora-4 {
+            top: 25%;
+            right: -8%;
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.35) 0%, rgba(99, 102, 241, 0.2) 60%, transparent 80%);
+            animation: auroraFloat1 25s ease-in-out infinite alternate-reverse;
+        }
+
+        @keyframes auroraFloat1 {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(60px, 80px) scale(1.15); }
+            100% { transform: translate(-40px, 120px) scale(0.95); }
+        }
+
+        @keyframes auroraFloat2 {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-70px, -60px) scale(1.18); }
+            100% { transform: translate(50px, -90px) scale(0.92); }
+        }
+
+        @keyframes auroraFloat3 {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(80px, -50px) scale(1.12); }
+            100% { transform: translate(-30px, 60px) scale(0.98); }
+        }
+
+        /* 2. Rayons Lasers Défilants & Balayages de Sécurité */
+        .cyber-laser-beam {
+            position: absolute;
+            top: -100px;
+            bottom: -100px;
+            width: 1.5px;
+            pointer-events: none;
+            opacity: 0;
+            will-change: transform, opacity;
+            animation: laserSweep linear infinite;
+        }
+
+        .laser-cyan {
+            background: linear-gradient(180deg, transparent 0%, rgba(56, 189, 248, 0.2) 20%, #38bdf8 50%, #ffffff 85%, transparent 100%);
+            box-shadow: 0 0 12px #38bdf8, 0 0 25px rgba(56, 189, 248, 0.6);
+        }
+
+        .laser-purple {
+            background: linear-gradient(180deg, transparent 0%, rgba(192, 132, 252, 0.2) 20%, #c084fc 50%, #ffffff 85%, transparent 100%);
+            box-shadow: 0 0 12px #c084fc, 0 0 25px rgba(192, 132, 252, 0.6);
+        }
+
+        .laser-rose {
+            background: linear-gradient(180deg, transparent 0%, rgba(244, 63, 94, 0.2) 20%, #f43f5e 50%, #ffffff 85%, transparent 100%);
+            box-shadow: 0 0 12px #f43f5e, 0 0 25px rgba(244, 63, 94, 0.6);
+        }
+
+        @keyframes laserSweep {
+            0% {
+                transform: translateX(-10vw) scaleY(0.8);
+                opacity: 0;
+            }
+            15% {
+                opacity: 0.75;
+            }
+            85% {
+                opacity: 0.75;
+            }
+            100% {
+                transform: translateX(110vw) scaleY(1.1);
+                opacity: 0;
+            }
+        }
+
+        /* Faisceau de balayage radar horizontal discret */
+        .cyber-radar-scanline {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.1) 15%, #38bdf8 50%, rgba(56, 189, 248, 0.1) 85%, transparent 100%);
+            box-shadow: 0 0 14px #38bdf8, 0 0 28px rgba(56, 189, 248, 0.5);
+            opacity: 0.45;
+            will-change: transform;
+            animation: radarScan 10s ease-in-out infinite;
+        }
+
+        @keyframes radarScan {
+            0% { top: -5%; opacity: 0; }
+            10% { opacity: 0.55; }
+            90% { opacity: 0.55; }
+            100% { top: 105%; opacity: 0; }
+        }
+
+        /* Thème clair - adaptation de l'intensité */
+        body.light-mode .aurora-1 {
+            background: radial-gradient(circle, rgba(2, 132, 199, 0.25) 0%, transparent 75%);
+        }
+        body.light-mode .aurora-2 {
+            background: radial-gradient(circle, rgba(147, 51, 234, 0.2) 0%, transparent 75%);
+        }
+        body.light-mode .aurora-3 {
+            background: radial-gradient(circle, rgba(225, 29, 72, 0.18) 0%, transparent 75%);
+        }
+        body.light-mode .cyber-radar-scanline {
+            opacity: 0.25;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
         }
 
         /* --- INPUTS & CONTROLS --- */
@@ -1141,32 +1378,48 @@
             0% {
                 transform: translateY(30px) scale(0.85);
             }
+
             15% {
                 transform: translateY(-160px) scale(1.42);
             }
+
             32% {
                 transform: translateY(-190px) scale(1.48);
             }
+
             58% {
-                transform: translateY(22px) scale(1.0); /* 1er impact franc au sol */
+                transform: translateY(22px) scale(1.0);
+                /* 1er impact franc au sol */
             }
+
             68% {
-                transform: translateY(-44px) scale(1.10); /* 1er rebond en l'air */
+                transform: translateY(-44px) scale(1.10);
+                /* 1er rebond en l'air */
             }
+
             78% {
-                transform: translateY(22px) scale(1.0); /* 2ème impact */
+                transform: translateY(22px) scale(1.0);
+                /* 2ème impact */
             }
+
             85% {
-                transform: translateY(-14px) scale(1.03); /* 2ème rebond */
+                transform: translateY(-14px) scale(1.03);
+                /* 2ème rebond */
             }
+
             91% {
-                transform: translateY(22px) scale(1.0); /* 3ème retombée */
+                transform: translateY(22px) scale(1.0);
+                /* 3ème retombée */
             }
+
             95% {
-                transform: translateY(20px) scale(1.0); /* oscillations d'atténuation */
+                transform: translateY(20px) scale(1.0);
+                /* oscillations d'atténuation */
             }
+
             100% {
-                transform: translateY(22px) scale(1.0); /* immobilisé à plat/debout */
+                transform: translateY(22px) scale(1.0);
+                /* immobilisé à plat/debout */
             }
         }
 
@@ -1176,46 +1429,55 @@
                 opacity: 0.9;
                 filter: blur(4px);
             }
+
             15% {
                 transform: scale(0.35);
                 opacity: 0.18;
                 filter: blur(10px);
             }
+
             32% {
                 transform: scale(0.28);
                 opacity: 0.12;
                 filter: blur(12px);
             }
+
             58% {
                 transform: scale(1.3);
                 opacity: 1;
                 filter: blur(3px);
             }
+
             68% {
                 transform: scale(0.65);
                 opacity: 0.45;
                 filter: blur(7px);
             }
+
             78% {
                 transform: scale(1.18);
                 opacity: 0.95;
                 filter: blur(3px);
             }
+
             85% {
                 transform: scale(0.88);
                 opacity: 0.7;
                 filter: blur(5px);
             }
+
             91% {
                 transform: scale(1.05);
                 opacity: 0.92;
                 filter: blur(3px);
             }
+
             95% {
                 transform: scale(0.98);
                 opacity: 0.9;
                 filter: blur(3px);
             }
+
             100% {
                 transform: scale(1.0);
                 opacity: 0.9;
@@ -1378,8 +1640,13 @@
         }
 
         @keyframes tiePulse {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.06); }
+            0% {
+                transform: scale(1);
+            }
+
+            100% {
+                transform: scale(1.06);
+            }
         }
 
         /* --- CHAT TOGGLE BUTTON --- */
@@ -1549,6 +1816,24 @@
 </head>
 
 <body class="">
+
+    <!-- AMBIANCE CYBER : AURA VIVANTE (MESH GLOW) & RAYONS LASERS TACTIQUES -->
+    <div class="cyber-bg-stage" aria-hidden="true">
+        <!-- Nébuleuses lumineuses mouvantes en profondeur -->
+        <div class="cyber-aurora-blob aurora-1"></div>
+        <div class="cyber-aurora-blob aurora-2"></div>
+        <div class="cyber-aurora-blob aurora-3"></div>
+        <div class="cyber-aurora-blob aurora-4"></div>
+
+        <!-- Faisceau de balayage radar de sécurité -->
+        <div class="cyber-radar-scanline"></div>
+
+        <!-- Rayons lasers tactiques défilants -->
+        <div class="cyber-laser-beam laser-cyan" style="animation-duration: 14s; animation-delay: 0s;"></div>
+        <div class="cyber-laser-beam laser-purple" style="animation-duration: 19s; animation-delay: 4.5s;"></div>
+        <div class="cyber-laser-beam laser-rose" style="animation-duration: 16s; animation-delay: 9s;"></div>
+        <div class="cyber-laser-beam laser-cyan" style="animation-duration: 22s; animation-delay: 13.5s;"></div>
+    </div>
 
     <video id="noSleepVideo" playsinline loop muted
         style="position: absolute; width: 1px; height: 1px; opacity: 0.01; pointer-events: none; top: 0; left: 0; z-index: -1000;">
@@ -1742,9 +2027,13 @@
             <div class="col-md-6">
                 <div class="glass-card p-4 text-center">
                     <div id="lobby-host-elements" class="d-none">
-                        <h5 class="text-muted small text-uppercase">Code de la salle</h5>
-                        <div id="displayRoomCode" class="room-code-display">----</div>
-                        <p class="small text-muted mb-4">Partagez ce code avec vos amis.</p>
+                        <h5 class="text-muted small text-uppercase mb-1">Code de la salle</h5>
+                        <div onclick="copyRoomCode();" style="cursor: pointer;" title="Cliquer pour copier le code"
+                            class="room-code-display d-inline-flex align-items-center justify-content-center gap-2 px-4 py-1 rounded-pill border border-info bg-dark bg-opacity-50 mb-2 shadow-sm">
+                            <span id="displayRoomCode" class="fw-bold fs-1 text-info" style="letter-spacing: 4px;">----</span>
+                            <i class="bi bi-clipboard-fill fs-4 text-warning"></i>
+                        </div>
+                        <p class="small text-muted mb-4"><span class="badge bg-secondary bg-opacity-50 me-1"><i class="bi bi-touch-app"></i> Touchez pour copier le code</span></p>
                     </div>
 
                     <div id="lobby-client-elements" class="d-none">
@@ -2041,26 +2330,27 @@
         style="z-index: 3500; backdrop-filter: blur(12px);">
         <div class="glass-card p-4 text-center d-flex flex-column align-items-center justify-content-center"
             style="width: 92%; max-width: 440px; border: 1.5px solid var(--accent-neon); box-shadow: 0 0 35px rgba(251, 191, 36, 0.35);">
-            
+
             <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
                 <i class="bi bi-exclamation-diamond-fill text-warning fs-5"></i>
                 <h4 class="brand-font text-warning mb-0" style="letter-spacing: 1.5px;">ÉGALITÉ PARFAITE !</h4>
                 <i class="bi bi-exclamation-diamond-fill text-warning fs-5"></i>
             </div>
-            
+
             <p id="tie-break-subtitle" class="text-muted small mb-2">Le destin cybernétique tranche l'égalité...</p>
 
             <!-- CONTENEUR DES AGENTS EN ÉGALITÉ (CASES AVEC TÊTES) -->
             <div id="tie-break-candidates-container" class="mb-2 w-100">
-                <div class="small text-danger text-uppercase fw-bold mb-2 d-flex align-items-center justify-content-center gap-1" style="font-size: 0.72rem; letter-spacing: 0.8px;">
+                <div class="small text-danger text-uppercase fw-bold mb-2 d-flex align-items-center justify-content-center gap-1"
+                    style="font-size: 0.72rem; letter-spacing: 0.8px;">
                     <i class="bi bi-crosshair"></i> AGENTS EN DANGER D'ÉLIMINATION
                 </div>
                 <div id="tie-break-candidates-grid" class="d-flex flex-wrap justify-content-center gap-2"></div>
             </div>
-            
+
             <!-- 3D SCENE CONTAINER -->
             <div id="tie-break-scene" class="tie-3d-scene my-2"></div>
-            
+
             <div id="tie-break-result-banner" class="mt-3 opacity-0" style="transition: opacity 0.4s ease;">
                 <div class="small text-muted text-uppercase fw-bold letter-spacing mb-1">CIBLE DÉSIGNÉE</div>
                 <div id="tie-break-victim-name" class="fs-4 fw-bold text-danger">---</div>
@@ -2133,17 +2423,17 @@
         const wordPairs = [
             ["Neurone", "Synapse"],
             ["Anticorps", "Globule blanc"],
-            ["G�ne", "Chromosome"],
+            ["Gêne", "Chromosome"],
             ["Esprit", "Conscience"],
             ["Rond-point", "Carrefour"],
-            ["Trottoir", "Chauss�e"],
-            ["Passage pi�ton", "Feu pi�ton"],
-            ["Mobilier urbain", "�clairage public"],
+            ["Trottoir", "Chaussée"],
+            ["Passage piéton", "Feu piéton"],
+            ["Mobilier urbain", "Éclairage public"],
             ["Moisson", "Vendange"],
             ["Silo", "Grange"],
             ["Engrais", "Compost"],
             ["Serre", "Verger"],
-            ["Embrayage", "Bo�te de vitesses"],
+            ["Embrayage", "Boîte de vitesses"],
             ["Amortisseur", "Suspension"],
             ["Radiateur", "Alternateur"],
             ["Devis", "Facture"],
@@ -2151,21 +2441,21 @@
             ["Archivage", "Indexation"],
             ["Organigramme", "Planning"],
             ["Audience", "Cible"],
-            ["Publicit�", "Propagande"],
+            ["Publicité", "Propagande"],
             ["Conversion", "Clic"],
             ["Soudure", "Assemblage"],
             ["Alliage", "Fusion"],
-            ["Boulon", "�crou"],
-            ["Th�se", "M�moire"],
+            ["Boulon", "Ecrou"],
+            ["Thèse", "Mémoire"],
             ["Plagiat", "Citation"],
-            ["Bulletin", "Dipl�me"],
+            ["Bulletin", "Diplôme"],
             ["Loyer", "Caution"],
             ["Franchise", "Sinistre"],
             ["Bail", "Contrat"],
-            ["Altitude", "D�nivel�"],
+            ["Altitude", "Dénivelé"],
             ["Latitude", "Longitude"],
             ["Relief", "Topographie"],
-            ["�chelle", "L�gende"],
+            ["Échelle", "Légende"],
             ["Cardiologue", "Neurologue"],
             ["Pédiatre", "Gériatre"],
             ["Radiologue", "Généraliste"],
@@ -2214,40 +2504,40 @@
             ["Prémisse", "Postulat"],
             ["Théorie", "Pratique"],
             ["Abstrait", "Concret"],
-            ["Ring Light", "Tr�pied"],
+            ["Ring Light", "Trépied"],
             ["Kindle", "Livre de poche"],
             ["ChatGPT", "Midjourney"],
             ["Vinted", "Depop"],
             ["Shazam", "SoundHound"],
             ["QR Code", "Code-barres"],
             ["Bluetooth", "Wi-Fi"],
-            ["Calculatrice", "Chronom�tre"],
+            ["Calculatrice", "Chronomètre"],
             ["Agrafeuse", "Trombone"],
             ["Post-it", "Carnet"],
             ["Costume", "Smoking"],
-            ["M�tropole", "M�gapole"],
-            ["�migration", "Immigration"],
-            ["Densit�", "Population"],
-            ["Fronti�re", "Douane"],
+            ["Métropole", "Mégapole"],
+            ["Émigration", "Immigration"],
+            ["Densité", "Population"],
+            ["Frontière", "Douane"],
             ["Crampons", "Pointes"],
             ["Tatami", "Ring"],
-            ["Prot�ge-tibia", "Genouill�re"],
-            ["Chronom�tre", "Sifflet"],
-            ["P�trissage", "Levage"],
-            ["Grillade", "R�tissage"],
-            ["D�gla�age", "R�duction"],
+            ["Protège-tibia", "Genouillère"],
+            ["Chronomètre", "Sifflet"],
+            ["Pétrissage", "Levage"],
+            ["Grillade", "Rôtissage"],
+            ["Déglaçage", "Réduction"],
             ["Cuisson", "Mijotage"],
-            ["Mill�naire", "Si�cle"],
+            ["Millénaire", "Siècle"],
             ["Chronologie", "Frise historique"],
-            ["Simultan�", "Successif"],
+            ["Simultané", "Successif"],
             ["Pyramide", "Pharaon"],
             ["Guitare", "Violon"],
-            ["Bi�re", "Vin"],
+            ["Bière", "Vin"],
             ["Facebook", "Twitter"],
             ["Plage", "Piscine"],
-            ["Th�", "Caf�"],
+            ["Thé", "Café"],
             ["Lune", "Soleil"],
-            ["Train", "M�tro"],
+            ["Train", "Métro"],
             ["Chat", "Chien"],
             ["PC", "Tablette"],
             ["Foot", "Rugby"],
@@ -2258,38 +2548,38 @@
             ["Android", "iPhone"],
             ["Chocolat", "Vanille"],
             ["Paris", "Londres"],
-            ["Rome", "Ath�nes"],
+            ["Rome", "Athènes"],
             ["Madrid", "Barcelone"],
             ["Lisbonne", "Porto"],
-            ["Mer", "Oc�an"],
-            ["Lac", "�tang"],
-            ["Rivi�re", "Fleuve"],
+            ["Mer", "Océan"],
+            ["Lac", "Étang"],
+            ["Rivière", "Fleuve"],
             ["Montagne", "Colline"],
-            ["For�t", "Jungle"],
-            ["D�sert", "Savane"],
+            ["Forêt", "Jungle"],
+            ["Désert", "Savane"],
             ["Pluie", "Neige"],
-            ["Vent", "Temp�te"],
+            ["Vent", "Tempête"],
             ["Nuage", "Brouillard"],
-            ["Soleil", "�toile"],
+            ["Soleil", "Étoile"],
             ["Matin", "Soir"],
             ["Jour", "Nuit"],
             ["Printemps", "Automne"],
-            ["�t�", "Hiver"],
+            ["Été", "Hiver"],
             ["Chaud", "Froid"],
             ["Feu", "Glace"],
             ["Eau", "Glace"],
-            ["Vapeur", "Fum�e"],
+            ["Vapeur", "Fumée"],
             ["Or", "Argent"],
             ["Cuivre", "Fer"],
-            ["Bois", "M�tal"],
+            ["Bois", "Métal"],
             ["Verre", "Plastique"],
             ["Pierre", "Brique"],
-            ["Mur", "Cl�ture"],
-            ["Porte", "Fen�tre"],
+            ["Mur", "Clôture"],
+            ["Porte", "Fenêtre"],
             ["Escalier", "Ascenseur"],
             ["Villa", "Chalet"],
-            ["H�tel", "Auberge"],
-            ["�cole", "Universit�"],
+            ["Hôtel", "Auberge"],
+            ["École", "Université"],
             ["Livre", "Magazine"],
             ["Journal", "Blog"],
             ["Stylo", "Crayon"],
@@ -2299,7 +2589,7 @@
             ["Chaise", "Fauteuil"],
             ["Oreiller", "Coussin"],
             ["Couette", "Couverture"],
-            ["R�veil", "Horloge"],
+            ["Réveil", "Horloge"],
             ["Bague", "Collier"],
             ["Chapeau", "Casquette"],
             ["Pull", "Sweat"],
@@ -3120,14 +3410,209 @@
             ["Teaser", "Bande-annonce"],
             ["Slogan", "Logo"],
             ["Infographie", "Diagramme"],
+            ["Escale", "Transit"],
+            ["Bagage en soute", "Bagage cabine"],
+            ["Hors-saison", "Haute-saison"],
+            ["Excursion", "Circuit"],
+            ["Gravure", "Sérigraphie"],
+            ["Impression", "Reproduction"],
+            ["Trame", "Pixel"],
+            ["Nuancier", "Palette"],
+            ["Acide", "Basique"],
+            ["Oxydation", "Fermentation"],
+            ["Solvant", "Diluant"],
+            ["Fusion", "Solidification"],
+            ["Plâtre", "Ciment"],
+            ["Isolation", "Étanchéité"],
+            ["Béton", "Goudron"],
+            ["Faïence", "Carrelage"],
+            ["Détergent", "Désinfectant"],
+            ["Eau de Javel", "Lessive"],
+            ["Anticalcaire", "Dégraissant"],
+            ["Lessive", "Adoucissant"],
+            ["Tissage", "Filage"],
+            ["Doublure", "Rembourrage"],
+            ["Ourlet", "Couture"],
+            ["Patron", "Modèle"],
+            ["Saveur", "Arôme"],
+            ["Odorat", "Goût"],
+            ["Texture", "Consistance"],
+            ["Luminosité", "Contraste"],
+            ["Radiographie", "Échographie"],
+            ["Scanner", "IRM"],
+            ["Anesthésie", "Sédation"],
+            ["Biopsie", "Prélèvement"],
+            ["Bénévolat", "Charité"],
+            ["Association", "ONG"],
+            ["Donation", "Mécénat"],
+            ["Subvention", "Parrainage"],
+            ["Métropole", "Mégapole"],
+            ["Émigration", "Immigration"],
+            ["Densité", "Population"],
+            ["Frontière", "Douane"],
+            ["Protège-tibia", "Genouillère"],
+            ["Chronomètre", "Sifflet"],
+            ["Pétrissage", "Levage"],
+            ["Grillade", "Rôtissage"],
+            ["Déglaçage", "Réduction"],
+            ["Millénaire", "Siècle"],
+            ["Fuseau horaire", "Méridien"],
+            ["Simultané", "Successif"],
+            ["Publicité", "Propagande"],
+            ["Sondage", "Statistiques"],
+            ["Boulon", "Écrou"],
+            ["Clé à molette", "Pince multiprise"],
+            ["Thèse", "Mémoire"],
+            ["Bulletin", "Diplôme"],
+            ["Soutenance", "Examen"],
+            ["Copropriété", "Syndic"],
+            ["Altitude", "Dénivelé"],
+            ["Échelle", "Légende"],
+            ["Entretien", "Recrutement"],
+            ["Préavis", "Période d'essai"],
+            ["Licenciement", "Démission"],
+            ["Promotion", "Mutation"],
+            ["Satellite", "Sonde"],
+            ["Rover", "Lander"],
+            ["Fusée", "Missile"],
+            ["Orbite", "Trajectoire"],
+            ["Jazz", "Blues"],
+            ["Salsa", "Bachata"],
+            ["Opéra", "Ballet"],
+            ["Partition", "Tablature"],
+            ["Baroque", "Rococo"],
+            ["Gothique", "Roman"],
+            ["Renaissance", "Classicisme"],
+            ["Cubisme", "Surréalisme"],
+            ["Disjoncteur", "Fusible"],
+            ["Siphon", "Bonde"],
+            ["Gaine", "Câble"],
+            ["Prise", "Interrupteur"],
+            ["Tirade", "Monologue"],
+            ["Réplique", "Dialogue"],
+            ["Improvisation", "Sketch"],
+            ["Coup de théâtre", "Quiproquo"],
+            ["Reliure", "Brochure"],
+            ["Typographie", "Calibrage"],
+            ["Édition", "Impression"],
+            ["Tome", "Volume"],
+            ["Obturateur", "Diaphragme"],
+            ["Focale", "Zoom"],
+            ["Trépied", "Monopode"],
+            ["Exposition", "Sensibilité"],
+            ["Châssis", "Carrosserie"],
+            ["Monospace", "SUV"],
+            ["Berline", "Citadine"],
+            ["Hybride", "Électrique"],
+            ["Ganache", "Praliné"],
+            ["Meringue", "Chantilly"],
+            ["Nappage", "Glaçage"],
+            ["Génoise", "Biscuit"],
+            ["Perforatrice", "Plastifieuse"],
+            ["Surligneur", "Correcteur"],
+            ["Classeur", "Chemise"],
+            ["Punaise", "Adhésif"],
+            ["Rayon", "Diamètre"],
+            ["Tangente", "Sécante"],
+            ["Périmètre", "Aire"],
+            ["Hypoténuse", "Diagonale"],
+            ["SEO", "SEA"],
+            ["Algorithme", "Code"],
+            ["Hébergement", "Domaine"],
+            ["Base de données", "Cloud"],
+            ["Blockchain", "Grand livre"],
+            ["Minage", "Staking"],
+            ["Wallet", "Clé privée"],
+            ["Jeton", "Crypto-monnaie"],
+            ["Word1", "Word2"],
+            ["Burnout", "Boreout"],
+            ["Tribord", "Bâbord"],
+            ["Proue", "Poupe"],
+            ["Gouvernail", "Ancre"],
+            ["Mousqueton", "Manille"],
+            ["Marée haute", "Marée basse"],
+            ["Gladiateur", "Légionnaire"],
+            ["Sultan", "Émir"],
+            ["Scribe", "Copiste"],
+            ["Sarcophage", "Mausolée"],
+            ["Donjon", "Rempart"],
+            ["Stalactite", "Stalagmite"],
+            ["Quartz", "Obsidienne"],
+            ["Améthyste", "Émeraude"],
+            ["Silex", "Granit"],
+            ["Filon", "Gisement"],
+            ["Uranium", "Plutonium"],
+            ["Infrarouge", "Ultraviolet"],
+            ["Fusion", "Fission"],
+            ["Électron", "Proton"],
+            ["Pesanteur", "Gravité"],
+            ["Métaphore", "Allégorie"],
+            ["Argot", "Jargon"],
+            ["Pastiche", "Parodie"],
+            ["Préface", "Postface"],
+            ["Pseudonyme", "Anonyme"],
+            ["Doublage", "Voix off"],
+            ["Storyboard", "Script"],
+            ["Coulisses", "Loges"],
+            ["Doublure", "Cascadeur"],
+            ["Déjà-vu", "Prémonition"],
+            ["Placebo", "Nocebo"],
+            ["Phobie", "Obsession"],
+            ["Amnésie", "Démence"],
+            ["Origami", "Calligraphie"],
+            ["Poterie", "Céramique"],
+            ["Philatélie", "Numismatique"],
+            ["Brocante", "Vide-grenier"],
+            ["Couture", "Tricot"],
+            ["Flamber", "Caraméliser"],
+            ["Émincer", "Hacher"],
+            ["Bain-marie", "Mijoteuse"],
+            ["Marinade", "Saumure"],
+            ["Mousson", "Typhon"],
+            ["Canicule", "Sécheresse"],
+            ["Blizzard", "Verglas"],
+            ["Toundra", "Taïga"],
+            ["Alibi", "Mobile"],
+            ["Flagrant délit", "Récidive"],
+            ["Perquisition", "Saisie"],
+            ["Verdict", "Sentence"],
+            ["Légitime défense", "Préméditation"],
+            ["Catapulte", "Trébuchet"],
+            ["Camouflage", "Furtivité"],
+            ["Siège", "Blocus"],
+            ["Tranchée", "Bunker"],
+            ["Façade", "Pignon"],
+            ["Poutre", "Charpente"],
+            ["Fondations", "Piliers"],
+            ["Dôme", "Coupole"],
+            ["Échafaudage", "Treuil"],
+            ["Turbulence", "Trou d'air"],
+            ["Pilote automatique", "Radar"],
+            ["Atterrissage", "Amerrissage"],
+            ["Hublot", "Cockpit"],
+            ["Solstice", "Équinoxe"],
+            ["Année-lumière", "Parsec"],
+            ["Méridien", "Équateur"],
+            ["Fuseau horaire", "Jetlag"],
+            ["Éolien", "Solaire"],
+            ["Biomasse", "Géothermie"],
+            ["Recyclage", "Compostage"],
+            ["Gala", "Cérémonie"],
+            ["Protocole", "Étiquette"],
+            ["Discours", "Éloge"],
+            ["Inauguration", "Vernissage"],
+            ["Newsletter", "Communiqué"],
+            ["Teaser", "Bande-annonce"],
+            ["Slogan", "Logo"],
+            ["Infographie", "Diagramme"],
             ["Hormone", "Enzyme"],
             ["Gène", "Chromosome"],
             ["word1", "word2"],
-            ["R�duction", "Promotion"],
-            ["Ch�teau", "Palais"],
-            ["Menottes", "Cha�nes"],
-            ["D�j�-vu", "Pr�monition"],
-            ["Gaine", "C�ble"]
+            ["Réduction", "Promotion"],
+            ["Château", "Palais"],
+            ["Menottes", "Chaînes"],
+            ["Déjà-vu", "Prémonition"],
+            ["Gaine", "Câble"]
         ];
 
         // --- GLOBAL GAME STATE ---
@@ -3145,40 +3630,51 @@
         const HOST_RECONNECT_MAX_MS = 60000;
 
 
-        // --- NETWORKING (PEERJS CONFIG) ---
-        const PEER_CONFIG = {
-            config: {
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' },
-                    { urls: 'stun:stun2.l.google.com:19302' },
-                    { urls: 'stun:stun3.l.google.com:19302' },
-                    { urls: 'stun:stun4.l.google.com:19302' },
-                    { urls: 'stun:stun.cloudflare.com:3478' }
-                ]
-            }
+        // --- NETWORKING (FIREBASE CONFIG & INITIALIZATION) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBfIkJhLMhBRwW4-14dprQ_6hAwuIHc-5E",
+            authDomain: "db-synchro-online-intr.firebaseapp.com",
+            databaseURL: "https://db-synchro-online-intr-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "db-synchro-online-intr",
+            storageBucket: "db-synchro-online-intr.firebasestorage.app",
+            messagingSenderId: "142472260536",
+            appId: "1:142472260536:web:46624199e5e2a24682fd4d"
         };
 
-        // --- MULTIPLAYER ENGINE (MP) ---
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+
+        // --- MULTIPLAYER ENGINE (MP) AVEC FIREBASE ---
         const MP = {
-            peer: null,
             mode: null, // 'host' or 'client'
             roomId: null,
-            connections: [],
+            playerId: null, // ID unique persistant du joueur
+            roomRef: null,
+            playersRef: null,
+            chatRef: null,
             me: { id: null, name: null, avatar: null, index: null },
             memorizedCount: 0,
             memorizedPlayers: [],
-            gameState: { players: [], roles: [], words: [], currentStep: 0 },
-            voted: false,
-            receivedFirstSync: false,
+            votes: {},
+            stopTimerVotes: 0,
             isDisconnecting: false,
-            _heartbeatTimer: null,
-            _lobbySyncTimer: null,
-            _joinRetryTimer: null,
-            _reconnectInterval: null,
-            _memorizedTimeout: null,
-            _voteTimeout: null,
-            _hostInitRetries: 0,
+            isChatMinimized: false,
+            unreadChatCount: 0,
+            _listeners: [],
+
+            // Génère ou récupère un ID unique de joueur
+            getOrCreatePlayerId: function () {
+                let pid = localStorage.getItem('intrusion_player_uid');
+                if (!pid) {
+                    pid = 'usr_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now().toString(36);
+                    localStorage.setItem('intrusion_player_uid', pid);
+                }
+                this.playerId = pid;
+                this.me.id = pid;
+                return pid;
+            },
 
             updateStatus: function (status, type) {
                 const ind = document.getElementById('mp-status-indicator');
@@ -3190,24 +3686,61 @@
                 }
             },
 
+            generateRoomId: function () {
+                this.roomId = Math.floor(1000 + Math.random() * 9000).toString();
+            },
+
+            cleanupListeners: function () {
+                this._listeners.forEach(l => {
+                    try { l.ref.off(l.event, l.fn); } catch (e) { }
+                });
+                this._listeners = [];
+            },
+
+            addListener: function (ref, event, fn) {
+                ref.on(event, fn);
+                this._listeners.push({ ref, event, fn });
+            },
+
+            // --- CRÉATION DU SALON PAR L'HÔTE ---
             initHost: function () {
                 this.isDisconnecting = false;
                 this.mode = 'host';
                 this.generateRoomId();
-                const fullId = 'toupil-' + this.roomId;
+                this.getOrCreatePlayerId();
+                this.cleanupListeners();
 
-                this.cleanupTimers();
-
-                if (this.peer) {
-                    try { this.peer.destroy(); } catch (e) { }
-                }
-
-                this.connections = [];
-                this.peer = new Peer(fullId, PEER_CONFIG);
                 this.updateStatus('CRÉATION...', 'connecting');
+                this.roomRef = db.ref('rooms/' + this.roomId);
+                this.playersRef = this.roomRef.child('players');
+                this.chatRef = this.roomRef.child('chat');
 
-                this.peer.on('open', (id) => {
-                    this._hostInitRetries = 0;
+                this.me.name = localStorage.getItem('intrusion_last_name') || 'Hôte';
+                this.me.avatar = localStorage.getItem('intrusion_last_avatar') || null;
+                this.me.index = 0;
+
+                const hostData = {
+                    createdAt: firebase.database.ServerValue.TIMESTAMP,
+                    hostId: this.playerId,
+                    status: 'lobby',
+                    config: gameConfig,
+                    words: ['', ''],
+                    starter: '',
+                    tieBreak: null,
+                    guessPhase: null,
+                    stopTimerVotes: 0,
+                    players: {
+                        [this.playerId]: {
+                            name: this.me.name,
+                            avatar: this.me.avatar,
+                            isHost: true,
+                            online: true,
+                            joinedAt: firebase.database.ServerValue.TIMESTAMP
+                        }
+                    }
+                };
+
+                this.roomRef.set(hostData).then(() => {
                     this.updateStatus('HÔTE : ' + this.roomId, 'online');
                     document.getElementById('displayRoomCode').innerText = this.roomId;
                     document.getElementById('host-room-code-display').innerText = this.roomId;
@@ -3224,85 +3757,69 @@
                     if (placeholder && block) placeholder.appendChild(block);
                     updateConfigFromSlider(1);
 
+                    // Présence de l'hôte
+                    this.setupPresence();
+
+                    // Écoute des joueurs et des changements d'état
+                    this.attachRoomListeners();
+
                     showView('view-mp-lobby');
-                    this.addSelfToLobby();
                     this.saveSession();
-
-                    this.startHeartbeat();
-                    this.startLobbySyncTimer();
-                });
-
-                this.peer.on('connection', (conn) => {
-                    const existingIdx = this.connections.findIndex(c => c.peer === conn.peer);
-                    if (existingIdx !== -1) {
-                        try { this.connections[existingIdx].close(); } catch (e) { }
-                        this.connections.splice(existingIdx, 1);
-                    }
-                    this.connections.push(conn);
-
-                    conn.on('open', () => {
-                        conn.lastSeen = Date.now();
-                        if (this.mode === 'host' && (!players || players.length === 0)) {
-                            this.syncLobby();
-                        }
-                    });
-
-                    conn.on('data', (data) => {
-                        conn.lastSeen = Date.now();
-                        this.handleData(data, conn);
-                    });
-
-                    conn.on('close', () => {
-                        this.handleConnectionClose(conn);
-                    });
-
-                    conn.on('error', (err) => {
-                        console.warn('Erreur DataConnection:', err);
-                    });
-                });
-
-                this.peer.on('error', (err) => {
-                    console.error("PeerJS Host Error:", err);
-                    if (!this.isDisconnecting) {
-                        if (err.type === 'unavailable-id') {
-                            this._hostInitRetries = (this._hostInitRetries || 0) + 1;
-                            if (this._hostInitRetries < 5) {
-                                setTimeout(() => this.initHost(), 300);
-                                return;
-                            }
-                        }
-                        alert("Erreur réseau PeerJS (" + (err.type || 'connexion') + "). Nouvelle tentative...");
-                        this.disconnect();
-                    }
+                }).catch(err => {
+                    console.error("Erreur création room Firebase:", err);
+                    alert("Erreur lors de la création de la salle Firebase.");
+                    this.disconnect();
                 });
             },
 
+            // --- REJOINDRE UN SALON (CLIENT) ---
             initClient: function (codeOverride) {
                 const codeInput = document.getElementById('inputRoomCode');
                 const code = (codeOverride || (codeInput ? codeInput.value : '')).trim().toUpperCase();
                 if (code.length !== 4) return alert("Code invalide (4 caractères requis)");
 
-                this.cleanupTimers();
                 this.isDisconnecting = false;
-                this.receivedFirstSync = false;
                 this.mode = 'client';
                 this.roomId = code;
+                this.getOrCreatePlayerId();
+                this.cleanupListeners();
 
-                if (this.peer) {
-                    try { this.peer.destroy(); } catch (e) { }
-                }
-
-                this.peer = new Peer(null, PEER_CONFIG);
                 this.updateStatus('CONNEXION...', 'connecting');
                 showReconnectingOverlay("Connexion à la salle " + code + "...");
 
-                this.peer.on('open', (id) => {
-                    const hostPeerId = 'toupil-' + this.roomId;
-                    const conn = this.peer.connect(hostPeerId, { reliable: true });
-                    this.connections = [conn];
+                this.roomRef = db.ref('rooms/' + this.roomId);
+                this.playersRef = this.roomRef.child('players');
+                this.chatRef = this.roomRef.child('chat');
 
-                    conn.on('open', () => {
-                        conn.lastSeen = Date.now();
+                this.roomRef.once('value').then(snapshot => {
+                    if (!snapshot.exists()) {
+                        hideReconnectingOverlay();
+                        alert("Salle introuvable (" + this.roomId + "). Vérifiez le code fourni par l'hôte.");
+                        this.disconnect();
+                        return;
+                    }
+
+                    const roomData = snapshot.val();
+                    if (roomData.status !== 'lobby' && (!roomData.players || !roomData.players[this.playerId])) {
+                        hideReconnectingOverlay();
+                        alert("La partie est déjà en cours dans cette salle.");
+                        this.disconnect();
+                        return;
+                    }
+
+                    this.me.name = localStorage.getItem('intrusion_last_name') || 'Joueur';
+                    this.me.avatar = localStorage.getItem('intrusion_last_avatar') || null;
+
+                    // Rejoindre la liste des joueurs
+                    const myPlayerData = {
+                        name: this.me.name,
+                        avatar: this.me.avatar,
+                        isHost: false,
+                        online: true,
+                        joinedAt: firebase.database.ServerValue.TIMESTAMP
+                    };
+
+                    return this.playersRef.child(this.playerId).update(myPlayerData).then(() => {
                         this.updateStatus('CONNECTÉ', 'online');
                         hideReconnectingOverlay();
                         document.getElementById('lobby-host-elements').classList.add('d-none');
@@ -3310,556 +3827,635 @@
                         document.getElementById('lobby-actions-host').classList.add('d-none');
                         document.getElementById('mp-chat-container').classList.remove('d-none');
                         document.body.style.paddingBottom = "200px";
+
+                        this.setupPresence();
+                        this.attachRoomListeners();
+
                         showView('view-mp-lobby');
-
-                        this.me.name = localStorage.getItem('intrusion_last_name') || 'Inconnu';
-                        this.me.avatar = localStorage.getItem('intrusion_last_avatar');
                         this.saveSession();
-
-                        const sendJoinPacket = () => {
-                            this.sendData({ type: 'join', name: this.me.name, avatar: this.me.avatar });
-                        };
-                        sendJoinPacket();
-
-                        let joinAttempts = 0;
-                        if (this._joinRetryTimer) clearInterval(this._joinRetryTimer);
-                        this._joinRetryTimer = setInterval(() => {
-                            joinAttempts++;
-                            if (this.receivedFirstSync || joinAttempts > 6 || !conn.open) {
-                                clearInterval(this._joinRetryTimer);
-                                this._joinRetryTimer = null;
-                                return;
-                            }
-                            sendJoinPacket();
-                        }, 1200);
-
-                        this.startHeartbeat();
                     });
-
-                    conn.on('data', (data) => {
-                        conn.lastSeen = Date.now();
-                        this.handleData(data, conn);
-                    });
-
-                    conn.on('close', () => {
-                        if (!this.isDisconnecting) {
-                            this.startHostReconnectLoop();
-                        }
-                    });
-
-                    conn.on('error', (err) => {
-                        console.warn('Erreur DataConnection Client:', err);
-                    });
-                });
-
-                this.peer.on('error', (err) => {
-                    console.error("PeerJS Client Error:", err);
+                }).catch(err => {
+                    console.error("Erreur connexion room:", err);
                     hideReconnectingOverlay();
-                    if (err.type === 'peer-unavailable') {
-                        alert("Salle introuvable (" + this.roomId + "). Vérifiez que l'hôte a bien créé la salle.");
-                    } else {
-                        alert("Impossible de rejoindre la salle (" + (err.type || 'erreur réseau') + ").");
-                    }
+                    alert("Erreur de connexion à Firebase : " + err.message);
                     this.disconnect();
                 });
             },
 
-            generateRoomId: function () {
-                this.roomId = Math.floor(1000 + Math.random() * 9000).toString();
+            // Gestion de la déconnexion automatique en temps réel (onDisconnect)
+            setupPresence: function () {
+                if (!this.playersRef || !this.playerId) return;
+                const myPlayerRef = this.playersRef.child(this.playerId);
+                myPlayerRef.child('online').onDisconnect().set(false);
+                myPlayerRef.child('online').set(true);
             },
 
-            cleanupTimers: function () {
-                if (this._heartbeatTimer) { clearInterval(this._heartbeatTimer); this._heartbeatTimer = null; }
-                if (this._lobbySyncTimer) { clearInterval(this._lobbySyncTimer); this._lobbySyncTimer = null; }
-                if (this._joinRetryTimer) { clearInterval(this._joinRetryTimer); this._joinRetryTimer = null; }
-                if (this._reconnectInterval) { clearInterval(this._reconnectInterval); this._reconnectInterval = null; }
-                if (this._memorizedTimeout) { clearTimeout(this._memorizedTimeout); this._memorizedTimeout = null; }
-                if (this._voteTimeout) { clearTimeout(this._voteTimeout); this._voteTimeout = null; }
+            // --- ÉCOUTE DES DONNÉES EN TEMPS RÉEL SUR LA ROOM ---
+            attachRoomListeners: function () {
+                // 0. Suivi de l'état de la connexion Firebase
+                if (typeof db !== 'undefined' && db) {
+                    this.addListener(db.ref('.info/connected'), 'value', (snap) => {
+                        const isConnected = snap.val() === true;
+                        const badge = document.getElementById('mp-status-badge');
+                        if (badge && this.mode) {
+                            if (isConnected) {
+                                badge.innerHTML = `<i class="bi bi-circle-fill text-success small me-1"></i> ${this.mode === 'host' ? 'HÔTE : ' + this.roomId : 'CONNECTÉ (' + this.roomId + ')'}`;
+                                badge.className = 'connection-status status-online';
+                            } else {
+                                badge.innerHTML = `<i class="bi bi-circle-fill text-warning small me-1"></i> RECONNEXION...`;
+                                badge.className = 'connection-status status-connecting';
+                            }
+                        }
+                    });
+                }
+
+                // 1. Écoute globale de la room
+                this.addListener(this.roomRef, 'value', (snapshot) => {
+                    if (!snapshot.exists()) {
+                        if (!this.isDisconnecting) {
+                            alert("La salle a été fermée.");
+                            this.disconnect();
+                        }
+                        return;
+                    }
+                    const data = snapshot.val();
+                    this.handleRoomUpdate(data);
+                });
+
+                // 2. Écoute du chat (textes et vocaux)
+                this.addListener(this.chatRef.limitToLast(30), 'child_added', (snapshot) => {
+                    const msg = snapshot.val();
+                    if (!msg) return;
+                    const isMe = msg.senderId === this.playerId;
+                    this.displayChat(msg.name, msg.message, msg.time, isMe, msg.audio);
+                });
             },
 
-            startHeartbeat: function () {
-                if (this._heartbeatTimer) clearInterval(this._heartbeatTimer);
-                this._heartbeatTimer = setInterval(() => {
-                    if (this.isDisconnecting || !this.peer || this.peer.destroyed) return;
+            // Traitement des données synchronisées du salon
+            handleRoomUpdate: function (roomData) {
+                if (!roomData) return;
+
+                // Sync de la configuration si modifiée
+                if (roomData.config && this.mode === 'client') {
+                    gameConfig = roomData.config;
+                }
+
+                // Récupération de la liste ordonnée des joueurs
+                const rawPlayersObj = roomData.players || {};
+                const playerKeys = Object.keys(rawPlayersObj);
+
+                // Conversion des joueurs en liste
+                const playerList = [];
+                let myFoundIndex = -1;
+
+                playerKeys.forEach(k => {
+                    const p = rawPlayersObj[k];
+                    p.id = k;
+                    playerList.push(p);
+                });
+
+                // En lobby : tri par date d'arrivée
+                if (roomData.status === 'lobby') {
+                    playerList.sort((a, b) => (a.isHost ? -1 : b.isHost ? 1 : (a.joinedAt || 0) - (b.joinedAt || 0)));
+                    this.renderLobby(playerList);
+
                     if (this.mode === 'host') {
-                        this.broadcast({ type: 'ping', t: Date.now() });
-                    } else if (this.mode === 'client') {
-                        const conn = this.connections[0];
-                        if (conn && conn.lastSeen && Date.now() - conn.lastSeen > 12000) {
-                            console.warn("Heartbeat timeout - relance connexion hôte");
-                            conn.lastSeen = Date.now();
-                            this.startHostReconnectLoop();
-                        }
+                        updateConfigFromSlider(playerList.length, false);
                     }
-                }, 4000);
-            },
+                    return;
+                }
 
-            startLobbySyncTimer: function () {
-                if (this._lobbySyncTimer) clearInterval(this._lobbySyncTimer);
-                this._lobbySyncTimer = setInterval(() => {
-                    if (this.mode === 'host' && (!players || players.length === 0) && !this.isDisconnecting) {
-                        this.syncLobby();
+                // EN JEU : La liste 'players' globale est alimentée par roomData.gamePlayers
+                if (roomData.gamePlayers && roomData.gamePlayers.length > 0) {
+                    players = roomData.gamePlayers;
+                    myFoundIndex = players.findIndex(p => p.id === this.playerId || (p.name && p.name.trim().toLowerCase() === (this.me.name || '').trim().toLowerCase()));
+                    if (myFoundIndex !== -1) {
+                        this.me.index = myFoundIndex;
+                        currentStep = myFoundIndex;
                     }
-                }, 3000);
-            },
-
-            disconnect: function () {
-                if (this.isDisconnecting) return;
-                this.isDisconnecting = true;
-                this.cleanupTimers();
-                this.clearSession();
-
-                if (typeof timerInterval !== 'undefined' && timerInterval) {
-                    clearInterval(timerInterval);
                 }
 
-                if (this.mode === 'host' && this.connections.length > 0) {
-                    try { this.broadcast({ type: 'room_closed' }); } catch (e) { }
+                if (roomData.words) {
+                    currentPNJWord = roomData.words[0] || '';
+                    currentInfiltreWord = roomData.words[1] || '';
                 }
 
-                try { if (this.peer) this.peer.destroy(); } catch (e) { }
-                this.peer = null;
-                this.connections = [];
-                this.mode = null;
-
-                const ind = document.getElementById('mp-status-indicator');
-                if (ind) ind.classList.add('d-none');
-                const chat = document.getElementById('mp-chat-container');
-                if (chat) chat.classList.add('d-none');
-                const hostBtn = document.getElementById('host-room-code-btn');
-                if (hostBtn) hostBtn.classList.add('d-none');
-                document.body.style.paddingBottom = "0px";
-
-                const placeholder = document.getElementById('setup-role-settings-placeholder');
-                const block = document.getElementById('role-settings-block');
-                if (placeholder && block) placeholder.appendChild(block);
-
-                try { updateConfigFromSlider(); } catch (e) { }
-
-                const setupView = document.getElementById('view-setup');
-                if (setupView && setupView.classList.contains('d-none')) {
-                    showView('view-setup');
+                if (roomData.pendingVictimIndex !== undefined) {
+                    pendingVictimIndex = roomData.pendingVictimIndex;
                 }
 
-                setTimeout(() => {
-                    this.isDisconnecting = false;
-                }, 400);
+                // Gérer les phases de jeu selon le status Firebase
+                this.syncGameFlow(roomData);
             },
 
-            addSelfToLobby: function () {
-                this.me.name = localStorage.getItem('intrusion_last_name') || 'Hôte';
-                this.me.avatar = localStorage.getItem('intrusion_last_avatar');
-                this.syncLobby();
-            },
+            syncGameFlow: function (roomData) {
+                const status = roomData.status;
 
-            handleData: function (data, conn) {
-                if (!data || !data.type) return;
+                // Mettre à jour la visibilité du bouton discret de rappel de mot
+                if (typeof updateSecretWordBtnVisibility === 'function') {
+                    updateSecretWordBtnVisibility(status);
+                }
 
-                switch (data.type) {
-                    case 'ping':
-                        if (this.mode === 'client') {
-                            this.sendData({ type: 'pong', t: data.t });
-                        }
-                        break;
+                // 1. Démarrage de la mémorisation
+                if (status === 'memorizing') {
+                    const myPlayer = players[this.me.index];
+                    const hasMemorized = roomData.memorized && roomData.memorized[this.playerId];
 
-                    case 'pong':
-                        if (conn) conn.lastSeen = Date.now();
-                        break;
-
-                    case 'room_closed':
-                        alert("L'hôte a fermé la salle.");
-                        this.disconnect();
-                        break;
-
-                    case 'reconnect_game':
-                        this.receivedFirstSync = true;
-                        if (this._joinRetryTimer) { clearInterval(this._joinRetryTimer); this._joinRetryTimer = null; }
-                        players = data.players;
-                        gameConfig = data.config;
-                        currentPNJWord = data.words[0];
-                        currentInfiltreWord = data.words[1];
-                        MP.me.index = data.myIndex;
-                        currentStep = data.myIndex;
-                        pendingVictimIndex = data.pendingVictimIndex !== undefined ? data.pendingVictimIndex : -1;
-                        hideReconnectingOverlay();
-
-                        const targetView = data.currentView || 'view-debate';
-                        if (targetView === 'view-reveal') {
+                    if (hasMemorized) {
+                        let msgTitle = gameConfig.mode === 'revele' ? 'RÔLE MÉMORISÉ' : 'MOT MÉMORISÉ';
+                        document.getElementById('pass-dynamic-content').innerHTML = `<h3>${msgTitle}</h3><p class="text-muted mb-1">Attente des autres agents...</p><div id="mp-memorized-list" class="mt-2 text-start"></div>`;
+                        const btn = document.getElementById('btn-pass-ready');
+                        if (btn) btn.classList.add('d-none');
+                        showView('view-pass');
+                        this.renderMemorizedStatusFromRoom(roomData.memorized);
+                    } else {
+                        const currentView = getCurrentViewId();
+                        if (currentView !== 'view-reveal') {
+                            if (typeof SFX !== 'undefined' && SFX.reveal) SFX.reveal();
+                            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
                             revealIdentity(true);
-                        } else if (targetView === 'view-pass') {
-                            let msgTitle = gameConfig.mode === 'revele' ? 'RÔLE MÉMORISÉ' : 'MOT MÉMORISÉ';
-                            document.getElementById('pass-dynamic-content').innerHTML = `<h3>${msgTitle}</h3><p class="text-muted mb-1">Attente des autres agents...</p><div id="mp-memorized-list" class="mt-2 text-start"></div>`;
-                            const btn = document.getElementById('btn-pass-ready');
-                            if (btn) btn.classList.add('d-none');
-                            showView('view-pass');
-                            if (data.memorized) {
-                                MP.renderMemorizedStatus(data.memorized);
-                            }
-                        } else if (targetView === 'view-vote') {
-                            setupVoteScreen();
-                            if (data.voteProgress) {
-                                renderVoteTracker(data.voteProgress.voterIndices, data.voteProgress.count, data.voteProgress.total);
-                            }
-                        } else if (targetView === 'view-guess') {
-                            document.getElementById('inputGuessWord').value = "";
-                            showView('view-guess');
-                        } else if (targetView === 'view-pre-debate') {
-                            document.getElementById('firstPlayerName').innerText = data.starterName || (players.length > 0 ? players[0].name : '');
-                            preparePreDebateView();
-                            showView('view-pre-debate');
-                        } else if (targetView === 'view-debate') {
-                            startDebate(data.debateTimeLeft || 60, true);
-                        } else if (targetView === 'view-result') {
-                            if (pendingVictimIndex !== -1 && players[pendingVictimIndex]) {
-                                const victim = players[pendingVictimIndex];
-                                const roleDisplay = document.getElementById('eliminatedRoleDisplay');
-                                const nameDisplay = document.getElementById('eliminatedNameDisplay');
-                                nameDisplay.innerText = victim.name;
-                                roleDisplay.innerText = victim.role.toUpperCase();
-                                if (victim.role === 'PNJ') roleDisplay.style.color = '#38bdf8';
-                                else if (victim.role === 'Infiltré') roleDisplay.style.color = '#f43f5e';
-                                else roleDisplay.style.color = '#94a3b8';
-                                updateEliminatedImage();
-                            }
-                            showView('view-result');
-                        } else {
-                            showView(targetView);
                         }
-                        checkWinCondition();
-                        break;
-
-                    case 'force_lobby':
-                        if (typeof timerInterval !== 'undefined' && timerInterval) {
-                            clearInterval(timerInterval);
-                        }
-                        const tbModal = document.getElementById('modal-tie-break');
-                        if (tbModal) tbModal.classList.add('d-none');
-                        players = [];
-                        currentStep = 0;
-                        document.getElementById('voteButtonsContainer').innerHTML = "";
-                        showView('view-mp-lobby');
-                        if (this.mode === 'host') {
-                            this.syncLobby();
-                        }
-                        break;
-
-                    case 'join': {
-                        const cleanName = (data.name || '').trim();
-                        if (!conn) break;
-
-                        const existingConnIndex = this.connections.findIndex(c => c !== conn && c.peerName && c.peerName.trim().toLowerCase() === cleanName.toLowerCase());
-                        if (existingConnIndex !== -1) {
-                            const existingConn = this.connections[existingConnIndex];
-                            if (existingConn._graceTimeout) clearTimeout(existingConn._graceTimeout);
-                            try { existingConn.close(); } catch (e) { }
-                            this.connections.splice(existingConnIndex, 1);
-                        }
-
-                        if (this.me.name.trim().toLowerCase() === cleanName.toLowerCase()) {
-                            try { conn.send({ type: 'error', message: "Ce pseudo est déjà utilisé par l'hôte." }); } catch(e) {}
-                            return;
-                        }
-
-                        conn.peerName = cleanName;
-                        conn.peerAvatar = data.avatar;
-                        conn.lastSeen = Date.now();
-
-                        if (players && players.length > 0) {
-                            let playerIdx = players.findIndex(p => p.name.trim().toLowerCase() === cleanName.toLowerCase());
-
-                            if (playerIdx === -1) {
-                                const disconnectedIndices = players.map((p, i) => ({ player: p, index: i }))
-                                    .filter(item => item.index !== 0 && !this.isPlayerConnected(item.index));
-
-                                if (disconnectedIndices.length === 1) {
-                                    playerIdx = disconnectedIndices[0].index;
-                                    conn.peerName = players[playerIdx].name;
-                                }
-                            }
-
-                            if (playerIdx !== -1) {
-                                players[playerIdx].peerId = conn.peer;
-
-                                const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                                this.displayChat('Système', `✅ ${players[playerIdx].name} est de retour !`, t, true);
-                                this.broadcast({ type: 'chat', name: 'Système', message: `✅ ${players[playerIdx].name} est de retour !`, time: t, system: true });
-
-                                const targetView = getReconnectingPlayerView(playerIdx);
-                                const progressData = {
-                                    type: 'reconnect_game',
-                                    players: players,
-                                    config: gameConfig,
-                                    words: [currentPNJWord, currentInfiltreWord],
-                                    myIndex: playerIdx,
-                                    currentView: targetView,
-                                    pendingVictimIndex: pendingVictimIndex,
-                                    memorized: this.memorizedPlayers || [],
-                                    starterName: document.getElementById('firstPlayerName').innerText || (players.length > 0 ? players[0].name : '')
-                                };
-                                if (targetView === 'view-vote') {
-                                    const aliveCount = players.filter(p => p.alive).length;
-                                    const votesCount = this.votes ? Object.keys(this.votes).length : 0;
-                                    const voterIndices = this.votes ? Object.keys(this.votes).map(Number) : [];
-                                    progressData.voteProgress = {
-                                        count: votesCount,
-                                        total: aliveCount,
-                                        voterIndices: voterIndices
-                                    };
-                                } else if (targetView === 'view-debate') {
-                                    progressData.debateTimeLeft = MP.debateTimeLeft || 60;
-                                }
-                                try { conn.send(progressData); } catch (e) { }
-                                this.unblockPendingPhases();
-                            } else {
-                                const activeNames = players.map(p => p.name).join(', ');
-                                try {
-                                    conn.send({
-                                        type: 'error',
-                                        message: `Partie en cours. Pseudonyme "${cleanName}" inconnu. Joueurs dans la partie : ${activeNames}`
-                                    });
-                                } catch (e) { }
-                            }
-                        } else {
-                            this.syncLobby();
-                        }
-                        break;
                     }
 
-                    case 'error':
-                        hideReconnectingOverlay();
-                        alert(data.message);
-                        this.disconnect();
-                        break;
-
-                    case 'sync_lobby':
-                        this.receivedFirstSync = true;
-                        if (this._joinRetryTimer) { clearInterval(this._joinRetryTimer); this._joinRetryTimer = null; }
-                        hideReconnectingOverlay();
-                        if (!players || players.length === 0) {
-                            showView('view-mp-lobby');
-                        }
-                        if (data.config) {
-                            gameConfig = data.config;
-                        }
-                        this.renderLobby(data.players);
-                        break;
-
-                    case 'start_game':
-                        this.receivedFirstSync = true;
-                        if (this._joinRetryTimer) { clearInterval(this._joinRetryTimer); this._joinRetryTimer = null; }
-                        players = data.players;
-                        gameConfig = data.config;
-                        currentPNJWord = data.words[0];
-                        currentInfiltreWord = data.words[1];
-                        this.startClientFlow(data.myIndex);
-                        break;
-
-                    case 'memorized':
-                        if (this.mode === 'host') {
-                            this.memorizedPlayers = this.memorizedPlayers || [];
-                            if (!this.memorizedPlayers.includes(data.index)) {
-                                this.memorizedPlayers.push(data.index);
-                                this.memorizedCount = this.memorizedPlayers.length;
-                            }
-
-                            const hostView = getCurrentViewId();
-                            if (hostView !== 'view-pass' && hostView !== 'view-reveal') {
-                                const playerConn = this.connections.find(c => players[data.index] && c.peerName === players[data.index].name);
-                                if (playerConn && playerConn.open) {
-                                    const progressData = {
-                                        type: 'reconnect_game',
-                                        players: players,
-                                        config: gameConfig,
-                                        words: [currentPNJWord, currentInfiltreWord],
-                                        myIndex: data.index,
-                                        currentView: hostView,
-                                        pendingVictimIndex: pendingVictimIndex,
-                                        memorized: this.memorizedPlayers || [],
-                                        starterName: document.getElementById('firstPlayerName').innerText || (players.length > 0 ? players[0].name : '')
-                                    };
-                                    if (hostView === 'view-vote') {
-                                        const aliveCount = players.filter(p => p.alive).length;
-                                        const votesCount = this.votes ? Object.keys(this.votes).length : 0;
-                                        const voterIndices = this.votes ? Object.keys(this.votes).map(Number) : [];
-                                        progressData.voteProgress = { count: votesCount, total: aliveCount, voterIndices: voterIndices };
-                                    } else if (hostView === 'view-debate') {
-                                        progressData.debateTimeLeft = MP.debateTimeLeft || 60;
-                                    }
-                                    try { playerConn.send(progressData); } catch (e) { }
-                                }
-                                break;
-                            }
-
-                            const alivePlayers = players.filter(p => p.alive).length;
-                            if (this.memorizedCount >= alivePlayers) {
-                                if (this._memorizedTimeout) { clearTimeout(this._memorizedTimeout); this._memorizedTimeout = null; }
-                                const starterName = pickSmartStarter(true);
-                                this.broadcast({ type: 'start_debate', starter: starterName });
-                                document.getElementById('firstPlayerName').innerText = starterName;
-                                preparePreDebateView();
-                                showView('view-pre-debate');
-                            } else {
-                                this.broadcast({ type: 'sync_memorized_status', memorized: this.memorizedPlayers });
-                                this.renderMemorizedStatus(this.memorizedPlayers);
-                                if (!this._memorizedTimeout) {
-                                    this._memorizedTimeout = setTimeout(() => {
-                                        this._memorizedTimeout = null;
-                                        this.unblockPendingPhases();
-                                    }, RECONNECT_TIMEOUT_MS);
-                                }
-                            }
-                        }
-                        break;
-
-                    case 'sync_memorized_status':
-                        this.renderMemorizedStatus(data.memorized);
-                        break;
-
-                    case 'vote':
-                        if (this.mode === 'host') this.handleIncomingVote(data.from, data.to);
-                        break;
-
-                    case 'sync_tie_break':
-                        startTieBreaker(data.tiedIndices, data.victimIndex, this.mode === 'host');
-                        break;
-
-                    case 'sync_elimination':
-                        finalizeElimination(data.index, true);
-                        break;
-
-                    case 'sync_vote_progress':
-                        renderVoteTracker(data.voterIndices || [], data.count, data.total);
-                        break;
-
-                    case 'sync_guess_phase':
-                        pendingVictimIndex = data.index;
-                        if (MP.me.index === data.index) {
-                            document.getElementById('inputGuessWord').value = "";
-                            showView('view-guess');
-                        } else {
-                            document.getElementById('voteButtonsContainer').innerHTML = `
-                            <div class="vote-wait-screen">
-                                <div class="spinner-border text-warning mb-3"></div>
-                                <h5 class="text-warning">DERNIÈRE CHANCE</h5>
-                                <p class="text-muted small">L'Inconnu tente de deviner le mot...</p>
-                            </div>`;
-                        }
-                        break;
-
-                    case 'guess_submit':
-                        if (this.mode === 'host') {
-                            const guessRaw = data.guess;
-                            const guess = cleanString(guessRaw); const correct = cleanString(currentPNJWord);
-                            let isCorrect = false; if (guess === correct) isCorrect = true; else { const dist = levenshtein(guess, correct); if (dist <= 1) isCorrect = true; }
-
-                            this.broadcast({ type: 'sync_guess_result', correct: isCorrect, index: pendingVictimIndex });
-                            this.handleData({ type: 'sync_guess_result', correct: isCorrect, index: pendingVictimIndex });
-                        }
-                        break;
-
-                    case 'sync_guess_result':
-                        pendingVictimIndex = data.index;
-                        players[pendingVictimIndex].alive = false;
-                        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-                        document.body.classList.add('elimination-shock');
-                        setTimeout(() => document.body.classList.remove('elimination-shock'), 500);
-
-                        if (data.correct) {
-                            SFX.success(); showView('view-result');
-                            document.getElementById('gameContinueAction').classList.add('d-none'); document.getElementById('gameWinAction').classList.remove('d-none');
-                            const winMsg = document.getElementById('winMessage');
-                            document.getElementById('eliminatedNameDisplay').innerText = players[pendingVictimIndex].name;
-                            document.getElementById('eliminatedRoleDisplay').innerText = "INCONNU"; document.getElementById('eliminatedRoleDisplay').style.color = "#94a3b8";
-                            updateWinStats(['INCONNU_SOLO']);
-                            winMsg.innerText = "VICTOIRE DE L'INCONNU !"; winMsg.className = "brand-font mb-4 victory-text text-white-force";
-                            updateEliminatedImage();
-                        } else {
-                            SFX.error(); finalizeElimination(pendingVictimIndex, true);
-                        }
-                        break;
-
-                    case 'sync_next_round':
-                        setupNextRound(data.starter, true);
-                        break;
-
-                    case 'start_debate':
-                        document.getElementById('firstPlayerName').innerText = data.starter;
-                        preparePreDebateView();
-                        showView('view-pre-debate');
-                        break;
-
-                    case 'start_timer':
-                        startDebate(data.seconds, true);
-                        break;
-
-                    case 'chat':
-                        this.displayChat(data.name, data.message, data.time, false);
-                        if (this.mode === 'host') {
-                            this.connections.forEach(c => {
-                                if (c !== conn && c.open) {
-                                    try { c.send(data); } catch (e) { }
-                                }
+                    // Si l'hôte constate que tout le monde a mémorisé, lancer le débat
+                    if (this.mode === 'host' && roomData.memorized) {
+                        const alivePlayers = players.filter(p => p.alive);
+                        const memCount = Object.keys(roomData.memorized).length;
+                        if (memCount >= alivePlayers.length && alivePlayers.length > 0) {
+                            const starterName = pickSmartStarter(true);
+                            this.roomRef.update({
+                                status: 'debate',
+                                starter: starterName,
+                                debateSeconds: 60,
+                                debateStartedAt: Date.now()
                             });
                         }
-                        break;
+                    }
+                }
 
-                    case 'vote_stop_timer':
-                        if (this.mode === 'host') {
-                            this.stopTimerVotes = (this.stopTimerVotes || 0) + 1;
-                            const alivePlayers = players.filter(p => p.alive).length;
-                            const threshold = Math.floor(alivePlayers / 2) + 1;
+                // 2. Débat
+                else if (status === 'debate') {
+                    if (roomData.starter) {
+                        document.getElementById('firstPlayerName').innerText = roomData.starter;
+                    }
+                    const currentView = getCurrentViewId();
+                    if (currentView !== 'view-debate') {
+                        preparePreDebateView();
+                        startDebate(roomData.debateSeconds || 60, true);
+                    }
 
-                            if (this.stopTimerVotes >= threshold) {
-                                this.broadcast({ type: 'force_vote' });
-                                forceVote();
-                                this.stopTimerVotes = 0;
-                            } else {
-                                this.broadcast({ type: 'sync_stop_timer_votes', votes: this.stopTimerVotes, threshold: threshold });
-                                const btn = document.getElementById('btn-force-vote');
-                                if (btn && !btn.classList.contains('disabled')) {
-                                    btn.innerHTML = `<i class="bi bi-stop-circle"></i> ARRÊTER & VOTER (${this.stopTimerVotes}/${threshold})`;
-                                }
-                            }
+                    // Arrêt prématuré du chrono (votes stop par majorité)
+                    const votesStop = roomData.stopTimerVotes || 0;
+                    const activeAliveCount = players.filter(p => p.alive && roomData.players && roomData.players[p.id] && roomData.players[p.id].online !== false).length;
+                    const aliveCount = activeAliveCount || players.filter(p => p.alive).length;
+                    const threshold = Math.floor(aliveCount / 2) + 1;
+                    const btn = document.getElementById('btn-force-vote');
+                    if (btn && !btn.classList.contains('disabled')) {
+                        if (votesStop > 0) {
+                            btn.innerHTML = `<i class="bi bi-stop-circle"></i> ARRÊTER & VOTER (${votesStop}/${threshold})`;
                         }
-                        break;
+                    }
 
-                    case 'sync_stop_timer_votes':
-                        const btn = document.getElementById('btn-force-vote');
-                        if (btn && !btn.classList.contains('disabled')) {
-                            btn.innerHTML = `<i class="bi bi-stop-circle"></i> ARRÊTER & VOTER (${data.votes}/${data.threshold})`;
+                    if (this.mode === 'host' && votesStop >= threshold && aliveCount > 0) {
+                        this.roomRef.update({ status: 'vote' });
+                    }
+                }
+
+                // 3. Phase de Vote
+                else if (status === 'vote') {
+                    const currentView = getCurrentViewId();
+                    if (currentView !== 'view-vote') {
+                        if (typeof SFX !== 'undefined' && SFX.alarm) SFX.alarm();
+                        if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+                        setupVoteScreen();
+                    }
+
+                    const votesMap = roomData.votes || {};
+                    const voterPids = Object.keys(votesMap);
+                    const activeAliveCount = players.filter(p => p.alive && roomData.players && roomData.players[p.id] && roomData.players[p.id].online !== false).length;
+                    const aliveCount = activeAliveCount || players.filter(p => p.alive).length;
+
+                    // Convertir les IDs de votants en indices de tableau
+                    const voterIndices = voterPids.map(pid => {
+                        return players.findIndex(p => p.id === pid);
+                    }).filter(idx => idx !== -1);
+
+                    renderVoteTracker(voterIndices, voterPids.length, aliveCount);
+
+                    // Si le joueur actuel a déjà voté, afficher l'écran d'attente
+                    if (votesMap[this.playerId] !== undefined) {
+                        const container = document.getElementById('voteButtonsContainer');
+                        if (container && !container.querySelector('.vote-wait-screen')) {
+                            container.innerHTML = `
+                            <div class="vote-wait-screen">
+                                <i class="bi bi-check-circle-fill text-success mb-3" style="font-size: 2.5rem;"></i>
+                                <h5>VOTE ENREGISTRÉ</h5>
+                                <p class="text-muted small">Attente des autres agents...</p>
+                                <div id="vote-tracker-container"></div>
+                            </div>`;
+                            renderVoteTracker(voterIndices, voterPids.length, aliveCount);
                         }
-                        break;
+                    }
 
-                    case 'force_vote':
-                        forceVote();
-                        break;
+                    // Si l'hôte voit que tous les survivants ont voté, il calcule le résultat
+                    if (this.mode === 'host' && voterPids.length >= aliveCount && aliveCount > 0) {
+                        this.resolveFirebaseVotes(votesMap);
+                    }
+                }
+
+                // 4. Tie Break (Égalité)
+                else if (status === 'tiebreak') {
+                    const tb = roomData.tieBreak;
+                    if (tb) {
+                        startTieBreaker(tb.tiedIndices, tb.victimIndex, this.mode === 'host');
+                    }
+                }
+
+                // 5. Phase devinette (Inconnu)
+                else if (status === 'guess') {
+                    pendingVictimIndex = roomData.pendingVictimIndex;
+                    if (this.me.index === pendingVictimIndex) {
+                        document.getElementById('inputGuessWord').value = "";
+                        showView('view-guess');
+                    } else {
+                        showView('view-vote');
+                        document.getElementById('voteButtonsContainer').innerHTML = `
+                        <div class="vote-wait-screen">
+                            <div class="spinner-border text-warning mb-3"></div>
+                            <h5 class="text-warning">DERNIÈRE CHANCE</h5>
+                            <p class="text-muted small">L'Inconnu tente de deviner le mot...</p>
+                        </div>`;
+                    }
+                }
+
+                // 6. Résultat d'élimination ou Victoire
+                else if (status === 'result') {
+                    if (roomData.pendingVictimIndex !== undefined && players[roomData.pendingVictimIndex]) {
+                        pendingVictimIndex = roomData.pendingVictimIndex;
+                        const victim = players[pendingVictimIndex];
+                        showView('view-result');
+                        const roleDisplay = document.getElementById('eliminatedRoleDisplay');
+                        const nameDisplay = document.getElementById('eliminatedNameDisplay');
+                        nameDisplay.innerText = victim.name;
+                        roleDisplay.innerText = victim.role.toUpperCase();
+                        if (victim.role === 'PNJ') roleDisplay.style.color = '#38bdf8';
+                        else if (victim.role === 'Infiltré') roleDisplay.style.color = '#f43f5e';
+                        else roleDisplay.style.color = '#94a3b8';
+                        updateEliminatedImage();
+                    }
+                    checkWinCondition();
+                }
+
+                // 7. Transition Tour Suivant
+                else if (status === 'transition') {
+                    if (roomData.starter) {
+                        setupNextRound(roomData.starter, true);
+                    }
                 }
             },
 
+            renderMemorizedStatusFromRoom: function (memorizedObj) {
+                const container = document.getElementById('mp-memorized-list');
+                if (!container) return;
+                memorizedObj = memorizedObj || {};
+
+                let html = '<div class="list-group list-group-flush border rounded bg-dark bg-opacity-50 mt-3">';
+                players.forEach((p, idx) => {
+                    if (p.alive) {
+                        const isReady = !!memorizedObj[p.id];
+                        const icon = isReady ? '<i class="bi bi-check-circle-fill text-success fs-5"></i>' : '<div class="spinner-border spinner-border-sm text-warning" role="status" style="width: 1rem; height: 1rem;"></div>';
+                        html += `<div class="list-group-item bg-transparent text-white d-flex justify-content-between align-items-center border-secondary px-3 py-2 small">
+                                    <span class="${isReady ? 'text-white' : 'text-light opacity-75'}">${p.name}</span>
+                                    <span>${icon}</span>
+                                 </div>`;
+                    }
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            },
+
+            // Calcul du résultat des votes par l'hôte
+            resolveFirebaseVotes: function (votesMap) {
+                const tallies = {};
+                Object.values(votesMap).forEach(targetIdx => {
+                    tallies[targetIdx] = (tallies[targetIdx] || 0) + 1;
+                });
+
+                let maxVotes = 0;
+                for (let idx in tallies) {
+                    if (tallies[idx] > maxVotes) maxVotes = tallies[idx];
+                }
+
+                const tiedCandidates = [];
+                for (let idx in tallies) {
+                    if (tallies[idx] === maxVotes && maxVotes > 0) {
+                        tiedCandidates.push(parseInt(idx));
+                    }
+                }
+
+                if (tiedCandidates.length === 0) {
+                    const alive = players.map((p, i) => ({ p, i })).filter(item => item.p.alive);
+                    if (alive.length > 0) tiedCandidates.push(alive[0].i);
+                }
+
+                if (tiedCandidates.length > 1) {
+                    const victimIdx = tiedCandidates[Math.floor(Math.random() * tiedCandidates.length)];
+                    this.roomRef.update({
+                        status: 'tiebreak',
+                        tieBreak: { tiedIndices: tiedCandidates, victimIndex: victimIdx }
+                    });
+                } else if (tiedCandidates.length === 1) {
+                    const victimIdx = tiedCandidates[0];
+                    if (players[victimIdx]) {
+                        if (players[victimIdx].role === 'Inconnu') {
+                            this.roomRef.update({
+                                status: 'guess',
+                                pendingVictimIndex: victimIdx
+                            });
+                        } else {
+                            players[victimIdx].alive = false;
+                            this.roomRef.update({
+                                status: 'result',
+                                pendingVictimIndex: victimIdx,
+                                gamePlayers: players
+                            });
+                        }
+                    }
+                }
+            },
+
+            // --- MÉTHODES MULTIJOUEUR UTILISÉES PAR LE JEU ---
+            startGame: function () {
+                if (this.mode !== 'host') return;
+                this.roomRef.once('value').then(snapshot => {
+                    const roomData = snapshot.val();
+                    const playersObj = roomData.players || {};
+                    const activePids = Object.keys(playersObj).filter(id => playersObj[id].online !== false);
+
+                    if (activePids.length < 3) {
+                        return alert("Il faut au moins 3 joueurs connectés pour lancer la partie.");
+                    }
+
+                    initGame(true);
+
+                    // Assigner l'hôte en premier, puis les autres
+                    const pList = [];
+                    const hostPid = this.playerId;
+                    pList.push({
+                        id: hostPid,
+                        name: this.me.name,
+                        avatar: this.me.avatar,
+                        role: rolesDeck[0].role,
+                        word: rolesDeck[0].word,
+                        alive: true
+                    });
+
+                    let slot = 1;
+                    activePids.forEach(pid => {
+                        if (pid !== hostPid && slot < rolesDeck.length) {
+                            const p = playersObj[pid];
+                            pList.push({
+                                id: pid,
+                                name: p.name,
+                                avatar: p.avatar,
+                                role: rolesDeck[slot].role,
+                                word: rolesDeck[slot].word,
+                                alive: true
+                            });
+                            slot++;
+                        }
+                    });
+
+                    players = pList;
+                    this.me.index = 0;
+                    currentStep = 0;
+
+                    this.roomRef.update({
+                        status: 'memorizing',
+                        gamePlayers: pList,
+                        words: [currentPNJWord, currentInfiltreWord],
+                        config: gameConfig,
+                        memorized: {},
+                        votes: {},
+                        stopTimerVotes: 0,
+                        pendingVictimIndex: -1,
+                        tieBreak: null
+                    }).then(() => {
+                        revealIdentity(true);
+                    });
+                });
+            },
+
+            // Chat
             sendChat: function () {
                 const input = document.getElementById('mp-chat-input');
                 const msg = input.value.trim();
-                if (!msg) return;
+                if (!msg || !this.chatRef) return;
                 input.value = "";
 
-                const chatData = { type: 'chat', name: this.me.name || localStorage.getItem('intrusion_last_name') || 'Joueur', message: msg, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+                const chatItem = {
+                    senderId: this.playerId,
+                    name: this.me.name || localStorage.getItem('intrusion_last_name') || 'Joueur',
+                    message: msg,
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                };
 
-                this.displayChat(chatData.name, chatData.message, chatData.time, true);
+                this.chatRef.push(chatItem);
+            },
 
-                if (this.mode === 'host') {
-                    this.broadcast(chatData);
-                } else if (this.mode === 'client') {
-                    this.sendData(chatData);
+            // --- GESTION DES MESSAGES VOCAUX ---
+            startVoiceRecording: function () {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    return alert("Votre navigateur ne supporte pas l'enregistrement audio ou le micro n'est pas accessible.");
+                }
+                navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                    this._mediaStream = stream;
+                    let mimeType = 'audio/webm';
+                    if (typeof MediaRecorder !== 'undefined') {
+                        if (!MediaRecorder.isTypeSupported('audio/webm')) {
+                            if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4';
+                            else if (MediaRecorder.isTypeSupported('audio/ogg')) mimeType = 'audio/ogg';
+                            else mimeType = '';
+                        }
+                    }
+
+                    const options = mimeType ? { mimeType, audioBitsPerSecond: 24000 } : { audioBitsPerSecond: 24000 };
+                    this._mediaRecorder = new MediaRecorder(stream, options);
+                    this._audioChunks = [];
+
+                    this._mediaRecorder.ondataavailable = (e) => {
+                        if (e.data && e.data.size > 0) {
+                            this._audioChunks.push(e.data);
+                        }
+                    };
+
+                    this._mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(this._audioChunks, { type: mimeType || 'audio/webm' });
+                        if (this._mediaStream) {
+                            this._mediaStream.getTracks().forEach(t => t.stop());
+                            this._mediaStream = null;
+                        }
+                        if (this._cancelVoice) {
+                            this._cancelVoice = false;
+                            return;
+                        }
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                            const base64Audio = reader.result;
+                            this.sendVoiceChat(base64Audio);
+                        };
+                        reader.readAsDataURL(audioBlob);
+                    };
+
+                    this._mediaRecorder.start();
+                    this.isRecordingVoice = true;
+                    this.updateVoiceRecordingUI(true);
+
+                    let seconds = 0;
+                    const maxSeconds = 15;
+                    this._voiceTimer = setInterval(() => {
+                        seconds++;
+                        const timerEl = document.getElementById('mp-voice-timer');
+                        if (timerEl) timerEl.innerText = (seconds < 10 ? '0' + seconds : seconds) + 's / 15s';
+                        if (seconds >= maxSeconds) {
+                            this.stopVoiceRecording(false);
+                        }
+                    }, 1000);
+
+                }).catch(err => {
+                    console.error("Microphone error:", err);
+                    alert("Impossible d'accéder au microphone. Vérifiez les autorisations de votre navigateur.");
+                });
+            },
+
+            stopVoiceRecording: function (cancel = false) {
+                if (!this.isRecordingVoice) return;
+                this._cancelVoice = cancel;
+                if (this._voiceTimer) {
+                    clearInterval(this._voiceTimer);
+                    this._voiceTimer = null;
+                }
+                this.isRecordingVoice = false;
+                this.updateVoiceRecordingUI(false);
+                if (this._mediaRecorder && this._mediaRecorder.state !== 'inactive') {
+                    this._mediaRecorder.stop();
                 }
             },
 
-            displayChat: function (name, msg, time, isMe) {
+            toggleVoiceRecording: function () {
+                if (this.isRecordingVoice) {
+                    this.stopVoiceRecording(false);
+                } else {
+                    this.startVoiceRecording();
+                }
+            },
+
+            updateVoiceRecordingUI: function (isRecording) {
+                const input = document.getElementById('mp-chat-input');
+                const recBar = document.getElementById('mp-voice-recording-bar');
+                const micBtn = document.getElementById('btn-voice-record');
+                const timerEl = document.getElementById('mp-voice-timer');
+                if (isRecording) {
+                    if (input) input.classList.add('d-none');
+                    if (recBar) { recBar.classList.remove('d-none'); recBar.classList.add('d-flex'); }
+                    if (timerEl) timerEl.innerText = '00s / 15s';
+                    if (micBtn) {
+                        micBtn.className = 'btn btn-sm btn-danger px-2 shadow';
+                        micBtn.innerHTML = '<i class="bi bi-stop-fill fs-6"></i>';
+                        micBtn.title = "Arrêter et envoyer";
+                    }
+                } else {
+                    if (input) input.classList.remove('d-none');
+                    if (recBar) { recBar.classList.add('d-none'); recBar.classList.remove('d-flex'); }
+                    if (micBtn) {
+                        micBtn.className = 'btn btn-sm btn-outline-warning px-2';
+                        micBtn.innerHTML = '<i class="bi bi-mic-fill fs-6"></i>';
+                        micBtn.title = "Enregistrer un vocal";
+                    }
+                }
+            },
+
+            sendVoiceChat: function (base64Audio) {
+                if (!base64Audio || !this.chatRef) return;
+                const chatItem = {
+                    senderId: this.playerId,
+                    name: this.me.name || localStorage.getItem('intrusion_last_name') || 'Joueur',
+                    message: '🎤 Message vocal',
+                    audio: base64Audio,
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                };
+                this.chatRef.push(chatItem);
+            },
+
+            playVoice: function (btn) {
+                const parentDiv = btn.closest('[data-audio]');
+                const audioSrc = parentDiv ? parentDiv.dataset.audio : null;
+                if (!audioSrc) return;
+
+                if (this._currentAudio && !this._currentAudio.paused && this._currentPlayingBtn === btn) {
+                    this._currentAudio.pause();
+                    btn.innerHTML = '<i class="bi bi-play-fill fs-5 text-dark" style="margin-left: 2px;"></i>';
+                    return;
+                }
+                if (this._currentAudio) {
+                    this._currentAudio.pause();
+                    if (this._currentPlayingBtn) {
+                        this._currentPlayingBtn.innerHTML = '<i class="bi bi-play-fill fs-5 text-dark" style="margin-left: 2px;"></i>';
+                    }
+                }
+                const audio = new Audio(audioSrc);
+                this._currentAudio = audio;
+                this._currentPlayingBtn = btn;
+                btn.innerHTML = '<i class="bi bi-pause-fill fs-5 text-dark"></i>';
+
+                const progressBar = btn.closest('.d-flex').querySelector('.progress-bar');
+                audio.ontimeupdate = () => {
+                    if (progressBar && audio.duration) {
+                        progressBar.style.width = ((audio.currentTime / audio.duration) * 100) + '%';
+                    }
+                };
+                audio.onended = () => {
+                    btn.innerHTML = '<i class="bi bi-play-fill fs-5 text-dark" style="margin-left: 2px;"></i>';
+                    if (progressBar) progressBar.style.width = '0%';
+                };
+                audio.onerror = () => {
+                    btn.innerHTML = '<i class="bi bi-play-fill fs-5 text-dark" style="margin-left: 2px;"></i>';
+                    if (progressBar) progressBar.style.width = '0%';
+                };
+                audio.play().catch(e => console.error("Playback error:", e));
+            },
+
+            displayChat: function (name, msg, time, isMe, audioData) {
                 const container = document.getElementById('mp-chat-messages');
                 if (!container) return;
                 const div = document.createElement('div');
                 div.className = "p-2 rounded mb-1 shadow-sm " + (isMe ? "bg-primary text-end align-self-end" : "bg-dark border border-secondary text-start align-self-start");
                 div.style.maxWidth = "85%";
-                div.innerHTML = `<strong class="small text-info">${isMe ? 'Moi' : name}</strong> <span style="font-size: 0.65rem; opacity: 0.6; margin-left: 5px;">${time}</span><br><span class="text-white">${msg}</span>`;
+
+                let contentHtml = '';
+                if (audioData) {
+                    div.dataset.audio = audioData;
+                    contentHtml = `
+                    <div class="d-flex align-items-center gap-2 mt-1 py-1" style="min-width: 140px;">
+                        <button class="btn btn-sm btn-warning rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 32px; height: 32px; min-width: 32px;" onclick="MP.playVoice(this)">
+                            <i class="bi bi-play-fill fs-5 text-dark" style="margin-left: 2px;"></i>
+                        </button>
+                        <div class="flex-grow-1 text-start" style="min-width: 90px;">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span style="font-size: 0.72rem; color: #fbbf24; font-weight: 600;"><i class="bi bi-soundwave"></i> Vocal</span>
+                            </div>
+                            <div class="progress bg-secondary bg-opacity-50" style="height: 4px; border-radius: 2px;">
+                                <div class="progress-bar bg-warning" style="width: 0%; transition: width 0.1s linear;"></div>
+                            </div>
+                        </div>
+                    </div>`;
+                } else {
+                    contentHtml = `<span class="text-white">${msg}</span>`;
+                }
+
+                div.innerHTML = `<strong class="small text-info">${isMe ? 'Moi' : name}</strong> <span style="font-size: 0.65rem; opacity: 0.6; margin-left: 5px;">${time}</span><br>${contentHtml}`;
                 container.appendChild(div);
                 container.scrollTop = container.scrollHeight;
 
@@ -3895,43 +4491,23 @@
                 }
             },
 
-            syncLobby: function () {
-                if (this.mode !== 'host') return;
-
-                this.connections = this.connections.filter(c => {
-                    if (c.peerConnection) {
-                        const state = c.peerConnection.connectionState;
-                        const iceState = c.peerConnection.iceConnectionState;
-                        if (state === 'closed' || iceState === 'closed') {
-                            return false;
-                        }
-                    }
-                    return true;
-                });
-
-                const lobbyPlayers = [{ name: this.me.name, avatar: this.me.avatar, isHost: true }];
-                const addedNames = new Set([this.me.name.trim().toLowerCase()]);
-
-                this.connections.forEach(c => {
-                    if (c.peerName) {
-                        const lower = c.peerName.trim().toLowerCase();
-                        if (!addedNames.has(lower)) {
-                            addedNames.add(lower);
-                            lobbyPlayers.push({ name: c.peerName, avatar: c.peerAvatar });
-                        }
-                    }
-                });
-
-                this.renderLobby(lobbyPlayers);
-                this.broadcast({ type: 'sync_lobby', players: lobbyPlayers, config: gameConfig });
-                updateConfigFromSlider(lobbyPlayers.length, false);
-            },
-
             renderLobby: function (list) {
                 const container = document.getElementById('lobby-players-list');
                 const count = document.getElementById('lobby-count');
                 if (count) count.innerText = list.length;
                 if (!container) return;
+
+                // Toast & alerte sonore quand un joueur rejoint
+                if (this._lastLobbyCount !== undefined && list.length > this._lastLobbyCount && this._lastLobbyCount > 0) {
+                    const lastPlayer = list[list.length - 1];
+                    if (lastPlayer && lastPlayer.name) {
+                        showToast(`✨ ${lastPlayer.name} a rejoint le salon !`, 'success');
+                        if (typeof SFX !== 'undefined' && SFX.success) SFX.success();
+                        if (navigator.vibrate) navigator.vibrate([60, 30, 60]);
+                    }
+                }
+                this._lastLobbyCount = list.length;
+
                 container.innerHTML = '';
                 list.forEach(p => {
                     const div = document.createElement('div');
@@ -3950,534 +4526,178 @@
                 }
             },
 
+            // Envoi de signal ou compatibilité
             broadcast: function (data) {
-                this.connections.forEach(c => {
-                    if (c && c.open) {
-                        try { c.send(data); } catch (e) { console.warn('Erreur broadcast:', e); }
-                    }
-                });
+                if (!this.roomRef) return;
+                if (data.type === 'start_timer') {
+                    this.roomRef.update({
+                        status: 'debate',
+                        debateSeconds: data.seconds,
+                        stopTimerVotes: 0,
+                        debateStartedAt: Date.now()
+                    });
+                } else if (data.type === 'sync_next_round') {
+                    this.roomRef.update({ status: 'transition', starter: data.starter });
+                } else if (data.type === 'sync_elimination') {
+                    if (players[data.index]) players[data.index].alive = false;
+                    this.roomRef.update({ status: 'result', pendingVictimIndex: data.index, gamePlayers: players });
+                } else if (data.type === 'sync_guess_phase') {
+                    this.roomRef.update({ status: 'guess', pendingVictimIndex: data.index });
+                } else if (data.type === 'force_lobby') {
+                    this.roomRef.update({ status: 'lobby', gamePlayers: null, votes: {}, memorized: {}, stopTimerVotes: 0, tieBreak: null });
+                }
             },
 
             sendData: function (data) {
-                if (this.connections && this.connections[0] && this.connections[0].open) {
-                    try { this.connections[0].send(data); } catch (e) { console.warn('Erreur sendData:', e); }
-                }
-            },
+                if (!this.roomRef) return;
+                if (data.type === 'memorized') {
+                    this.roomRef.child('memorized/' + this.playerId).set(true);
+                } else if (data.type === 'vote') {
+                    this.roomRef.child('votes/' + this.playerId).set(data.to);
+                } else if (data.type === 'vote_stop_timer') {
+                    this.roomRef.child('stopTimerVotes').transaction(curr => (curr || 0) + 1);
+                } else if (data.type === 'guess_submit') {
+                    const guessRaw = data.guess;
+                    const guess = cleanString(guessRaw);
+                    const correct = cleanString(currentPNJWord);
+                    let isCorrect = (guess === correct) || (levenshtein(guess, correct) <= 1);
+                    if (players[pendingVictimIndex]) players[pendingVictimIndex].alive = false;
 
-            renderMemorizedStatus: function (memorizedList) {
-                const container = document.getElementById('mp-memorized-list');
-                if (!container) return;
-
-                let html = '<div class="list-group list-group-flush border rounded bg-dark bg-opacity-50 mt-3">';
-                players.forEach((p, idx) => {
-                    if (p.alive) {
-                        const isReady = memorizedList.includes(idx);
-                        const icon = isReady ? '<i class="bi bi-check-circle-fill text-success fs-5"></i>' : '<div class="spinner-border spinner-border-sm text-warning" role="status" style="width: 1rem; height: 1rem;"></div>';
-                        html += `<div class="list-group-item bg-transparent text-white d-flex justify-content-between align-items-center border-secondary px-3 py-2 small">
-                                    <span class="${isReady ? 'text-white' : 'text-light opacity-75'}">${p.name}</span>
-                                    <span>${icon}</span>
-                                 </div>`;
+                    if (isCorrect) {
+                        this.roomRef.update({ status: 'result', pendingVictimIndex: pendingVictimIndex, guessCorrect: true, gamePlayers: players });
+                    } else {
+                        this.roomRef.update({ status: 'result', pendingVictimIndex: pendingVictimIndex, guessCorrect: false, gamePlayers: players });
                     }
-                });
-                html += '</div>';
-                container.innerHTML = html;
-            },
-
-            startGame: function () {
-                const activeClients = this.connections.filter(c => c && c.open && c.peerName);
-                if (activeClients.length + 1 < 3) {
-                    return alert("Il faut au moins 3 joueurs connectés pour lancer la partie.");
                 }
-
-                this.memorizedCount = 0;
-                this.stopTimerVotes = 0;
-                this.memorizedPlayers = [];
-
-                sessionStorage.removeItem('intrusion_host_session');
-
-                initGame(true);
-
-                const allPlayers = [{ name: this.me.name, avatar: this.me.avatar, role: rolesDeck[0].role, word: rolesDeck[0].word, alive: true }];
-                activeClients.forEach((c, i) => {
-                    const roleData = rolesDeck[i + 1];
-                    allPlayers.push({ name: c.peerName, avatar: c.peerAvatar, role: roleData.role, word: roleData.word, alive: true, peerId: c.peer });
-                });
-
-                players = allPlayers;
-
-                activeClients.forEach((c, i) => {
-                    try {
-                        c.send({
-                            type: 'start_game',
-                            players: allPlayers,
-                            config: gameConfig,
-                            words: [currentPNJWord, currentInfiltreWord],
-                            myIndex: i + 1
-                        });
-                    } catch (e) {
-                        console.error("Échec d'envoi start_game à", c.peerName, e);
-                    }
-                });
-
-                this.startLocalReveal();
-            },
-
-            startLocalReveal: function () {
-                this.me.index = 0;
-                currentStep = 0;
-                revealIdentity(true);
-            },
-
-            startClientFlow: function (myIdx) {
-                if (myIdx === undefined) {
-                    const myName = localStorage.getItem('intrusion_last_name');
-                    myIdx = players.findIndex(p => p.name === myName);
-                }
-                this.me.index = myIdx;
-                currentStep = myIdx;
-                revealIdentity(true);
             },
 
             handleIncomingVote: function (fromIdx, toIdx) {
-                this.votes = this.votes || {};
-                this.votes[fromIdx] = toIdx;
-                this.syncVoteStatus();
-            },
-
-            isPlayerConnected: function (playerIdx) {
-                const p = players[playerIdx];
-                if (!p) return false;
-                if (playerIdx === 0) return true;
-                return this.connections.some(c => c.peerName && c.peerName.trim().toLowerCase() === p.name.trim().toLowerCase() && c.open);
-            },
-
-            handleConnectionClose: function (conn) {
-                this.connections = this.connections.filter(c => c !== conn);
-                this.syncLobby();
-                if (typeof players !== 'undefined' && players.length > 0) {
-                    const playerIndex = players.findIndex(p => (conn.peer && p.peerId === conn.peer) || (conn.peerName && p.name.trim().toLowerCase() === conn.peerName.trim().toLowerCase()));
-                    if (playerIndex !== -1 && players[playerIndex].alive) {
-                        const pName = players[playerIndex].name;
-                        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                        this.displayChat('Système', `⏳ ${pName} s'est déconnecté. Reconnexion possible...`, timeStr, true);
-                        this.broadcast({ type: 'chat', name: 'Système', message: `⏳ ${pName} s'est déconnecté. Reconnexion possible...`, time: timeStr, system: true });
-
-                        if (conn._graceTimeout) clearTimeout(conn._graceTimeout);
-                        conn._graceTimeout = setTimeout(() => {
-                            const isBack = this.connections.some(c => c.peerName && c.peerName.trim().toLowerCase() === pName.trim().toLowerCase() && c.open);
-                            if (!isBack && players[playerIndex] && players[playerIndex].alive) {
-                                const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                                this.displayChat('Système', `❌ ${pName} absent — éliminé automatiquement.`, t, true);
-                                this.broadcast({ type: 'chat', name: 'Système', message: `❌ ${pName} absent — éliminé automatiquement.`, time: t, system: true });
-                                finalizeElimination(playerIndex, false);
-                                setTimeout(() => this.unblockPendingPhases(), 200);
-                            }
-                        }, RECONNECT_TIMEOUT_MS);
-                    }
-                }
-
-                const currentView = getCurrentViewId();
-                if (currentView === 'view-vote') {
-                    this.syncVoteStatus();
-                } else {
-                    this.unblockPendingPhases();
+                if (this.roomRef) {
+                    this.roomRef.child('votes/' + this.playerId).set(toIdx);
                 }
             },
 
-            tryConnectToHost: function () {
-                if (this.mode !== 'client' || !this.peer || this.peer.destroyed) return;
-                if (this.connections[0] && this.connections[0].open) return;
-
-                if (this._reconnectInterval) {
-                    clearInterval(this._reconnectInterval);
-                    this._reconnectInterval = null;
-                }
-
-                this.updateStatus('RECONNEXION...', 'connecting');
-                showReconnectingOverlay("Connexion au serveur de jeu...");
-
-                try {
-                    if (this.peer.disconnected) {
-                        this.peer.reconnect();
-                    }
-                    const tryConn = this.peer.connect('toupil-' + this.roomId, { reliable: true });
-                    this.connections = [tryConn];
-                    tryConn.on('open', () => {
-                        tryConn.lastSeen = Date.now();
-                        this.updateStatus('CONNECTÉ', 'online');
-                        hideReconnectingOverlay();
-                        document.getElementById('lobby-host-elements').classList.add('d-none');
-                        document.getElementById('lobby-client-elements').classList.remove('d-none');
-                        document.getElementById('mp-chat-container').classList.remove('d-none');
-                        document.body.style.paddingBottom = "200px";
-
-                        this.me.name = localStorage.getItem('intrusion_last_name') || 'Inconnu';
-                        this.me.avatar = localStorage.getItem('intrusion_last_avatar');
-                        this.saveSession();
-                        this.sendData({ type: 'join', name: this.me.name, avatar: this.me.avatar });
-                    });
-                    tryConn.on('data', (data) => {
-                        tryConn.lastSeen = Date.now();
-                        this.handleData(data, tryConn);
-                    });
-                    tryConn.on('close', () => {
-                        if (!this.isDisconnecting) {
-                            this.startHostReconnectLoop();
-                        }
-                    });
-                } catch (e) {
-                    this.startHostReconnectLoop();
+            handleData: function (data) {
+                if (!data) return;
+                if (data.type === 'memorized') {
+                    this.roomRef.child('memorized/' + this.playerId).set(true);
+                } else if (data.type === 'guess_submit') {
+                    this.sendData(data);
+                } else if (data.type === 'force_lobby') {
+                    if (typeof timerInterval !== 'undefined' && timerInterval) clearInterval(timerInterval);
+                    const tbModal = document.getElementById('modal-tie-break');
+                    if (tbModal) tbModal.classList.add('d-none');
+                    players = [];
+                    currentStep = 0;
+                    document.getElementById('voteButtonsContainer').innerHTML = "";
+                    showView('view-mp-lobby');
                 }
             },
 
-            resolveVotes: function (votesObj) {
-                if (this._voteTimeout) { clearTimeout(this._voteTimeout); this._voteTimeout = null; }
-                const currentVotes = votesObj || this.votes || {};
-                const tallies = {};
-                Object.values(currentVotes).forEach(v => tallies[v] = (tallies[v] || 0) + 1);
+            disconnect: function () {
+                if (this.isDisconnecting) return;
+                this.isDisconnecting = true;
+                this.clearSession();
 
-                let maxVotes = 0;
-                for (let idx in tallies) {
-                    if (tallies[idx] > maxVotes) maxVotes = tallies[idx];
-                }
-
-                const tiedCandidates = [];
-                for (let idx in tallies) {
-                    if (tallies[idx] === maxVotes && maxVotes > 0) {
-                        tiedCandidates.push(parseInt(idx));
-                    }
-                }
-
-                if (tiedCandidates.length === 0) {
-                    const connectedAlive = players.map((p, i) => ({ p, i })).filter(item => item.p.alive && this.isPlayerConnected(item.i));
-                    if (connectedAlive.length > 0) {
-                        tiedCandidates.push(connectedAlive[0].i);
-                    }
-                }
-
-                if (tiedCandidates.length > 1) {
-                    const victimIdx = tiedCandidates[Math.floor(Math.random() * tiedCandidates.length)];
-                    this.broadcast({ type: 'sync_tie_break', tiedIndices: tiedCandidates, victimIndex: victimIdx });
-                    this.handleData({ type: 'sync_tie_break', tiedIndices: tiedCandidates, victimIndex: victimIdx });
-                } else if (tiedCandidates.length === 1) {
-                    const victimIdx = tiedCandidates[0];
-                    if (players[victimIdx]) {
-                        if (players[victimIdx].role === 'Inconnu') {
-                            this.broadcast({ type: 'sync_guess_phase', index: victimIdx });
-                            this.handleData({ type: 'sync_guess_phase', index: victimIdx });
-                        } else {
-                            this.broadcast({ type: 'sync_elimination', index: victimIdx });
-                            finalizeElimination(victimIdx);
-                        }
-                    }
-                }
-                this.votes = {};
-            },
-
-            syncVoteStatus: function () {
-                const alivePlayers = players.filter(p => p.alive);
-                const connectedAlivePlayers = alivePlayers.filter(p => {
-                    const idx = players.indexOf(p);
-                    return this.isPlayerConnected(idx);
-                });
-                const votesCount = this.votes ? Object.keys(this.votes).length : 0;
-
-                if (votesCount >= connectedAlivePlayers.length && connectedAlivePlayers.length > 0) {
-                    this.resolveVotes(this.votes);
-                } else {
-                    const voterIndices = this.votes ? Object.keys(this.votes).map(Number) : [];
-                    const totalExpected = connectedAlivePlayers.length;
-                    this.broadcast({ type: 'sync_vote_progress', count: votesCount, total: totalExpected, voterIndices: voterIndices });
-                    this.handleData({ type: 'sync_vote_progress', count: votesCount, total: totalExpected, voterIndices: voterIndices });
-
-                    if (!this._voteTimeout) {
-                        this._voteTimeout = setTimeout(() => {
-                            this._voteTimeout = null;
-                            this.unblockPendingPhases();
-                        }, RECONNECT_TIMEOUT_MS);
-                    }
-                }
-            },
-
-            startHostReconnectLoop: function () {
-                if (this._reconnectInterval) {
-                    clearInterval(this._reconnectInterval);
-                }
-                showReconnectingOverlay("Connexion perdue. Tentative de reconnexion à l'hôte...");
-                let elapsed = 0;
-                this._reconnectInterval = setInterval(() => {
-                    elapsed += HOST_RECONNECT_POLL_MS;
-                    if (elapsed >= HOST_RECONNECT_MAX_MS) {
-                        clearInterval(this._reconnectInterval);
-                        this._reconnectInterval = null;
-                        hideReconnectingOverlay();
-                        alert("L'hôte n'est pas revenu après 60 secondes. La partie est terminée.");
-                        this.disconnect();
-                        return;
-                    }
+                if (this.playersRef && this.playerId) {
                     try {
-                        if (!this.peer || this.peer.destroyed) return;
-                        if (this.peer.disconnected) {
-                            this.peer.reconnect();
-                        }
-                        const tryConn = this.peer.connect('toupil-' + this.roomId, { reliable: true });
-                        tryConn.on('open', () => {
-                            clearInterval(this._reconnectInterval);
-                            this._reconnectInterval = null;
-                            tryConn.lastSeen = Date.now();
-                            this.connections = [tryConn];
-                            tryConn.on('data', (d) => {
-                                tryConn.lastSeen = Date.now();
-                                this.handleData(d, tryConn);
-                            });
-                            tryConn.on('close', () => {
-                                if (!this.isDisconnecting) this.startHostReconnectLoop();
-                            });
-                            hideReconnectingOverlay();
-                            this.sendData({ type: 'join', name: this.me.name, avatar: this.me.avatar });
-                        });
+                        this.playersRef.child(this.playerId).update({ online: false });
                     } catch (e) { }
-                }, HOST_RECONNECT_POLL_MS);
-            },
-
-            unblockPendingPhases: function () {
-                const alivePlayers = players.filter(p => p.alive);
-                const currentView = getCurrentViewId();
-
-                if (this.memorizedPlayers && (currentView === 'view-pass' || currentView === 'view-reveal')) {
-                    const connectedAlivePlayers = alivePlayers.filter(p => {
-                        const idx = players.indexOf(p);
-                        return this.isPlayerConnected(idx);
-                    });
-                    const connectedAliveMemorized = connectedAlivePlayers.filter(p => {
-                        const idx = players.indexOf(p);
-                        return this.memorizedPlayers.includes(idx);
-                    });
-                    if (connectedAliveMemorized.length >= connectedAlivePlayers.length && connectedAlivePlayers.length > 0) {
-                        if (this._memorizedTimeout) { clearTimeout(this._memorizedTimeout); this._memorizedTimeout = null; }
-                        const starterName = pickSmartStarter(true);
-                        this.broadcast({ type: 'start_debate', starter: starterName });
-                        document.getElementById('firstPlayerName').innerText = starterName;
-                        preparePreDebateView();
-                        showView('view-pre-debate');
-                        return;
-                    }
                 }
 
-                if (this.votes && Object.keys(this.votes).length > 0 && currentView === 'view-vote') {
-                    const connectedAlivePlayers = alivePlayers.filter(p => {
-                        const idx = players.indexOf(p);
-                        return this.isPlayerConnected(idx);
-                    });
-                    const votesCount = Object.keys(this.votes).length;
+                this.cleanupListeners();
+                this.roomRef = null;
+                this.playersRef = null;
+                this.chatRef = null;
+                this.mode = null;
 
-                    if (votesCount >= connectedAlivePlayers.length || !this._voteTimeout) {
-                        this.resolveVotes(this.votes);
-                    }
+                const ind = document.getElementById('mp-status-indicator');
+                if (ind) ind.classList.add('d-none');
+                const chat = document.getElementById('mp-chat-container');
+                if (chat) chat.classList.add('d-none');
+                const hostBtn = document.getElementById('host-room-code-btn');
+                if (hostBtn) hostBtn.classList.add('d-none');
+                const secretWordBtn = document.getElementById('mp-secret-word-btn');
+                if (secretWordBtn) secretWordBtn.classList.add('d-none');
+                const secretModal = document.getElementById('modal-secret-word-reminder');
+                if (secretModal) secretModal.classList.add('d-none');
+                document.body.style.paddingBottom = "0px";
+
+                const placeholder = document.getElementById('setup-role-settings-placeholder');
+                const block = document.getElementById('role-settings-block');
+                if (placeholder && block) placeholder.appendChild(block);
+
+                try { updateConfigFromSlider(); } catch (e) { }
+
+                const setupView = document.getElementById('view-setup');
+                if (setupView && setupView.classList.contains('d-none')) {
+                    showView('view-setup');
                 }
+
+                setTimeout(() => {
+                    this.isDisconnecting = false;
+                }, 400);
             },
 
             saveSession: function () {
-                if (this.mode === 'host') {
-                    sessionStorage.setItem('intrusion_host_session', JSON.stringify({
-                        roomId: this.roomId,
-                        meName: this.me.name,
-                        meAvatar: this.me.avatar
-                    }));
-                } else if (this.mode === 'client') {
-                    sessionStorage.setItem('intrusion_client_session', JSON.stringify({
-                        roomId: this.roomId,
-                        meName: this.me.name || localStorage.getItem('intrusion_last_name'),
-                        meAvatar: this.me.avatar || localStorage.getItem('intrusion_last_avatar')
-                    }));
-                }
+                const sessionData = {
+                    roomId: this.roomId,
+                    mode: this.mode,
+                    playerId: this.playerId,
+                    meName: this.me.name,
+                    meAvatar: this.me.avatar
+                };
+                sessionStorage.setItem('intrusion_firebase_session', JSON.stringify(sessionData));
+                localStorage.setItem('intrusion_firebase_session', JSON.stringify(sessionData));
             },
 
             clearSession: function () {
-                sessionStorage.removeItem('intrusion_host_session');
-                sessionStorage.removeItem('intrusion_client_session');
+                sessionStorage.removeItem('intrusion_firebase_session');
+                localStorage.removeItem('intrusion_firebase_session');
                 const banner = document.getElementById('resume-session-banner');
                 if (banner) banner.classList.add('d-none');
             },
 
             resumeSession: function () {
-                const hostRaw = sessionStorage.getItem('intrusion_host_session');
-                const clientRaw = sessionStorage.getItem('intrusion_client_session');
-
-                this.cleanupTimers();
-                try { if (this.peer) this.peer.destroy(); } catch (e) { }
-                this.peer = null;
-                this.connections = [];
-
-                if (hostRaw) {
-                    const state = JSON.parse(hostRaw);
-                    this.mode = 'host';
-                    this.roomId = state.roomId;
-                    this.me.name = state.meName;
-                    this.me.avatar = state.meAvatar;
-                    this.peer = new Peer('toupil-' + this.roomId, PEER_CONFIG);
-                    this.updateStatus('RECONNEXION...', 'connecting');
-                    const banner = document.getElementById('resume-session-banner');
-                    if (banner) banner.classList.add('d-none');
-
-                    this.peer.on('open', () => {
+                const raw = sessionStorage.getItem('intrusion_firebase_session') || localStorage.getItem('intrusion_firebase_session');
+                if (!raw) return;
+                try {
+                    const sess = JSON.parse(raw);
+                    if (sess.mode === 'host') {
+                        this.mode = 'host';
+                        this.roomId = sess.roomId;
+                        this.playerId = sess.playerId;
+                        this.me.name = sess.meName;
+                        this.me.avatar = sess.meAvatar;
+                        this.roomRef = db.ref('rooms/' + this.roomId);
+                        this.playersRef = this.roomRef.child('players');
+                        this.chatRef = this.roomRef.child('chat');
                         this.updateStatus('HÔTE : ' + this.roomId, 'online');
                         document.getElementById('displayRoomCode').innerText = this.roomId;
                         document.getElementById('host-room-code-display').innerText = this.roomId;
                         document.getElementById('modalRoomCodeDisplay').innerText = this.roomId;
                         document.getElementById('host-room-code-btn').classList.remove('d-none');
                         document.getElementById('mp-chat-container').classList.remove('d-none');
-                        document.body.style.paddingBottom = '200px';
-
-                        if (players && players.length > 0) {
-                            this.displayChat('Système', '🔄 Session de jeu restaurée. En attente des joueurs.', '', true);
-                        } else {
-                            document.getElementById('lobby-host-elements').classList.remove('d-none');
-                            document.getElementById('lobby-client-elements').classList.add('d-none');
-                            document.getElementById('lobby-actions-host').classList.remove('d-none');
-                            const placeholder = document.getElementById('mp-role-settings-placeholder');
-                            const block = document.getElementById('role-settings-block');
-                            if (placeholder && block) placeholder.appendChild(block);
-                            updateConfigFromSlider(1);
-                            showView('view-mp-lobby');
-                            this.addSelfToLobby();
-                        }
-                        this.saveSession();
-                        this.startHeartbeat();
-                        this.startLobbySyncTimer();
-                    });
-
-                    this.peer.on('connection', (conn) => {
-                        this.connections.push(conn);
-                        conn.on('open', () => {
-                            conn.lastSeen = Date.now();
-                            if (this.mode === 'host' && (!players || players.length === 0)) {
-                                this.syncLobby();
-                            }
-                        });
-                        conn.on('data', (data) => {
-                            conn.lastSeen = Date.now();
-                            this.handleData(data, conn);
-                        });
-                        conn.on('close', () => {
-                            this.handleConnectionClose(conn);
-                        });
-                    });
-
-                    this.peer.on('error', () => {
-                        alert('Impossible de reprendre la session (code expiré ou déjà utilisé).');
-                        this.clearSession();
-                    });
-                } else if (clientRaw) {
-                    const state = JSON.parse(clientRaw);
-                    this.mode = 'client';
-                    this.roomId = state.roomId;
-                    this.me.name = state.meName || localStorage.getItem('intrusion_last_name') || 'Inconnu';
-                    this.me.avatar = state.meAvatar || localStorage.getItem('intrusion_last_avatar');
-                    this.peer = new Peer(null, PEER_CONFIG);
-                    this.updateStatus('CONNEXION...', 'connecting');
-                    showReconnectingOverlay("Reconnexion à la salle...");
-                    const banner = document.getElementById('resume-session-banner');
-                    if (banner) banner.classList.add('d-none');
-
-                    this.peer.on('open', (id) => {
-                        const conn = this.peer.connect('toupil-' + this.roomId, { reliable: true });
-                        this.connections = [conn];
-                        conn.on('open', () => {
-                            conn.lastSeen = Date.now();
-                            this.updateStatus('CONNECTÉ', 'online');
-                            hideReconnectingOverlay();
-                            document.getElementById('lobby-host-elements').classList.add('d-none');
-                            document.getElementById('lobby-client-elements').classList.remove('d-none');
-                            document.getElementById('lobby-actions-host').classList.add('d-none');
-                            document.getElementById('mp-chat-container').classList.remove('d-none');
-                            document.body.style.paddingBottom = "200px";
-                            this.saveSession();
-                            this.sendData({ type: 'join', name: this.me.name, avatar: this.me.avatar });
-                            this.startHeartbeat();
-                        });
-                        conn.on('data', (data) => {
-                            conn.lastSeen = Date.now();
-                            this.handleData(data, conn);
-                        });
-                        conn.on('close', () => {
-                            if (!this.isDisconnecting) {
-                                this.startHostReconnectLoop();
-                            }
-                        });
-                    });
-
-                    this.peer.on('error', (err) => {
-                        hideReconnectingOverlay();
-                        alert("Impossible de rejoindre la salle. Vérifie le code.");
-                        this.disconnect();
-                    });
+                        document.body.style.paddingBottom = "200px";
+                        this.setupPresence();
+                        this.attachRoomListeners();
+                    } else if (sess.mode === 'client') {
+                        this.initClient(sess.roomId);
+                    }
+                } catch (e) {
+                    this.clearSession();
                 }
             },
 
             resyncAllPlayers: function () {
-                if (this.mode !== 'host') return;
-
-                this.connections = this.connections.filter(c => c && c.open);
-
-                if (!players || players.length === 0) {
-                    this.syncLobby();
-                    alert(`Salon resynchronisé. ${this.connections.filter(c => c.peerName).length} joueur(s) connecté(s).`);
-                    return;
+                if (this.roomRef) {
+                    this.roomRef.once('value').then(snap => {
+                        if (snap.exists()) {
+                            this.handleRoomUpdate(snap.val());
+                            alert("Données synchronisées avec la base de données Firebase.");
+                        }
+                    });
                 }
-
-                let sentCount = 0;
-                const disconnectedIndices = players.map((p, i) => ({ player: p, index: i }))
-                    .filter(item => item.index !== 0 && !this.isPlayerConnected(item.index));
-
-                this.connections.forEach(conn => {
-                    if (conn.open) {
-                        let playerIdx = -1;
-                        if (conn.peerName) {
-                            playerIdx = players.findIndex(p => p.name.trim().toLowerCase() === conn.peerName.trim().toLowerCase());
-                        }
-
-                        if (playerIdx === -1 && disconnectedIndices.length === 1) {
-                            playerIdx = disconnectedIndices[0].index;
-                            conn.peerName = players[playerIdx].name;
-                        }
-
-                        if (playerIdx !== -1) {
-                            const targetView = getReconnectingPlayerView(playerIdx);
-                            const progressData = {
-                                type: 'reconnect_game',
-                                players: players,
-                                config: gameConfig,
-                                words: [currentPNJWord, currentInfiltreWord],
-                                myIndex: playerIdx,
-                                currentView: targetView,
-                                pendingVictimIndex: pendingVictimIndex,
-                                memorized: this.memorizedPlayers || [],
-                                starterName: document.getElementById('firstPlayerName').innerText || (players.length > 0 ? players[0].name : '')
-                            };
-                            if (targetView === 'view-vote') {
-                                const aliveCount = players.filter(p => p.alive).length;
-                                const votesCount = this.votes ? Object.keys(this.votes).length : 0;
-                                const voterIndices = this.votes ? Object.keys(this.votes).map(Number) : [];
-                                progressData.voteProgress = {
-                                    count: votesCount,
-                                    total: aliveCount,
-                                    voterIndices: voterIndices
-                                };
-                            } else if (targetView === 'view-debate') {
-                                progressData.debateTimeLeft = MP.debateTimeLeft || 60;
-                            }
-
-                            try {
-                                conn.send(progressData);
-                                sentCount++;
-                            } catch (e) {
-                                console.error("Échec de l'envoi de la resynchronisation à", conn.peerName, e);
-                            }
-                        }
-                    }
-                });
-                alert(`Signal de resynchronisation envoyé à ${sentCount} joueur(s) en jeu.`);
             }
         };
 
@@ -4617,7 +4837,6 @@
             await requestWakeLock();
         }
 
-        // Active automatiquement le maintien d'écran éveillé dès la première interaction de l'utilisateur
         const handleFirstInteraction = async () => {
             await requestWakeLock();
             document.removeEventListener('click', handleFirstInteraction);
@@ -4626,34 +4845,13 @@
         document.addEventListener('click', handleFirstInteraction);
         document.addEventListener('touchstart', handleFirstInteraction);
 
-        // Avant de fermer/rafraîchir la page, avertir les clients si on est hôte en jeu
-        window.addEventListener('beforeunload', () => {
-            if (MP.mode === 'host' && players && players.length > 0) {
-                try { MP.broadcast({ type: 'room_closed' }); } catch (e) { }
-            }
-        });
-
         document.addEventListener('visibilitychange', async () => {
             if (document.visibilityState === 'visible') {
                 await toggleScreenLock();
                 try {
-                    const hasSession = sessionStorage.getItem('intrusion_host_session') || sessionStorage.getItem('intrusion_client_session'); if (hasSession) {
-                        if (MP.peer) {
-                            if (MP.peer.destroyed) {
-                                MP.resumeSession();
-                            } else if (MP.peer.disconnected) {
-                                MP.peer.reconnect();
-                            }
-                        } else {
-                            MP.resumeSession();
-                        }
-
-                        if (MP.mode === 'client' && MP.peer && !MP.peer.destroyed) {
-                            const isConnClosed = !MP.connections[0] || MP.connections[0].open === false;
-                            if (isConnClosed) {
-                                MP.tryConnectToHost();
-                            }
-                        }
+                    const hasSession = sessionStorage.getItem('intrusion_firebase_session') || localStorage.getItem('intrusion_firebase_session');
+                    if (hasSession && (!MP.roomRef || !MP.mode)) {
+                        MP.resumeSession();
                     }
                 } catch (e) {
                     console.error("Erreur auto-reconnect:", e);
@@ -5204,7 +5402,9 @@
             currentPNJWord = pair[0]; currentInfiltreWord = pair[1];
 
             // Match player count to connected players if MP
-            if (isMP) { const activeCount = MP.connections.filter(c => c && c.open && c.peerName).length + 1; gameConfig.total = activeCount; }
+            if (isMP && MP.mode === 'host') {
+                // gameConfig.total est déjà calculé depuis les joueurs Firebase connectés dans MP.startGame
+            }
 
             buildRolesDeck(pair);
 
@@ -5231,20 +5431,15 @@
                     players[i].role = rolesDeck[i].role;
                     players[i].word = rolesDeck[i].word;
                 }
-                // On envoie individuellement à chaque client son propre index en se basant sur le pseudo stable
-                MP.connections.forEach((c) => {
-                    const clientIndex = players.findIndex(p => p.name === c.peerName);
-                    if (clientIndex !== -1) {
-                        c.send({
-                            type: 'start_game',
-                            players: players,
-                            config: gameConfig,
-                            words: [currentPNJWord, currentInfiltreWord],
-                            myIndex: clientIndex
-                        });
-                    }
+                MP.roomRef.update({
+                    words: [currentPNJWord, currentInfiltreWord],
+                    gamePlayers: players,
+                    memorized: {},
+                    votes: {},
+                    stopTimerVotes: 0
+                }).then(() => {
+                    revealIdentity(true);
                 });
-                revealIdentity(true);
             } else if (players.length === gameConfig.total) {
                 // Tous les joueurs sont déjà enregistrés (mode replay) : réassigner les rôles sans re-saisie
                 for (let i = 0; i < players.length; i++) {
@@ -5476,7 +5671,15 @@
                 if (timeLeft <= 0) { forceVote(); }
             }, 1000);
         }
-        function forceVote() { clearInterval(timerInterval); SFX.alarm(); setupVoteScreen(); }
+        function forceVote() {
+            clearInterval(timerInterval);
+            SFX.alarm();
+            if (MP.mode === 'host') {
+                MP.roomRef.update({ status: 'vote' });
+            } else if (!MP.mode) {
+                setupVoteScreen();
+            }
+        }
 
         function handleForceVoteClick() {
             if (MP.mode && MP.me.index !== null && !players[MP.me.index].alive) {
@@ -5632,7 +5835,7 @@
             const targetSlot = tiedIndices.indexOf(victimIndex);
 
             let rigHtml = "";
-            let spinAction = () => {};
+            let spinAction = () => { };
 
             SFX.alarm();
 
@@ -5747,8 +5950,8 @@
 
                 // Couvercles 3D lumineux
                 const capsHtml = `
-                <div class="prism-cap top" style="width: ${capSize}px; height: ${capSize}px; margin-left: -${capSize/2}px; margin-top: -${capSize/2}px;"></div>
-                <div class="prism-cap bottom" style="width: ${capSize}px; height: ${capSize}px; margin-left: -${capSize/2}px; margin-top: -${capSize/2}px;"></div>`;
+                <div class="prism-cap top" style="width: ${capSize}px; height: ${capSize}px; margin-left: -${capSize / 2}px; margin-top: -${capSize / 2}px;"></div>
+                <div class="prism-cap bottom" style="width: ${capSize}px; height: ${capSize}px; margin-left: -${capSize / 2}px; margin-top: -${capSize / 2}px;"></div>`;
 
                 rigHtml = `
                 <div class="tie-3d-shadow" id="tie-shadow"></div>
@@ -6083,6 +6286,86 @@
             return 'view-setup';
         }
 
+        // --- HELPERS : RAPPEL DU MOT SECRET EN LIGNE ---
+        function toggleSecretWordModal() {
+            const modal = document.getElementById('modal-secret-word-reminder');
+            if (!modal) return;
+            if (modal.classList.contains('d-none')) {
+                // Remplir les données
+                const myIdx = MP.me && MP.me.index !== null ? MP.me.index : currentStep;
+                const myPlayer = (players && players[myIdx]) ? players[myIdx] : null;
+
+                const wordEl = document.getElementById('reminderWordDisplay');
+                const roleEl = document.getElementById('reminderRoleDisplay');
+                const roleBadge = document.getElementById('reminderRoleBadge');
+
+                if (myPlayer) {
+                    if (wordEl) wordEl.innerText = myPlayer.word || "Aucun mot";
+                    if (roleEl) {
+                        roleEl.innerText = myPlayer.role || "";
+                        if (myPlayer.role === 'PNJ') roleEl.className = "brand-font fs-5 text-info";
+                        else if (myPlayer.role === 'Infiltré') roleEl.className = "brand-font fs-5 text-danger";
+                        else roleEl.className = "brand-font fs-5 text-secondary";
+                    }
+                    if (roleBadge) {
+                        roleBadge.classList.toggle('d-none', gameConfig.mode !== 'revele');
+                    }
+                }
+                modal.classList.remove('d-none');
+                SFX.reveal();
+            } else {
+                modal.classList.add('d-none');
+            }
+        }
+
+        function updateSecretWordBtnVisibility(status) {
+            const btn = document.getElementById('mp-secret-word-btn');
+            if (!btn) return;
+            // Visible dès que le jeu commence (memorizing, debate, vote, tiebreak, etc.)
+            const inGameStatuses = ['memorizing', 'debate', 'vote', 'tiebreak', 'guess', 'transition'];
+            if (MP.mode && status && inGameStatuses.includes(status) && players && players.length > 0) {
+                btn.classList.remove('d-none');
+            } else {
+                btn.classList.add('d-none');
+            }
+        }
+
+        // --- HELPERS : TOAST NOTIFICATIONS & COPIE ---
+        function showToast(message, type = 'info', duration = 3000) {
+            let container = document.getElementById('custom-toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'custom-toast-container';
+                document.body.appendChild(container);
+            }
+            const toast = document.createElement('div');
+            toast.className = `toast-pill toast-${type}`;
+            let icon = type === 'success' ? 'bi-check-circle-fill text-success' : type === 'warning' ? 'bi-exclamation-triangle-fill text-warning' : 'bi-info-circle-fill text-info';
+            toast.innerHTML = `<i class="bi ${icon} fs-5"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('toast-fade-out');
+                setTimeout(() => toast.remove(), 400);
+            }, duration);
+        }
+
+        function copyRoomCode() {
+            const code = (MP.roomId || document.getElementById('displayRoomCode').innerText || '').trim();
+            if (!code || code === '----') return;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(code).then(() => {
+                    showToast(`Code "${code}" copié dans le presse-papier !`, 'success');
+                    if (navigator.vibrate) navigator.vibrate(50);
+                    if (typeof SFX !== 'undefined' && SFX.click) SFX.click();
+                }).catch(() => {
+                    showToast(`Code du salon : ${code}`, 'info');
+                });
+            } else {
+                showToast(`Code du salon : ${code}`, 'info');
+            }
+        }
+
         // --- HELPERS : OVERLAY RECONNEXION ---
         function showReconnectingOverlay(msg) {
             const overlay = document.getElementById('reconnecting-overlay');
@@ -6096,35 +6379,76 @@
             if (overlay) { overlay.classList.add('d-none'); }
         }
 
+        // Reconnexion automatique Firebase au chargement de la page si une partie était en cours
         (function checkSavedSession() {
             try {
-                const hostRaw = sessionStorage.getItem('intrusion_host_session');
-                const clientRaw = sessionStorage.getItem('intrusion_client_session');
-
-                if (hostRaw || clientRaw) {
-                    const banner = document.getElementById('resume-session-banner');
-                    const msgEl = document.getElementById('resume-session-msg');
-                    const parsed = JSON.parse(hostRaw || clientRaw);
-
-                    if (banner) {
-                        if (msgEl && parsed.roomId) {
-                            msgEl.innerText = `Une partie en cours (Code: ${parsed.roomId}) a été détectée.`;
+                const sessionRaw = sessionStorage.getItem('intrusion_firebase_session') || localStorage.getItem('intrusion_firebase_session');
+                if (sessionRaw) {
+                    const parsed = JSON.parse(sessionRaw);
+                    if (parsed && parsed.roomId) {
+                        const banner = document.getElementById('resume-session-banner');
+                        const msgEl = document.getElementById('resume-session-msg');
+                        if (banner) {
+                            if (msgEl) {
+                                msgEl.innerText = `Partie en cours (Code: ${parsed.roomId}) détectée.`;
+                            }
+                            banner.classList.remove('d-none');
                         }
-                        // Affiche la bannière au lieu de forcer la reconnexion automatique
-                        banner.classList.remove('d-none');
+                        // Reconnexion automatique fluide
+                        setTimeout(() => {
+                            MP.resumeSession();
+                        }, 500);
                     }
                 }
             } catch (e) {
-                sessionStorage.removeItem('intrusion_host_session');
-                sessionStorage.removeItem('intrusion_client_session');
+                console.warn("Erreur chargement session:", e);
             }
         })();
-        window.addEventListener('beforeunload', () => {
-            if (MP.peer && !MP.peer.destroyed) {
-                try { MP.peer.destroy(); } catch (e) { }
-            }
-        });
     </script>
+
+    <!-- BOUTON DISCRET RAPPEL DU MOT SECRET (EN LIGNE) -->
+    <div id="mp-secret-word-btn" class="position-fixed d-none" style="top: 15px; left: 15px; z-index: 2000;">
+        <button class="btn btn-sm btn-outline-warning bg-dark fw-bold shadow d-flex align-items-center gap-1 py-1 px-2"
+            style="border-color: rgba(251, 191, 36, 0.4); backdrop-filter: blur(8px); opacity: 0.85; transition: all 0.2s ease;"
+            onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.85'"
+            onclick="toggleSecretWordModal(); SFX.click();">
+            <i class="bi bi-eye-fill text-warning"></i>
+            <span class="small fw-semibold">Mon mot</span>
+        </button>
+    </div>
+
+    <!-- MODAL CONFIDENTIEL DE RAPPEL DU MOT SECRET -->
+    <div id="modal-secret-word-reminder"
+        class="d-none position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-90 d-flex justify-content-center align-items-center"
+        style="z-index: 3500; backdrop-filter: blur(10px);"
+        onclick="if(event.target === this) toggleSecretWordModal();">
+        <div class="glass-card p-4 text-center position-relative"
+            style="width: 90%; max-width: 360px; border: 1.5px solid var(--accent-neon); box-shadow: 0 0 30px rgba(251, 191, 36, 0.25);">
+            <button onclick="toggleSecretWordModal(); SFX.click()"
+                class="btn btn-sm btn-outline-secondary position-absolute top-0 end-0 m-3"
+                style="width: 32px; height: 32px; padding: 0;">
+                <i class="bi bi-x-lg"></i>
+            </button>
+            <div class="mb-2">
+                <i class="bi bi-shield-lock-fill text-warning fs-1"></i>
+            </div>
+            <h5 class="brand-font text-warning mb-1" style="letter-spacing: 1px;">INFORMATIONS CONFIDENTIELLES</h5>
+            <p class="text-muted small mb-3">Attention aux regards indiscrets !</p>
+
+            <div class="p-3 rounded mb-3 border border-secondary" style="background: rgba(0, 0, 0, 0.55);">
+                <div class="small text-muted text-uppercase fw-bold mb-1">VOTRE MOT SECRET</div>
+                <div id="reminderWordDisplay" class="brand-font fs-2 text-warning fw-bold mb-2">---</div>
+                <div id="reminderRoleBadge" class="d-none pt-2 border-top border-secondary">
+                    <div class="small text-muted text-uppercase fw-bold mb-1">VOTRE RÔLE</div>
+                    <div id="reminderRoleDisplay" class="brand-font fs-5 text-info">---</div>
+                </div>
+            </div>
+
+            <button onclick="toggleSecretWordModal(); SFX.click()" class="btn btn-outline-light w-100 py-2 fw-bold">
+                <i class="bi bi-eye-slash-fill me-1"></i> MASQUER LE MOT
+            </button>
+        </div>
+    </div>
 
     <!-- HOST ROOM CODE BUTTON -->
     <div id="host-room-code-btn" class="position-fixed d-none" style="top: 15px; right: 15px; z-index: 2000;">
@@ -6216,10 +6540,24 @@
             <div id="mp-chat-messages" class="flex-grow-1 overflow-auto mb-2 px-1"
                 style="max-height: 150px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 5px;">
             </div>
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 align-items-center">
                 <input type="text" id="mp-chat-input"
                     class="form-control form-control-sm cyber-input bg-dark text-white border-secondary"
                     placeholder="Message..." autocomplete="off" onkeypress="if(event.key==='Enter') MP.sendChat()">
+
+                <div id="mp-voice-recording-bar" class="d-none flex-grow-1 align-items-center justify-content-between px-2 py-1 rounded bg-danger bg-opacity-25 border border-danger text-white">
+                    <span class="d-flex align-items-center gap-2 small">
+                        <span class="spinner-grow spinner-grow-sm text-danger" role="status"></span>
+                        <span id="mp-voice-timer" class="fw-bold text-danger">00s / 15s</span>
+                    </span>
+                    <button type="button" onclick="MP.stopVoiceRecording(true); SFX.click();" class="btn btn-sm text-light p-0 ms-2" title="Annuler">
+                        <i class="bi bi-x-circle-fill text-danger fs-5"></i>
+                    </button>
+                </div>
+
+                <button id="btn-voice-record" type="button" onclick="MP.toggleVoiceRecording()" class="btn btn-sm btn-outline-warning px-2" title="Enregistrer un vocal">
+                    <i class="bi bi-mic-fill fs-6"></i>
+                </button>
                 <button onclick="MP.sendChat()" class="btn btn-sm btn-neon px-3"><i
                         class="bi bi-send-fill"></i></button>
             </div>
