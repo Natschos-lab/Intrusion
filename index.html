@@ -3625,6 +3625,7 @@
         let currentStep = 0;
         let currentPNJWord = "";
         let currentInfiltreWord = "";
+        let currentPairVersion = null;
         let pendingVictimIndex = -1;
         let timerInterval = null;
         let previousStarters = [];
@@ -3663,7 +3664,7 @@
             memorizedCount: 0,
             memorizedPlayers: [],
             votes: {},
-            stopTimerVotes: 0,
+            stopTimerVotes: {},
             resolvingVote: false,
             resolvingGuess: false,
             roomInactivityTimer: null,
@@ -3812,7 +3813,7 @@
                     tieBreak: null,
                     round: 0,
                     guessPhase: null,
-                    stopTimerVotes: 0,
+                    stopTimerVotes: {},
                     lastActivityAt: Date.now(),
                     players: {
                         [this.playerId]: {
@@ -4089,6 +4090,14 @@
                     currentInfiltreWord = roomData.words[1] || '';
                 }
 
+                const roomPairVersion = roomData.pairVersion || null;
+                const isNewPair = currentPairVersion !== null && roomPairVersion !== currentPairVersion;
+                currentPairVersion = roomPairVersion;
+                if (isNewPair && roomData.status === 'memorizing') {
+                    updatePassScreen();
+                    showView('view-pass');
+                }
+
                 if (roomData.pendingVictimIndex !== undefined) {
                     pendingVictimIndex = roomData.pendingVictimIndex;
                 }
@@ -4157,7 +4166,13 @@
                     // Si l'hôte constate que tout le monde a mémorisé, lancer le débat
                     if (this.mode === 'host' && roomData.memorized) {
                         const alivePlayers = players.filter(p => p.alive);
-                        const allAliveValidated = alivePlayers.length > 0 && alivePlayers.every(p => roomData.memorized[p.id]);
+                        const allAliveValidated = alivePlayers.length > 0 && alivePlayers.every(p => {
+                            const memorized = roomData.memorized[p.id];
+                            return !!memorized && (typeof memorized !== 'object' || (
+                                (memorized.round === undefined || memorized.round === this.currentRound) &&
+                                (memorized.pairVersion === undefined || memorized.pairVersion === currentPairVersion)
+                            ));
+                        });
                         if (allAliveValidated) {
                             const starterName = pickSmartStarter(true);
                             this.roomRef.update({
@@ -4201,7 +4216,9 @@
                     }
 
                     // Arrêt prématuré du chrono (votes stop par majorité)
-                    const votesStop = roomData.stopTimerVotes || 0;
+                    const votesStop = roomData.stopTimerVotes && typeof roomData.stopTimerVotes === 'object'
+                        ? Object.keys(roomData.stopTimerVotes).length
+                        : Number(roomData.stopTimerVotes || 0);
                     const activeAliveCount = players.filter(p => p.alive && p.eligible !== false && roomData.players && roomData.players[p.id] && roomData.players[p.id].online !== false).length;
                     const aliveCount = activeAliveCount || players.filter(p => p.alive && p.eligible !== false).length;
                     const threshold = Math.floor(aliveCount / 2) + 1;
@@ -4233,7 +4250,8 @@
                         const vote = votesMap[pid];
                         const targetIdx = Number(vote && typeof vote === 'object' ? vote.target : vote);
                         const voteRound = vote && typeof vote === 'object' ? vote.round : this.currentRound;
-                        if (aliveVoterPids.includes(pid) && voteRound === this.currentRound && Number.isInteger(targetIdx) && players[targetIdx] && players[targetIdx].alive && players[targetIdx].eligible !== false) {
+                        const votePairVersion = vote && typeof vote === 'object' ? vote.pairVersion : undefined;
+                        if (aliveVoterPids.includes(pid) && voteRound === this.currentRound && (votePairVersion === undefined || votePairVersion === currentPairVersion) && Number.isInteger(targetIdx) && players[targetIdx] && players[targetIdx].alive && players[targetIdx].eligible !== false) {
                             validVotes[pid] = targetIdx;
                         }
                     });
@@ -4272,7 +4290,11 @@
                 else if (status === 'tiebreak') {
                     const tb = roomData.tieBreak;
                     if (tb) {
-                        startTieBreaker(tb.tiedIndices, tb.victimIndex, this.mode === 'host');
+                        const tieBreakKey = `${this.currentRound}:${tb.victimIndex}:${(tb.tiedIndices || []).join(',')}`;
+                        if (this._activeTieBreakKey !== tieBreakKey) {
+                            this._activeTieBreakKey = tieBreakKey;
+                            startTieBreaker(tb.tiedIndices, tb.victimIndex, this.mode === 'host');
+                        }
                     }
                 }
 
@@ -4360,7 +4382,8 @@
                     const voteRound = vote && typeof vote === 'object' && vote.round !== undefined
                         ? vote.round
                         : this.currentRound;
-                    if (voteRound !== this.currentRound) return;
+                    const votePairVersion = vote && typeof vote === 'object' ? vote.pairVersion : undefined;
+                    if (voteRound !== this.currentRound || (votePairVersion !== undefined && votePairVersion !== currentPairVersion)) return;
                     if (players[targetIdx] && players[targetIdx].alive && players[targetIdx].eligible !== false) {
                         tallies[targetIdx] = (tallies[targetIdx] || 0) + 1;
                     }
@@ -4411,7 +4434,7 @@
 
             resolveFirebaseGuess: function (guessData) {
                 if (this.resolvingGuess || !guessData || pendingVictimIndex < 0) return;
-                if (guessData.round !== this.currentRound) return;
+                if (guessData.round !== this.currentRound || (guessData.pairVersion !== undefined && guessData.pairVersion !== currentPairVersion)) return;
                 this.resolvingGuess = true;
                 const guess = cleanString(guessData.guess || '');
                 const correct = cleanString(currentPNJWord);
@@ -4451,9 +4474,12 @@
                             gamePlayers: null,
                             votes: {},
                             memorized: {},
-                            stopTimerVotes: 0,
+                            stopTimerVotes: {},
                             tieBreak: null,
                             guessCorrect: null,
+                            guesses: {},
+                            gameOver: false,
+                            winner: null,
                             pendingVictimIndex: -1
                         });
                         showView('view-mp-lobby');
@@ -4502,14 +4528,18 @@
                         status: 'memorizing',
                         gamePlayers: pList,
                         words: [currentPNJWord, currentInfiltreWord],
+                        pairVersion: Date.now(),
                         config: gameConfig,
                         round: 1,
                         memorized: {},
                         votes: {},
-                        stopTimerVotes: 0,
+                        stopTimerVotes: {},
                         pendingVictimIndex: -1,
                         tieBreak: null,
-                        guessCorrect: null
+                        guessCorrect: null,
+                        guesses: {},
+                        gameOver: false,
+                        winner: null
                     }).then(() => {
                         revealIdentity(true);
                     }).catch(error => {
@@ -4809,7 +4839,7 @@
                     this.roomRef.update({
                         status: 'debate',
                         debateSeconds: data.seconds,
-                        stopTimerVotes: 0,
+                        stopTimerVotes: {},
                         debateStartedAt: Date.now(),
                         memorized: {},
                         votes: {},
@@ -4833,14 +4863,17 @@
                 } else if (data.type === 'sync_guess_phase') {
                     this.roomRef.update({ status: 'guess', pendingVictimIndex: data.index });
                 } else if (data.type === 'force_lobby') {
-                    this.roomRef.update({ status: 'lobby', gamePlayers: null, votes: {}, memorized: {}, guesses: {}, stopTimerVotes: 0, tieBreak: null, guessCorrect: null, gameOver: null, winner: null, pendingVictimIndex: -1 });
+                    this.roomRef.update({ status: 'lobby', gamePlayers: null, votes: {}, memorized: {}, guesses: {}, stopTimerVotes: {}, tieBreak: null, guessCorrect: null, gameOver: null, winner: null, pendingVictimIndex: -1 });
                 }
             },
 
             sendData: function (data) {
                 if (!this.roomRef) return;
                 if (data.type === 'memorized') {
-                    this.roomRef.child('memorized/' + this.playerId).set(true).catch(error => {
+                    this.roomRef.child('memorized/' + this.playerId).set({
+                        round: this.currentRound || 0,
+                        pairVersion: currentPairVersion
+                    }).catch(error => {
                         console.error("Erreur validation du mot:", error);
                         const btn = document.getElementById('btn-pass-ready');
                         if (btn) btn.classList.remove('d-none');
@@ -4851,7 +4884,8 @@
                     if (!voter || !voter.alive || voter.eligible === false) return;
                     this.roomRef.child('votes/' + this.playerId).set({
                         target: data.to,
-                        round: this.currentRound || 0
+                        round: this.currentRound || 0,
+                        pairVersion: currentPairVersion
                     }).catch(error => {
                         console.error("Erreur enregistrement du vote:", error);
                         alert("Le vote n'a pas été enregistré. Vérifiez la connexion puis réessayez.");
@@ -4859,7 +4893,7 @@
                 } else if (data.type === 'vote_stop_timer') {
                     const voter = players[this.me.index];
                     if (!voter || !voter.alive || voter.eligible === false) return;
-                    this.roomRef.child('stopTimerVotes').transaction(curr => (curr || 0) + 1).catch(error => {
+                    this.roomRef.child('stopTimerVotes/' + this.playerId).set(true).catch(error => {
                         console.error("Erreur arrêt du chrono:", error);
                         alert("Votre demande d'arrêt du chrono n'a pas été enregistrée.");
                     });
@@ -4868,7 +4902,8 @@
                     if (!guesser || this.me.index !== pendingVictimIndex || !guesser.alive || guesser.eligible === false) return;
                     this.roomRef.child('guesses/' + this.playerId).set({
                         guess: String(data.guess || '').slice(0, 100),
-                        round: this.currentRound || 0
+                        round: this.currentRound || 0,
+                        pairVersion: currentPairVersion
                     }).catch(error => {
                         console.error("Erreur enregistrement de la devinette:", error);
                         alert("La devinette n'a pas été enregistrée. Vérifiez la connexion puis réessayez.");
@@ -4886,6 +4921,8 @@
             handleData: function (data) {
                 if (!data) return;
                 if (data.type === 'memorized') {
+                    this.sendData(data);
+                } else if (data.type === 'vote_stop_timer') {
                     this.sendData(data);
                 } else if (data.type === 'guess_submit') {
                     this.sendData(data);
@@ -5559,6 +5596,20 @@
         }
 
         // --- CONFIG LOGIC ---
+        function normalizeRoleConfig(total) {
+            gameConfig.total = Number(total);
+            gameConfig.infiltres = Math.max(1, Number(gameConfig.infiltres) || 1);
+            gameConfig.inconnus = Math.max(0, Number(gameConfig.inconnus) || 0);
+
+            const maxBadGuys = Math.max(1, gameConfig.total - 1);
+            while (gameConfig.infiltres + gameConfig.inconnus > maxBadGuys) {
+                if (gameConfig.inconnus > 0) gameConfig.inconnus--;
+                else if (gameConfig.infiltres > 1) gameConfig.infiltres--;
+                else break;
+            }
+            gameConfig.pnj = gameConfig.total - gameConfig.infiltres - gameConfig.inconnus;
+        }
+
         function updateConfigFromSlider(totalOverride = null, forceDefault = true) {
             const val = totalOverride !== null ? totalOverride : parseInt(document.getElementById('rangePlayers').value);
             gameConfig.total = val;
@@ -5576,14 +5627,8 @@
                 else if (val >= 17 && val <= 18) { inf = 5; inc = 3; }
                 else if (val >= 19) { inf = 5; inc = 4; }
                 gameConfig.infiltres = inf; gameConfig.inconnus = inc;
-            } else {
-                const maxBadGuys = Math.max(1, val - 1);
-                while (gameConfig.infiltres + gameConfig.inconnus > maxBadGuys) {
-                    if (gameConfig.inconnus > 0) gameConfig.inconnus--;
-                    else if (gameConfig.infiltres > 1) gameConfig.infiltres--;
-                    else break;
-                }
             }
+            normalizeRoleConfig(val);
             updateUIStats();
         }
 
@@ -5722,6 +5767,7 @@
 
         // --- GAME INIT ---
         function buildRolesDeck(pair) {
+            normalizeRoleConfig(gameConfig.total);
             rolesDeck = [];
             for (let i = 0; i < gameConfig.infiltres; i++) rolesDeck.push({ role: 'Infiltré', word: pair[1] });
             for (let i = 0; i < gameConfig.inconnus; i++) rolesDeck.push({ role: 'Inconnu', word: null });
@@ -5772,10 +5818,17 @@
                 }
                 MP.roomRef.update({
                     words: [currentPNJWord, currentInfiltreWord],
+                    pairVersion: Date.now(),
                     gamePlayers: players,
                     memorized: {},
                     votes: {},
-                    stopTimerVotes: 0
+                    stopTimerVotes: {},
+                    guesses: {},
+                    tieBreak: null,
+                    guessCorrect: null,
+                    gameOver: false,
+                    winner: null,
+                    pendingVictimIndex: -1
                 }).then(() => {
                     revealIdentity(true);
                 });
@@ -5812,6 +5865,7 @@
 
             // Sync config with actual player count from previous game
             gameConfig.total = oldPlayers.length;
+            normalizeRoleConfig(gameConfig.total);
 
             const pair = getRandomWordPair();
             currentPNJWord = pair[0]; currentInfiltreWord = pair[1];
@@ -6014,7 +6068,7 @@
             clearInterval(timerInterval);
             SFX.alarm();
             if (MP.mode === 'host') {
-                MP.roomRef.update({ status: 'vote', votes: {}, tieBreak: null, stopTimerVotes: 0 });
+                MP.roomRef.update({ status: 'vote', votes: {}, tieBreak: null, stopTimerVotes: {} });
             } else if (!MP.mode) {
                 setupVoteScreen();
             }
