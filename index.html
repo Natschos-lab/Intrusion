@@ -3667,6 +3667,12 @@
             stopTimerVotes: {},
             resolvingVote: false,
             resolvingGuess: false,
+            memorizedWriteInProgress: false,
+            pendingMemorized: null,
+            memorizedRetryTimer: null,
+            pendingWrites: {},
+            writeInProgress: {},
+            writeRetryTimers: {},
             roomInactivityTimer: null,
             isDisconnecting: false,
             isChatMinimized: false,
@@ -3972,6 +3978,8 @@
                             if (isConnected) {
                                 badge.innerHTML = `<i class="bi bi-circle-fill text-success small me-1"></i> ${this.mode === 'host' ? 'HÔTE : ' + this.roomId : 'CONNECTÉ (' + this.roomId + ')'}`;
                                 badge.className = 'connection-status status-online';
+                                this.flushMemorized();
+                                Object.keys(this.pendingWrites).forEach(key => this.flushWrite(key));
                             } else {
                                 badge.innerHTML = `<i class="bi bi-circle-fill text-warning small me-1"></i> RECONNEXION...`;
                                 badge.className = 'connection-status status-connecting';
@@ -4867,46 +4875,103 @@
                 }
             },
 
+            saveMemorized: function () {
+                if (!this.roomRef || !this.playerId) return;
+
+                this.pendingMemorized = {
+                    roomId: this.roomId,
+                    playerId: this.playerId,
+                    data: {
+                        round: this.currentRound || 0,
+                        pairVersion: currentPairVersion
+                    }
+                };
+                this.flushMemorized();
+            },
+
+            flushMemorized: async function () {
+                if (!this.pendingMemorized || !this.roomRef || this.memorizedWriteInProgress) return;
+                if (this.pendingMemorized.roomId !== this.roomId || this.pendingMemorized.playerId !== this.playerId) return;
+
+                this.memorizedWriteInProgress = true;
+                const pending = this.pendingMemorized;
+                const memorizedRef = this.roomRef.child('memorized/' + this.playerId);
+                const memorizedData = pending.data;
+
+                try {
+                    await Promise.race([
+                        memorizedRef.set(memorizedData),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase timeout')), 8000))
+                    ]);
+                    if (this.pendingMemorized === pending) this.pendingMemorized = null;
+                } catch (error) {
+                    console.warn("Validation du mot en attente de synchronisation:", error);
+                    db.goOnline();
+                    if (!this.memorizedRetryTimer) {
+                        this.memorizedRetryTimer = setTimeout(() => {
+                            this.memorizedRetryTimer = null;
+                            this.flushMemorized();
+                        }, 3000);
+                    }
+                } finally {
+                    this.memorizedWriteInProgress = false;
+                }
+            },
+
+            queueWrite: function (key, ref, data) {
+                this.pendingWrites[key] = { ref, data };
+                this.flushWrite(key);
+            },
+
+            flushWrite: async function (key) {
+                const pending = this.pendingWrites[key];
+                if (!pending || this.writeInProgress[key]) return;
+
+                this.writeInProgress[key] = true;
+                try {
+                    await Promise.race([
+                        pending.ref.set(pending.data),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase timeout')), 8000))
+                    ]);
+                    if (this.pendingWrites[key] === pending) delete this.pendingWrites[key];
+                } catch (error) {
+                    console.warn("Action en attente de synchronisation:", key, error);
+                    db.goOnline();
+                    if (!this.writeRetryTimers[key]) {
+                        this.writeRetryTimers[key] = setTimeout(() => {
+                            delete this.writeRetryTimers[key];
+                            this.flushWrite(key);
+                        }, 3000);
+                    }
+                } finally {
+                    this.writeInProgress[key] = false;
+                    if (this.pendingWrites[key] && this.pendingWrites[key] !== pending) this.flushWrite(key);
+                }
+            },
+
             sendData: function (data) {
                 if (!this.roomRef) return;
                 if (data.type === 'memorized') {
-                    this.roomRef.child('memorized/' + this.playerId).set({
-                        round: this.currentRound || 0,
-                        pairVersion: currentPairVersion
-                    }).catch(error => {
-                        console.error("Erreur validation du mot:", error);
-                        const btn = document.getElementById('btn-pass-ready');
-                        if (btn) btn.classList.remove('d-none');
-                        alert("La validation du mot n'a pas été enregistrée. Vérifiez la connexion puis réessayez.");
-                    });
+                    this.saveMemorized();
                 } else if (data.type === 'vote') {
                     const voter = players[this.me.index];
                     if (!voter || !voter.alive || voter.eligible === false) return;
-                    this.roomRef.child('votes/' + this.playerId).set({
+                    this.queueWrite('vote', this.roomRef.child('votes/' + this.playerId), {
                         target: data.to,
                         round: this.currentRound || 0,
                         pairVersion: currentPairVersion
-                    }).catch(error => {
-                        console.error("Erreur enregistrement du vote:", error);
-                        alert("Le vote n'a pas été enregistré. Vérifiez la connexion puis réessayez.");
                     });
                 } else if (data.type === 'vote_stop_timer') {
                     const voter = players[this.me.index];
                     if (!voter || !voter.alive || voter.eligible === false) return;
-                    this.roomRef.child('stopTimerVotes/' + this.playerId).set(true).catch(error => {
-                        console.error("Erreur arrêt du chrono:", error);
-                        alert("Votre demande d'arrêt du chrono n'a pas été enregistrée.");
-                    });
+                    this.queueWrite('stopTimerVote', this.roomRef.child('stopTimerVotes/' + this.playerId), true);
                 } else if (data.type === 'guess_submit') {
                     const guesser = players[this.me.index];
                     if (!guesser || this.me.index !== pendingVictimIndex || !guesser.alive || guesser.eligible === false) return;
-                    this.roomRef.child('guesses/' + this.playerId).set({
+                    this.queueWrite('guess', this.roomRef.child('guesses/' + this.playerId), {
                         guess: String(data.guess || '').slice(0, 100),
                         round: this.currentRound || 0,
                         pairVersion: currentPairVersion
-                    }).catch(error => {
-                        console.error("Erreur enregistrement de la devinette:", error);
-                        alert("La devinette n'a pas été enregistrée. Vérifiez la connexion puis réessayez.");
                     });
                 }
             },
@@ -4949,6 +5014,13 @@
                 }
 
                 this.cleanupListeners();
+                Object.values(this.writeRetryTimers).forEach(timer => clearTimeout(timer));
+                if (this.memorizedRetryTimer) clearTimeout(this.memorizedRetryTimer);
+                this.pendingWrites = {};
+                this.writeInProgress = {};
+                this.writeRetryTimers = {};
+                this.pendingMemorized = null;
+                this.memorizedRetryTimer = null;
                 this.roomRef = null;
                 this.playersRef = null;
                 this.chatRef = null;
