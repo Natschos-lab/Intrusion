@@ -4911,8 +4911,14 @@
                         memorizedRef.set(memorizedData),
                         new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase timeout')), 8000))
                     ]);
+                    const savedSnapshot = await memorizedRef.once('value');
+                    if (!savedSnapshot.exists()) throw new Error('Validation absente après écriture Firebase');
                     if (this.pendingMemorized === pending) this.pendingMemorized = null;
-                    if (this.localMemorized === pending.data) this.localMemorized = null;
+                    if (this.localMemorized &&
+                        this.localMemorized.round === pending.data.round &&
+                        this.localMemorized.pairVersion === pending.data.pairVersion) {
+                        this.localMemorized = null;
+                    }
                 } catch (error) {
                     console.warn("Validation du mot en attente de synchronisation:", error);
                     db.goOnline();
