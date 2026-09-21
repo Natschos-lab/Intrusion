@@ -3669,6 +3669,7 @@
             resolvingGuess: false,
             memorizedWriteInProgress: false,
             pendingMemorized: null,
+            localMemorized: null,
             memorizedRetryTimer: null,
             pendingWrites: {},
             writeInProgress: {},
@@ -4153,7 +4154,11 @@
                         showView('view-pass');
                         return;
                     }
-                    const hasMemorized = roomData.memorized && roomData.memorized[this.playerId];
+                    const remoteMemorized = roomData.memorized && roomData.memorized[this.playerId];
+                    const localMemorized = this.localMemorized &&
+                        this.localMemorized.round === this.currentRound &&
+                        (this.localMemorized.pairVersion === undefined || this.localMemorized.pairVersion === currentPairVersion);
+                    const hasMemorized = remoteMemorized || localMemorized;
 
                     if (hasMemorized) {
                         let msgTitle = gameConfig.mode === 'revele' ? 'RÔLE MÉMORISÉ' : 'MOT MÉMORISÉ';
@@ -4161,7 +4166,9 @@
                         const btn = document.getElementById('btn-pass-ready');
                         if (btn) btn.classList.add('d-none');
                         showView('view-pass');
-                        this.renderMemorizedStatusFromRoom(roomData.memorized);
+                        const memorized = { ...(roomData.memorized || {}) };
+                        if (localMemorized && !memorized[this.playerId]) memorized[this.playerId] = this.localMemorized;
+                        this.renderMemorizedStatusFromRoom(memorized);
                     } else {
                         const currentView = getCurrentViewId();
                         if (currentView !== 'view-reveal') {
@@ -4878,14 +4885,18 @@
             saveMemorized: function () {
                 if (!this.roomRef || !this.playerId) return;
 
+                this.localMemorized = {
+                    round: this.currentRound || 0,
+                    pairVersion: currentPairVersion
+                };
                 this.pendingMemorized = {
                     roomId: this.roomId,
                     playerId: this.playerId,
                     data: {
-                        round: this.currentRound || 0,
-                        pairVersion: currentPairVersion
+                        ...this.localMemorized
                     }
                 };
+                this.renderMemorizedStatusFromRoom({ [this.playerId]: this.localMemorized });
                 this.flushMemorized();
             },
 
@@ -4904,6 +4915,7 @@
                         new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase timeout')), 8000))
                     ]);
                     if (this.pendingMemorized === pending) this.pendingMemorized = null;
+                    if (this.localMemorized === pending.data) this.localMemorized = null;
                 } catch (error) {
                     console.warn("Validation du mot en attente de synchronisation:", error);
                     db.goOnline();
