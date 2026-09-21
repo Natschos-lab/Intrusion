@@ -5643,6 +5643,12 @@
             if (confirm("Forcer le début du débat (ignorer les joueurs n'ayant pas validé leur rôle) ?")) {
                 toggleHostOptionsModal();
                 if (MP._memorizedTimeout) { clearTimeout(MP._memorizedTimeout); MP._memorizedTimeout = null; }
+                players.forEach(player => {
+                    if (player.alive) {
+                        player.validated = true;
+                        player.eligible = true;
+                    }
+                });
                 const starterName = pickSmartStarter(true);
                 MP.broadcast({ type: 'start_debate', starter: starterName });
                 document.getElementById('firstPlayerName').innerText = starterName;
