@@ -4904,11 +4904,10 @@
                 this.memorizedWriteInProgress = true;
                 const pending = this.pendingMemorized;
                 const memorizedRef = this.roomRef.child('memorized/' + this.playerId);
-                const memorizedData = pending.data;
 
                 try {
                     await Promise.race([
-                        memorizedRef.set(memorizedData),
+                        memorizedRef.set(true),
                         new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase timeout')), 8000))
                     ]);
                     const savedSnapshot = await memorizedRef.once('value');
