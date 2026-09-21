@@ -4183,10 +4183,7 @@
                         const alivePlayers = players.filter(p => p.alive);
                         const allAliveValidated = alivePlayers.length > 0 && alivePlayers.every(p => {
                             const memorized = roomData.memorized[p.id];
-                            return !!memorized && (typeof memorized !== 'object' || (
-                                (memorized.round === undefined || memorized.round === this.currentRound) &&
-                                (memorized.pairVersion === undefined || memorized.pairVersion === currentPairVersion)
-                            ));
+                            return !!memorized;
                         });
                         if (allAliveValidated) {
                             const starterName = pickSmartStarter(true);
