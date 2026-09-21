@@ -4906,6 +4906,11 @@
                 const memorizedRef = this.roomRef.child('memorized/' + this.playerId);
 
                 try {
+                    const connectionSnapshot = await Promise.race([
+                        db.ref('.info/connected').once('value'),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Connexion Firebase indisponible')), 4000))
+                    ]);
+                    if (connectionSnapshot.val() !== true) throw new Error('Connexion Firebase indisponible');
                     await Promise.race([
                         memorizedRef.set(true),
                         new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase timeout')), 8000))
