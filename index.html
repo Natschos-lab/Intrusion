@@ -4137,6 +4137,12 @@
                     this._lastRoomStatus = status;
                 }
 
+                // Un ancien timer de débat ne doit jamais agir après un changement de phase.
+                if (status !== 'debate' && timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+
                 // Mettre à jour la visibilité du bouton discret de rappel de mot
                 if (typeof updateSecretWordBtnVisibility === 'function') {
                     updateSecretWordBtnVisibility(status);
@@ -6157,8 +6163,10 @@
         }
         function forceVote() {
             clearInterval(timerInterval);
+            timerInterval = null;
             SFX.alarm();
             if (MP.mode === 'host') {
+                if (MP._lastRoomStatus !== 'debate') return;
                 MP.roomRef.update({ status: 'vote', votes: {}, tieBreak: null, stopTimerVotes: {} });
             } else if (!MP.mode) {
                 setupVoteScreen();
