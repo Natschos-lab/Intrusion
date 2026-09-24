@@ -1815,6 +1815,36 @@
                 opacity: 1;
             }
         }
+
+        /* --- REVEAL COUNTDOWN --- */
+        .reveal-countdown-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 4500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(3, 7, 18, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .reveal-countdown-number {
+            color: var(--accent-neon);
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(7rem, 25vw, 13rem);
+            font-weight: 900;
+            line-height: 1;
+            text-shadow: 0 0 25px var(--accent-glow), 0 0 70px var(--accent-glow);
+            animation: revealCountdownPop 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes revealCountdownPop {
+            0% { opacity: 0; transform: scale(1.45); }
+            18% { opacity: 1; transform: scale(1); }
+            72% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.35); }
+        }
     </style>
 </head>
 
@@ -2359,6 +2389,10 @@
                 <div id="tie-break-victim-name" class="fs-4 fw-bold text-danger">---</div>
             </div>
         </div>
+    </div>
+
+    <div id="reveal-countdown-overlay" class="reveal-countdown-overlay d-none" aria-hidden="true">
+        <div id="reveal-countdown-number" class="reveal-countdown-number">3</div>
     </div>
 
     <script>
@@ -4472,7 +4506,6 @@
                 if (this.mode !== 'host') return;
                 this.roomRef.once('value').then(async snapshot => {
                     const roomData = snapshot.val();
-                    if (roomData.config) gameConfig = roomData.config;
                     const playersObj = roomData.players || {};
                     const activePids = Object.keys(playersObj).filter(id => playersObj[id].online !== false);
 
@@ -5478,6 +5511,50 @@
             renderFullRoster();
         }
 
+        let revealCountdownTimer = null;
+        let revealCountdownRun = 0;
+
+        function showRevealCountdown(onComplete) {
+            const overlay = document.getElementById('reveal-countdown-overlay');
+            const number = document.getElementById('reveal-countdown-number');
+            if (!overlay || !number) {
+                onComplete();
+                return;
+            }
+
+            if (revealCountdownTimer) clearInterval(revealCountdownTimer);
+            const run = ++revealCountdownRun;
+            let count = 3;
+
+            const displayCount = () => {
+                if (run !== revealCountdownRun) return;
+                number.innerText = count;
+                number.classList.remove('reveal-countdown-pop');
+                void number.offsetWidth;
+                number.classList.add('reveal-countdown-pop');
+                SFX.playTone(520 + count * 100, 'sine', 0.12, 0.04);
+            };
+
+            overlay.classList.remove('d-none');
+            overlay.setAttribute('aria-hidden', 'false');
+            displayCount();
+
+            revealCountdownTimer = setInterval(() => {
+                if (run !== revealCountdownRun) return;
+                count--;
+                if (count > 0) {
+                    displayCount();
+                    return;
+                }
+
+                clearInterval(revealCountdownTimer);
+                revealCountdownTimer = null;
+                overlay.classList.add('d-none');
+                overlay.setAttribute('aria-hidden', 'true');
+                onComplete();
+            }, 1000);
+        }
+
         function preparePreDebateView() {
             if (MP.mode === 'client') {
                 document.getElementById('host-debate-action').classList.add('d-none');
@@ -5833,35 +5910,36 @@
         function handlePassClick() {
             const currentPlayer = players[currentStep];
             if (currentPlayer) {
-                // REPLAY: Go straight to reveal
-                const title = document.getElementById('revealTitle');
-                const word = document.getElementById('revealWord');
-                const desc = document.getElementById('revealDesc');
+                showRevealCountdown(() => {
+                    // REPLAY: Go straight to reveal
+                    const title = document.getElementById('revealTitle');
+                    const word = document.getElementById('revealWord');
+                    const desc = document.getElementById('revealDesc');
 
-                if (currentPlayer.role === 'Inconnu') {
-                    title.innerText = "L'INCONNU"; title.style.color = '#adb5bd';
-                    word.innerText = "???"; word.style.color = '#adb5bd'; desc.innerText = "Tu n'as pas de mot. Bluffe !";
-                } else {
-                    word.innerText = currentPlayer.word; word.style.color = '#fbbf24';
-                    if (gameConfig.mode === 'revele') {
-                        if (currentPlayer.role === 'PNJ') { title.innerText = "PNJ"; title.style.color = '#38bdf8'; desc.innerText = "Tu es civil. Trouve l'intrus."; }
-                        else { title.innerText = "INFILTRÉ"; title.style.color = '#f43f5e'; desc.innerText = "Tu es l'intrus. Cache-toi."; }
+                    if (currentPlayer.role === 'Inconnu') {
+                        title.innerText = "L'INCONNU"; title.style.color = '#adb5bd';
+                        word.innerText = "???"; word.style.color = '#adb5bd'; desc.innerText = "Tu n'as pas de mot. Bluffe !";
                     } else {
-                        title.innerText = "AGENT"; title.style.color = '#fff'; desc.innerText = "Analyse les autres mots.";
+                        word.innerText = currentPlayer.word; word.style.color = '#fbbf24';
+                        if (gameConfig.mode === 'revele') {
+                            if (currentPlayer.role === 'PNJ') { title.innerText = "PNJ"; title.style.color = '#38bdf8'; desc.innerText = "Tu es civil. Trouve l'intrus."; }
+                            else { title.innerText = "INFILTRÉ"; title.style.color = '#f43f5e'; desc.innerText = "Tu es l'intrus. Cache-toi."; }
+                        } else {
+                            title.innerText = "AGENT"; title.style.color = '#fff'; desc.innerText = "Analyse les autres mots.";
+                        }
                     }
-                }
-                // Afficher le bouton "Passer" pour le joueur 1
-                // Afficher le bouton "Passer" uniquement pour l'hôte en ligne ou le joueur 1 en local
-                const skipBtn = document.getElementById('btn-skip-pair');
-                const isHostOrLocalFirst = MP.mode ? (MP.mode === 'host') : (currentStep === 0);
-                if (isHostOrLocalFirst) {
-                    skipBtn.classList.remove('d-none');
-                } else {
-                    skipBtn.classList.add('d-none');
-                }
+                    // Afficher le bouton "Passer" uniquement pour l'hôte en ligne ou le joueur 1 en local
+                    const skipBtn = document.getElementById('btn-skip-pair');
+                    const isHostOrLocalFirst = MP.mode ? (MP.mode === 'host') : (currentStep === 0);
+                    if (isHostOrLocalFirst) {
+                        skipBtn.classList.remove('d-none');
+                    } else {
+                        skipBtn.classList.add('d-none');
+                    }
 
-                SFX.reveal();
-                showView('view-reveal');
+                    SFX.reveal();
+                    showView('view-reveal');
+                });
             } else {
                 // NEW GAME: Go to name input
                 showNameInput();
@@ -5920,6 +5998,7 @@
                     players[i].eligible = false;
                 }
                 MP.roomRef.update({
+                    status: 'memorizing',
                     words: [currentPNJWord, currentInfiltreWord],
                     pairVersion: Date.now(),
                     gamePlayers: players,
@@ -6074,30 +6153,32 @@
                 players.push({ name: pseudo, role: data.role, word: data.word, alive: true, avatar: currentAvatarData });
             }
 
-            const title = document.getElementById('revealTitle');
-            const word = document.getElementById('revealWord');
-            const desc = document.getElementById('revealDesc');
+            showRevealCountdown(() => {
+                const title = document.getElementById('revealTitle');
+                const word = document.getElementById('revealWord');
+                const desc = document.getElementById('revealDesc');
 
-            if (data.role === 'Inconnu') {
-                title.innerText = "L'INCONNU"; title.style.color = '#adb5bd';
-                word.innerText = "???"; word.style.color = '#adb5bd'; desc.innerText = "Tu n'as pas de mot. Bluffe !";
-            } else {
-                word.innerText = data.word; word.style.color = '#fbbf24';
-                if (gameConfig.mode === 'revele') {
-                    if (data.role === 'PNJ') { title.innerText = "PNJ"; title.style.color = '#38bdf8'; desc.innerText = "Tu es civil. Trouve l'intrus."; }
-                    else { title.innerText = "INFILTRÉ"; title.style.color = '#f43f5e'; desc.innerText = "Tu es l'intrus. Cache-toi."; }
+                if (data.role === 'Inconnu') {
+                    title.innerText = "L'INCONNU"; title.style.color = '#adb5bd';
+                    word.innerText = "???"; word.style.color = '#adb5bd'; desc.innerText = "Tu n'as pas de mot. Bluffe !";
                 } else {
-                    title.innerText = "AGENT"; title.style.color = '#fff'; desc.innerText = "Analyse les autres mots.";
+                    word.innerText = data.word; word.style.color = '#fbbf24';
+                    if (gameConfig.mode === 'revele') {
+                        if (data.role === 'PNJ') { title.innerText = "PNJ"; title.style.color = '#38bdf8'; desc.innerText = "Tu es civil. Trouve l'intrus."; }
+                        else { title.innerText = "INFILTRÉ"; title.style.color = '#f43f5e'; desc.innerText = "Tu es l'intrus. Cache-toi."; }
+                    } else {
+                        title.innerText = "AGENT"; title.style.color = '#fff'; desc.innerText = "Analyse les autres mots.";
+                    }
                 }
-            }
-            const skipBtn = document.getElementById('btn-skip-pair');
-            const isHostOrLocalFirst = MP.mode ? (MP.mode === 'host') : (currentStep === 0);
-            if (isHostOrLocalFirst) {
-                skipBtn.classList.remove('d-none');
-            } else {
-                skipBtn.classList.add('d-none');
-            }
-            SFX.reveal(); showView('view-reveal');
+                const skipBtn = document.getElementById('btn-skip-pair');
+                const isHostOrLocalFirst = MP.mode ? (MP.mode === 'host') : (currentStep === 0);
+                if (isHostOrLocalFirst) {
+                    skipBtn.classList.remove('d-none');
+                } else {
+                    skipBtn.classList.add('d-none');
+                }
+                SFX.reveal(); showView('view-reveal');
+            });
         }
 
         function nextPlayer() {
