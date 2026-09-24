@@ -4137,8 +4137,14 @@
                 const isNewPair = currentPairVersion !== null && roomPairVersion !== currentPairVersion;
                 currentPairVersion = roomPairVersion;
                 if (isNewPair && roomData.status === 'memorizing') {
+                    this.localMemorized = null;
+                    this.pendingMemorized = null;
                     updatePassScreen();
                     showView('view-pass');
+                    const currentPlayer = players[this.me.index];
+                    if (currentPlayer && currentPlayer.alive && currentPlayer.eligible !== false) {
+                        revealIdentity(true);
+                    }
                 }
 
                 if (roomData.pendingVictimIndex !== undefined) {
@@ -5513,6 +5519,7 @@
 
         let revealCountdownTimer = null;
         let revealCountdownRun = 0;
+        let revealCountdownActive = false;
 
         function showRevealCountdown(onComplete) {
             const overlay = document.getElementById('reveal-countdown-overlay');
@@ -5522,9 +5529,12 @@
                 return;
             }
 
+            if (revealCountdownActive) return;
+
             if (revealCountdownTimer) clearInterval(revealCountdownTimer);
             const run = ++revealCountdownRun;
             let count = 3;
+            revealCountdownActive = true;
 
             const displayCount = () => {
                 if (run !== revealCountdownRun) return;
@@ -5551,6 +5561,7 @@
                 revealCountdownTimer = null;
                 overlay.classList.add('d-none');
                 overlay.setAttribute('aria-hidden', 'true');
+                revealCountdownActive = false;
                 onComplete();
             }, 1000);
         }
